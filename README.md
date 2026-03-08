@@ -21,7 +21,7 @@
     <img hspace="6" src="https://img.shields.io/badge/Support%20astra1dev-Monero-FF6600?style=flat&logo=monero" alt="Monero">
   </a>
 
-  <a href="https://github.com/scp222thj/MalumMenu/releases">
+  <a href="https://github.com/ADHyperActive/MalumMenu/releases">
     <img hspace="6" src="https://img.shields.io/github/downloads/ADHyperActive/MalumMenu/total?style=flat&logo=github&label=Total%20Downloads&color=2ECC71" alt="Downloads">
   </a>
 
