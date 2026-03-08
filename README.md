@@ -24,6 +24,8 @@
   <a href="https://github.com/scp222thj/MalumMenu/releases">
     <img hspace="6" src="https://img.shields.io/github/downloads/scp222thj/MalumMenu/total?style=flat&logo=github&label=Total%20Downloads&color=2ECC71" alt="Downloads">
   </a>
+
+  `I don't want money from this fork since it's just developed because I don't want to burden the devs with my feature requests. Therefore, I'm not including a button to support me. -ADHyperActive`
 </p>
 
 <p align="center">
