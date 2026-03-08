@@ -48,7 +48,7 @@
 | Mod Version| Among Us - Version | Link |
 |----------|-------------|-----------------|
 | v1.0.1 | 17.2.1 ( 2026.2.24 ) | [Download](https://github.com/ADHyperActive/MalumMenu/releases/tag/ADV1.0.1) |\
-| v3.0.0 | 17.2.1 ( 2026.2.24 ) | [Download](https://github.com/ADHyperActive/MalumMenu/releases/tag/ADV1.0.0) |
+| v1.0.0 | 17.2.1 ( 2026.2.24 ) | [Download](https://github.com/ADHyperActive/MalumMenu/releases/tag/ADV1.0.0) |
 
 
 # ⬇️ Installation
