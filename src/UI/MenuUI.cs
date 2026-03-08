@@ -7,16 +7,22 @@ namespace MalumMenu;
 public class MenuUI : MonoBehaviour
 {
     public List<GroupInfo> groups = new List<GroupInfo>();
-    private Rect windowRect = new(10, 10, 700, 550);
+    private Rect windowRect = new(10, 10, 720, 570);
     public static bool isGUIActive = false;
     public static bool isPanicked = false;
     public int selectedTab;
 
     // Styles
     private GUIStyle tabButtonStyle;
+    private GUIStyle tabButtonActiveStyle;
     public GUIStyle tabTitleStyle;
     public GUIStyle tabSubtitleStyle;
     public static float hue; // For RGB mode
+    private GUIStyle windowStyle;
+
+    // Config input fields
+    private Vector2 configScrollPosition = Vector2.zero;
+    private Vector2 contentScrollPosition = Vector2.zero;
 
     // Create all groups (buttons) and their toggles on start
     private void Start()
@@ -254,11 +260,9 @@ public class MenuUI : MonoBehaviour
 
         groups.Add(new GroupInfo("Config", false,
             new List<ToggleInfo>() {
-                //new ToggleInfo(" Open Plugin Config", () => false, x => Utils.OpenConfigFile()),
                 new ToggleInfo(" Reload Config", () => CheatToggles.reloadConfig, x => CheatToggles.reloadConfig = x),
                 new ToggleInfo(" Save to Profile", () => false, x => CheatToggles.SaveTogglesToProfile()),
-                new ToggleInfo(" Load from Profile", () => false, x => CheatToggles.LoadTogglesFromProfile()),
-                new ToggleInfo(" RGB Mode", () => CheatToggles.rgbMode, x => CheatToggles.rgbMode = x)
+                new ToggleInfo(" Load from Profile", () => false, x => CheatToggles.LoadTogglesFromProfile())
             },
             new List<SubmenuInfo>()
         ));
@@ -268,17 +272,35 @@ public class MenuUI : MonoBehaviour
     {
         GUI.skin.toggle.fontSize = GUI.skin.button.fontSize = GUI.skin.label.fontSize = 15;
 
+        var buttonBg = MakeTex(2, 2, new Color(0.2f, 0.2f, 0.2f, 0.8f));
+        var buttonActiveBg = MakeTex(2, 2, new Color(0.35f, 0.4f, 0.5f, 0.95f));
+        var buttonHoverBg = MakeTex(2, 2, new Color(0.3f, 0.3f, 0.35f, 0.9f));
+
         tabButtonStyle = new GUIStyle(GUI.skin.button)
         {
-            fontSize = 18,
+            fontSize = 16,
             fontStyle = FontStyle.Bold,
+            alignment = TextAnchor.MiddleCenter,
+            normal = { background = buttonBg, textColor = new Color(0.85f, 0.85f, 0.85f) },
+            hover = { background = buttonHoverBg, textColor = Color.white },
+            padding = new RectOffset { left = 8, right = 8, top = 8, bottom = 8 },
+            margin = new RectOffset { left = 2, right = 2, top = 3, bottom = 3 }
+        };
+
+        tabButtonActiveStyle = new GUIStyle(tabButtonStyle)
+        {
+            normal = { background = buttonActiveBg, textColor = Color.white },
+            hover = { background = buttonActiveBg, textColor = Color.white },
+            fontStyle = FontStyle.Bold
         };
 
         tabTitleStyle = new GUIStyle(GUI.skin.label)
         {
-            fontSize = 20,
+            fontSize = 22,
             fontStyle = FontStyle.Bold,
             alignment = TextAnchor.MiddleLeft,
+            normal = { textColor = Color.white },
+            padding = new RectOffset { left = 0, right = 0, top = 5, bottom = 10 }
         };
 
         tabSubtitleStyle = new GUIStyle(GUI.skin.label)
@@ -286,7 +308,26 @@ public class MenuUI : MonoBehaviour
             fontSize = 16,
             fontStyle = FontStyle.Bold,
             alignment = TextAnchor.MiddleLeft,
+            normal = { textColor = new Color(0.75f, 0.85f, 1f) },
+            padding = new RectOffset { left = 0, right = 0, top = 8, bottom = 5 }
         };
+
+        windowStyle = new GUIStyle(GUI.skin.window)
+        {
+            padding = new RectOffset { left = 10, right = 10, top = 25, bottom = 10 }
+        };
+    }
+
+    private Texture2D MakeTex(int width, int height, Color col)
+    {
+        Color[] pix = new Color[width * height];
+        for (int i = 0; i < pix.Length; i++)
+            pix[i] = col;
+
+        Texture2D result = new Texture2D(width, height);
+        result.SetPixels(pix);
+        result.Apply();
+        return result;
     }
 
     private void Update()
@@ -368,33 +409,41 @@ public class MenuUI : MonoBehaviour
 
         UIHelpers.ApplyUIColor();
 
-        windowRect = GUI.Window(0, windowRect, (GUI.WindowFunction)WindowFunction, "MalumMenu v" + MalumMenu.malumVersion);
+        windowRect = GUI.Window(0, windowRect, (GUI.WindowFunction)WindowFunction, "MalumMenu v" + MalumMenu.malumVersion, windowStyle);
     }
 
     public void WindowFunction(int windowID)
     {
         GUILayout.BeginHorizontal();
 
-        // Left tab selector (15% width)
+        // Left tab selector (15% width) with modern styling
         GUILayout.BeginVertical(GUILayout.Width(windowRect.width * 0.15f));
+        GUILayout.Space(5);
         for (var i = 0; i < groups.Count; i++)
         {
-            if (GUILayout.Button(groups[i].name, tabButtonStyle, GUILayout.Height(35)))
+            var style = (i == selectedTab) ? tabButtonActiveStyle : tabButtonStyle;
+            if (GUILayout.Button(groups[i].name, style, GUILayout.Height(38)))
                 selectedTab = i;
         }
+        GUILayout.FlexibleSpace();
         GUILayout.EndVertical();
 
         // Vertical separator line + invisible space to create gap between the tab selector and the content
-        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
-        GUILayout.Space(10f);
+        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Width(2f), GUILayout.ExpandHeight(true));
+        GUILayout.Space(12f);
 
         // Right tab content and controls (85% width)
-        GUILayout.BeginVertical(GUILayout.Width(windowRect.width * 0.85f));
+        GUILayout.BeginVertical(GUILayout.Width(windowRect.width * 0.82f));
+        GUILayout.Space(5);
 
         // Tab-specific content
         if (selectedTab >= 0 && selectedTab < groups.Count)
         {
             GUILayout.Label(groups[selectedTab].name, tabTitleStyle);
+
+            GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Height(2f), GUILayout.ExpandWidth(true));
+            GUILayout.Space(8);
+
             DrawTabContents(selectedTab);
         }
 
@@ -429,9 +478,18 @@ public class MenuUI : MonoBehaviour
     {
         var group = groups[groupId];
 
+        // Special handling for Config tab
+        if (group.name == "Config")
+        {
+            DrawConfigTab(group);
+            return;
+        }
+
         var submenuCount = group.submenus.Count;
 
         bool needSpace = false;
+
+        contentScrollPosition = GUILayout.BeginScrollView(contentScrollPosition, false, true, GUILayout.Height(windowRect.height - 90));
 
         GUILayout.BeginHorizontal();
 
@@ -447,17 +505,20 @@ public class MenuUI : MonoBehaviour
         {
             try
             {
+                GUILayout.Space(10);
+                GUILayout.Label("Speed Control", tabSubtitleStyle);
+
                 if (PlayerControl.LocalPlayer.Data.IsDead)
                 {
+                    GUILayout.Label($"Ghost Speed: {PlayerControl.LocalPlayer?.MyPhysics.GhostSpeed:F2} {(Utils.IsSpeedDefault(true) ? "(Default)" : "")}");
                     PlayerControl.LocalPlayer.MyPhysics.GhostSpeed = GUILayout.HorizontalSlider(PlayerControl.LocalPlayer.MyPhysics.GhostSpeed, 0f, 20f, GUILayout.Width(250f));
                     Utils.SnapSpeedToDefault(0.05f, true);
-                    GUILayout.Label($"Current Speed: {PlayerControl.LocalPlayer?.MyPhysics.GhostSpeed} {(Utils.IsSpeedDefault(true) ? "(Default)" : "")}");
                 }
                 else
                 {
+                    GUILayout.Label($"Speed: {PlayerControl.LocalPlayer?.MyPhysics.Speed:F2} {(Utils.IsSpeedDefault() ? "(Default)" : "")}");
                     PlayerControl.LocalPlayer.MyPhysics.Speed = GUILayout.HorizontalSlider(PlayerControl.LocalPlayer.MyPhysics.Speed, 0f, 20f, GUILayout.Width(250f));
                     Utils.SnapSpeedToDefault(0.05f);
-                    GUILayout.Label($"Current Speed: {PlayerControl.LocalPlayer?.MyPhysics.Speed} {(Utils.IsSpeedDefault() ? "(Default)" : "")}");
                 }
             } catch (NullReferenceException) {}
         }
@@ -499,6 +560,110 @@ public class MenuUI : MonoBehaviour
         GUILayout.EndVertical();
 
         GUILayout.EndHorizontal();
+
+        GUILayout.EndScrollView();
+    }
+
+    private void DrawConfigTab(GroupInfo group)
+    {
+        configScrollPosition = GUILayout.BeginScrollView(configScrollPosition, false, true, GUILayout.Height(windowRect.height - 80));
+
+        GUILayout.BeginHorizontal();
+
+        // Left column
+        GUILayout.BeginVertical(GUILayout.Width(windowRect.width * 0.38f));
+
+        GUILayout.Label("Profile Management", tabSubtitleStyle);
+        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Height(1f), GUILayout.Width(windowRect.width * 0.35f));
+        GUILayout.Space(5);
+        DrawToggles(group.toggles);
+
+        GUILayout.Space(15);
+        GUILayout.Label("Visual Settings", tabSubtitleStyle);
+        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Height(1f), GUILayout.Width(windowRect.width * 0.35f));
+        GUILayout.Space(5);
+
+        var currentRgbState = CheatToggles.rgbMode;
+        var newRgbState = GUILayout.Toggle(currentRgbState, " RGB Rainbow Mode");
+        if (newRgbState != currentRgbState)
+        {
+            CheatToggles.rgbMode = newRgbState;
+        }
+
+        GUILayout.Space(10);
+        GUILayout.Label("Current Menu Color: " + (string.IsNullOrEmpty(MalumMenu.menuHtmlColor.Value) ? "(default)" : MalumMenu.menuHtmlColor.Value));
+
+        GUILayout.Space(15);
+        GUILayout.Label("Menu Settings", tabSubtitleStyle);
+        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Height(1f), GUILayout.Width(windowRect.width * 0.35f));
+        GUILayout.Space(5);
+
+        GUILayout.Label("Current Keybind: " + MalumMenu.menuKeybind.Value);
+
+        GUILayout.Space(10);
+        var currentOpenOnMouse = MalumMenu.menuOpenOnMouse.Value;
+        var newOpenOnMouse = GUILayout.Toggle(currentOpenOnMouse, " Open Menu at Mouse");
+        if (newOpenOnMouse != currentOpenOnMouse)
+        {
+            MalumMenu.menuOpenOnMouse.Value = newOpenOnMouse;
+        }
+
+        var currentAutoLoad = MalumMenu.autoLoadProfile.Value;
+        var newAutoLoad = GUILayout.Toggle(currentAutoLoad, " Auto-Load Profile");
+        if (newAutoLoad != currentAutoLoad)
+        {
+            MalumMenu.autoLoadProfile.Value = newAutoLoad;
+        }
+
+        GUILayout.EndVertical();
+
+        GUILayout.Space(10);
+
+        // Right column
+        GUILayout.BeginVertical(GUILayout.Width(windowRect.width * 0.38f));
+
+        GUILayout.Label("Privacy Settings", tabSubtitleStyle);
+        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Height(1f), GUILayout.Width(windowRect.width * 0.35f));
+        GUILayout.Space(5);
+
+        var currentHideDevice = MalumMenu.spoofDeviceId.Value;
+        var newHideDevice = GUILayout.Toggle(currentHideDevice, " Hide Device ID");
+        if (newHideDevice != currentHideDevice)
+        {
+            MalumMenu.spoofDeviceId.Value = newHideDevice;
+        }
+
+        var currentNoTelemetry = MalumMenu.noTelemetry.Value;
+        var newNoTelemetry = GUILayout.Toggle(currentNoTelemetry, " Disable Telemetry");
+        if (newNoTelemetry != currentNoTelemetry)
+        {
+            MalumMenu.noTelemetry.Value = newNoTelemetry;
+            if (newNoTelemetry)
+            {
+                UnityEngine.Analytics.Analytics.enabled = false;
+                UnityEngine.Analytics.Analytics.deviceStatsEnabled = false;
+                UnityEngine.Analytics.PerformanceReporting.enabled = false;
+            }
+        }
+
+        GUILayout.Space(15);
+        GUILayout.Label("Spoofing Settings", tabSubtitleStyle);
+        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Height(1f), GUILayout.Width(windowRect.width * 0.35f));
+        GUILayout.Space(5);
+
+        GUILayout.Label("Spoof Level: " + (string.IsNullOrEmpty(MalumMenu.spoofLevel.Value) ? "(disabled)" : MalumMenu.spoofLevel.Value));
+        GUILayout.Label("Spoof Platform: " + (string.IsNullOrEmpty(MalumMenu.spoofPlatform.Value) ? "(disabled)" : MalumMenu.spoofPlatform.Value));
+
+        GUILayout.Space(20);
+        GUILayout.Label("To change text settings,");
+        GUILayout.Label("edit the config file at:");
+        GUILayout.Label("BepInEx/config/");
+
+        GUILayout.EndVertical();
+
+        GUILayout.EndHorizontal();
+
+        GUILayout.EndScrollView();
     }
 
     public void DrawToggles(List<ToggleInfo> toggles)
@@ -506,7 +671,7 @@ public class MenuUI : MonoBehaviour
         foreach (var toggle in toggles)
         {
             var currentState = toggle.getState();
-            var newState = GUILayout.Toggle(currentState, toggle.label);
+            var newState = GUILayout.Toggle(currentState, toggle.label, GUIStylePreset.ModernToggle);
 
             if (newState != currentState)
             {

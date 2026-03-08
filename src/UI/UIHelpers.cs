@@ -8,7 +8,8 @@ public static class UIHelpers
     {
         if (CheatToggles.rgbMode)
         {
-            GUI.backgroundColor = Color.HSVToRGB(MenuUI.hue, 1f, 1f); // Set background color based on hue
+            GUI.backgroundColor = Color.HSVToRGB(MenuUI.hue, 0.6f, 0.9f);
+            GUI.contentColor = Color.white;
         }
         else
         {
@@ -28,6 +29,8 @@ public static class UIHelpers
             {
                 GUI.backgroundColor = uiColor;
             }
+
+            GUI.contentColor = Color.white;
         }
     }
 }

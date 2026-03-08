@@ -17,6 +17,7 @@ public partial class MalumMenu : BasePlugin
 {
     public Harmony Harmony { get; } = new(Id);
     public new static ManualLogSource Log;
+    public static MalumMenu Instance { get; private set; }
 
     public static MenuUI menuUI;
     public static ConsoleUI consoleUI;
@@ -41,6 +42,7 @@ public partial class MalumMenu : BasePlugin
 
     public override void Load()
     {
+        Instance = this;
         Log = base.Log;
 
         // Loads config settings
