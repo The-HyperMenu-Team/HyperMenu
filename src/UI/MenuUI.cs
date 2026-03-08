@@ -24,6 +24,24 @@ public class MenuUI : MonoBehaviour
     private Vector2 configScrollPosition = Vector2.zero;
     private Vector2 contentScrollPosition = Vector2.zero;
 
+    // Keybind popup state
+    private bool showKeybindPopup = false;
+    private string keybindTargetToggle = "";
+    private string keybindTargetLabel = "";
+    private bool waitingForKey = false;
+    private Rect keybindPopupRect = new(200, 200, 300, 150);
+
+    // Platform spoofing options
+    private readonly string[] platformOptions = new string[] 
+    { 
+        "Disabled", "Unknown", "StandaloneEpicPC", "StandaloneSteamPC", 
+        "StandaloneMac", "StandaloneWin10", "StandaloneItch", 
+        "IPhone", "Android", "Switch", "Xbox", "Playstation" 
+    };
+    private int selectedPlatformIndex = 0;
+    private uint spoofLevelValue = 0;
+    private bool spoofLevelEnabled = false;
+
     // Create all groups (buttons) and their toggles on start
     private void Start()
     {
@@ -505,20 +523,17 @@ public class MenuUI : MonoBehaviour
         {
             try
             {
-                GUILayout.Space(10);
-                GUILayout.Label("Speed Control", tabSubtitleStyle);
-
                 if (PlayerControl.LocalPlayer.Data.IsDead)
                 {
-                    GUILayout.Label($"Ghost Speed: {PlayerControl.LocalPlayer?.MyPhysics.GhostSpeed:F2} {(Utils.IsSpeedDefault(true) ? "(Default)" : "")}");
                     PlayerControl.LocalPlayer.MyPhysics.GhostSpeed = GUILayout.HorizontalSlider(PlayerControl.LocalPlayer.MyPhysics.GhostSpeed, 0f, 20f, GUILayout.Width(250f));
                     Utils.SnapSpeedToDefault(0.05f, true);
+                    GUILayout.Label($"Current Speed: {PlayerControl.LocalPlayer?.MyPhysics.GhostSpeed} {(Utils.IsSpeedDefault(true) ? "(Default)" : "")}");
                 }
                 else
                 {
-                    GUILayout.Label($"Speed: {PlayerControl.LocalPlayer?.MyPhysics.Speed:F2} {(Utils.IsSpeedDefault() ? "(Default)" : "")}");
                     PlayerControl.LocalPlayer.MyPhysics.Speed = GUILayout.HorizontalSlider(PlayerControl.LocalPlayer.MyPhysics.Speed, 0f, 20f, GUILayout.Width(250f));
                     Utils.SnapSpeedToDefault(0.05f);
+                    GUILayout.Label($"Current Speed: {PlayerControl.LocalPlayer?.MyPhysics.Speed} {(Utils.IsSpeedDefault() ? "(Default)" : "")}");
                 }
             } catch (NullReferenceException) {}
         }
@@ -566,6 +581,29 @@ public class MenuUI : MonoBehaviour
 
     private void DrawConfigTab(GroupInfo group)
     {
+        // Initialize platform selection from config
+        if (selectedPlatformIndex == 0 && !string.IsNullOrEmpty(MalumMenu.spoofPlatform.Value))
+        {
+            for (int i = 0; i < platformOptions.Length; i++)
+            {
+                if (platformOptions[i] == MalumMenu.spoofPlatform.Value)
+                {
+                    selectedPlatformIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // Initialize level from config
+        if (!spoofLevelEnabled && !string.IsNullOrEmpty(MalumMenu.spoofLevel.Value))
+        {
+            if (uint.TryParse(MalumMenu.spoofLevel.Value, out uint parsedLevel))
+            {
+                spoofLevelValue = parsedLevel;
+                spoofLevelEnabled = true;
+            }
+        }
+
         configScrollPosition = GUILayout.BeginScrollView(configScrollPosition, false, true, GUILayout.Height(windowRect.height - 80));
 
         GUILayout.BeginHorizontal();
@@ -651,19 +689,101 @@ public class MenuUI : MonoBehaviour
         GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Height(1f), GUILayout.Width(windowRect.width * 0.35f));
         GUILayout.Space(5);
 
-        GUILayout.Label("Spoof Level: " + (string.IsNullOrEmpty(MalumMenu.spoofLevel.Value) ? "(disabled)" : MalumMenu.spoofLevel.Value));
-        GUILayout.Label("Spoof Platform: " + (string.IsNullOrEmpty(MalumMenu.spoofPlatform.Value) ? "(disabled)" : MalumMenu.spoofPlatform.Value));
+        // Level Spoofing
+        GUILayout.Label("Spoof Level:");
 
-        GUILayout.Space(20);
-        GUILayout.Label("To change text settings,");
-        GUILayout.Label("edit the config file at:");
-        GUILayout.Label("BepInEx/config/");
+        var newLevelEnabled = GUILayout.Toggle(spoofLevelEnabled, spoofLevelEnabled ? " Enabled: " + spoofLevelValue : " Disabled");
+        if (newLevelEnabled != spoofLevelEnabled)
+        {
+            spoofLevelEnabled = newLevelEnabled;
+            UpdateSpoofLevel();
+        }
+
+        if (spoofLevelEnabled)
+        {
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("-100", GUILayout.Width(45))) { AdjustLevel(-100); }
+            if (GUILayout.Button("-10", GUILayout.Width(40))) { AdjustLevel(-10); }
+            if (GUILayout.Button("-1", GUILayout.Width(35))) { AdjustLevel(-1); }
+            if (GUILayout.Button("+1", GUILayout.Width(35))) { AdjustLevel(1); }
+            if (GUILayout.Button("+10", GUILayout.Width(40))) { AdjustLevel(10); }
+            if (GUILayout.Button("+100", GUILayout.Width(45))) { AdjustLevel(100); }
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Set 0", GUILayout.Width(60))) { spoofLevelValue = 0; UpdateSpoofLevel(); }
+            if (GUILayout.Button("Set 100", GUILayout.Width(60))) { spoofLevelValue = 100; UpdateSpoofLevel(); }
+            if (GUILayout.Button("Set Max", GUILayout.Width(60))) { spoofLevelValue = uint.MaxValue; UpdateSpoofLevel(); }
+            GUILayout.EndHorizontal();
+        }
+
+        GUILayout.Space(10);
+
+        // Platform Spoofing
+        GUILayout.Label("Spoof Platform:");
+
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("<", GUILayout.Width(30)))
+        {
+            selectedPlatformIndex = (selectedPlatformIndex - 1 + platformOptions.Length) % platformOptions.Length;
+            UpdateSpoofPlatform();
+        }
+
+        GUILayout.Label(platformOptions[selectedPlatformIndex], GUILayout.Width(140));
+
+        if (GUILayout.Button(">", GUILayout.Width(30)))
+        {
+            selectedPlatformIndex = (selectedPlatformIndex + 1) % platformOptions.Length;
+            UpdateSpoofPlatform();
+        }
+        GUILayout.EndHorizontal();
 
         GUILayout.EndVertical();
 
         GUILayout.EndHorizontal();
 
         GUILayout.EndScrollView();
+    }
+
+    private void AdjustLevel(int amount)
+    {
+        if (amount < 0 && spoofLevelValue < (uint)(-amount))
+        {
+            spoofLevelValue = 0;
+        }
+        else if (amount > 0 && spoofLevelValue > uint.MaxValue - (uint)amount)
+        {
+            spoofLevelValue = uint.MaxValue;
+        }
+        else
+        {
+            spoofLevelValue = (uint)(spoofLevelValue + amount);
+        }
+        UpdateSpoofLevel();
+    }
+
+    private void UpdateSpoofLevel()
+    {
+        if (spoofLevelEnabled)
+        {
+            MalumMenu.spoofLevel.Value = spoofLevelValue.ToString();
+        }
+        else
+        {
+            MalumMenu.spoofLevel.Value = "";
+        }
+    }
+
+    private void UpdateSpoofPlatform()
+    {
+        if (selectedPlatformIndex == 0) // "Disabled"
+        {
+            MalumMenu.spoofPlatform.Value = "";
+        }
+        else
+        {
+            MalumMenu.spoofPlatform.Value = platformOptions[selectedPlatformIndex];
+        }
     }
 
     public void DrawToggles(List<ToggleInfo> toggles)
