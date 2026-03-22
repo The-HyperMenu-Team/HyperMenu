@@ -385,7 +385,7 @@ public class MenuUI : MonoBehaviour
         if (CheatToggles.panic) Utils.Panic();
 
         var stamp = ModManager.Instance.ModStamp;
-        if (stamp) stamp.enabled = !(MalumMenu.inStealthMode || MalumMenu.isPanicked);
+        if (stamp) stamp.enabled = false;
 
         // Passive cheats are always on to avoid problems
         // CheatToggles.unlockFeatures = CheatToggles.freeCosmetics = CheatToggles.avoidBans = true;

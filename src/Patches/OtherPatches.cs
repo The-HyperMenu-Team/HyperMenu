@@ -87,11 +87,11 @@ public static class VersionShower_Start
 
         if (MalumMenu.supportedAU.Contains(Application.version)) // Checks if Among Us version is supported
         {
-            __instance.text.text =  $"MalumMenu v{MalumMenu.malumVersion} (v{Application.version})"; // Supported
+            __instance.text.text =  $"HyperMenu by Simon McLaurin, V{MalumMenu.hyperVersion} (v{Application.version})"; // Supported
         }
         else
         {
-            __instance.text.text =  $"MalumMenu v{MalumMenu.malumVersion} (<color=red>v{Application.version}</color>)"; // Unsupported
+            __instance.text.text =  $"HyperMenu V{MalumMenu.hyperVersion} (<color=red>v{Application.version}</color>)"; // Unsupported
         }
     }
 }
