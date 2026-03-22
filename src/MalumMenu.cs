@@ -135,7 +135,7 @@ public partial class MalumMenu : BasePlugin
                 // Warns about unsupported AU versions
                 if (!supportedAU.Contains(Application.version))
                 {
-                    Utils.ShowPopup("\nThis version of MalumMenu and this version of Among Us are incompatible\n\nInstall the right version to avoid problems");
+                    Utils.ShowPopup("\nThis version of HyperMenu and this version of Among Us are incompatible\n\nInstall the right version to avoid problems");
                 }
             }
         }));
