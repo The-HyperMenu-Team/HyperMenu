@@ -23,13 +23,11 @@ public class MenuUI : MonoBehaviour
     // Config input fields
     private Vector2 configScrollPosition = Vector2.zero;
     private Vector2 contentScrollPosition = Vector2.zero;
+    private string colorInputText = "";
+    private bool colorInputInvalid = false;
 
-    // Keybind popup state
-    private bool showKeybindPopup = false;
-    private string keybindTargetToggle = "";
-    private string keybindTargetLabel = "";
+    // Keybind capture state
     private bool waitingForKey = false;
-    private Rect keybindPopupRect = new(200, 200, 300, 150);
 
     // Platform spoofing options
     private readonly string[] platformOptions = new string[] 
@@ -45,6 +43,8 @@ public class MenuUI : MonoBehaviour
     // Create all groups (buttons) and their toggles on start
     private void Start()
     {
+        colorInputText = MalumMenu.menuHtmlColor.Value;
+
         groups.Add(new GroupInfo("Player", false,
             new List<ToggleInfo>() {
                 new ToggleInfo(" NoClip", () => CheatToggles.noClip, x => CheatToggles.noClip = x),
@@ -422,15 +422,36 @@ public class MenuUI : MonoBehaviour
     {
         if (!isGUIActive || MalumMenu.isPanicked) return;
 
+        // Capture the next key press when the user wants to set the menu keybind.
+        // Escape cancels the capture without changing the keybind.
+        if (waitingForKey && Event.current != null && Event.current.type == EventType.KeyDown && Event.current.keyCode != KeyCode.None)
+        {
+            if (Event.current.keyCode == KeyCode.Escape)
+            {
+                waitingForKey = false;
+            }
+            else
+            {
+                MalumMenu.menuKeybind.Value = Event.current.keyCode.ToString();
+                waitingForKey = false;
+            }
+            Event.current.Use();
+        }
+
         InitStyles();
 
         UIHelpers.ApplyUIColor();
 
-        windowRect = GUI.Window(0, windowRect, (GUI.WindowFunction)WindowFunction, "HyperMenuV" + MalumMenu.hyperVersion + ", forked from MalumMenu V" + MalumMenu.malumVersion, windowStyle);
+        windowRect = GUI.Window(0, windowRect, (GUI.WindowFunction)WindowFunction, "HyperMenu v" + MalumMenu.hyperVersion, windowStyle);
     }
 
     public void WindowFunction(int windowID)
     {
+        // Close button in the top-right corner of the window
+        var closeButtonRect = new Rect(windowRect.width - 24, 3, 20, 18);
+        if (GUI.Button(closeButtonRect, "✕"))
+            isGUIActive = false;
+
         GUILayout.BeginHorizontal();
 
         // Left tab selector (15% width) with modern styling
@@ -628,14 +649,52 @@ public class MenuUI : MonoBehaviour
         }
 
         GUILayout.Space(10);
-        GUILayout.Label("Current Menu Color: " + (string.IsNullOrEmpty(MalumMenu.menuHtmlColor.Value) ? "(default)" : MalumMenu.menuHtmlColor.Value));
+        GUILayout.Label("Menu Color (hex or name):");
+        GUILayout.BeginHorizontal();
+        colorInputText = GUILayout.TextField(colorInputText, GUIStylePreset.ModernTextField, GUILayout.Width(150));
+        if (GUILayout.Button("Apply", GUILayout.Width(60)))
+        {
+            bool valid = ColorUtility.TryParseHtmlString(colorInputText, out _) ||
+                         ColorUtility.TryParseHtmlString("#" + colorInputText, out _);
+            if (valid)
+            {
+                MalumMenu.menuHtmlColor.Value = colorInputText;
+                colorInputInvalid = false;
+            }
+            else
+            {
+                colorInputInvalid = true;
+            }
+        }
+        if (GUILayout.Button("Reset", GUILayout.Width(55)))
+        {
+            colorInputText = "";
+            MalumMenu.menuHtmlColor.Value = "";
+            colorInputInvalid = false;
+        }
+        GUILayout.EndHorizontal();
+        if (colorInputInvalid)
+            GUILayout.Label("Invalid color value.");
 
         GUILayout.Space(15);
         GUILayout.Label("Menu Settings", tabSubtitleStyle);
         GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Height(1f), GUILayout.Width(windowRect.width * 0.35f));
         GUILayout.Space(5);
 
-        GUILayout.Label("Current Keybind: " + MalumMenu.menuKeybind.Value);
+        GUILayout.BeginHorizontal();
+        if (waitingForKey)
+        {
+            GUILayout.Label("Keybind: [Press any key... (Esc to cancel)]");
+            if (GUILayout.Button("Cancel", GUILayout.Width(65)))
+                waitingForKey = false;
+        }
+        else
+        {
+            GUILayout.Label("Keybind: " + MalumMenu.menuKeybind.Value);
+            if (GUILayout.Button("Set", GUILayout.Width(45)))
+                waitingForKey = true;
+        }
+        GUILayout.EndHorizontal();
 
         GUILayout.Space(10);
         var currentOpenOnMouse = MalumMenu.menuOpenOnMouse.Value;
