@@ -449,13 +449,16 @@ public static class Utils
 
         var platform = "Unknown";
 
-        if (playerInfo.Object.AmOwner && StringToPlatformType(MalumMenu.spoofPlatform.Value, out Platforms? platformType))
+        if (!isLocalGame)
         {
-            platform = PlatformTypeToString((Platforms)platformType);
-        }
-        else
-        {
-            try { platform = PlatformTypeToString(player.PlatformData.Platform); } catch { }
+            if (playerInfo.Object.AmOwner && StringToPlatformType(MalumMenu.spoofPlatform.Value, out Platforms? platformType))
+            {
+                platform = PlatformTypeToString((Platforms)platformType);
+            }
+            else
+            {
+                try { platform = PlatformTypeToString(player.PlatformData.Platform); } catch { }
+            }
         }
 
         //var puid = player.ProductUserId;
