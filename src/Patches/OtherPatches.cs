@@ -139,15 +139,6 @@ public static class DisconnectPopup_DoShow
     }
 }
 
-[HarmonyPatch(typeof(HatManager), nameof(HatManager.Initialize))]
-public static class HatManager_Initialize
-{
-    public static void Postfix(HatManager __instance)
-    {
-        CosmeticsUnlocker.UnlockCosmetics(__instance);
-    }
-}
-
 [HarmonyPatch(typeof(PlayerBanData), nameof(PlayerBanData.BanMinutesLeft), MethodType.Getter)]
 public static class PlayerBanData_BanMinutesLeft_Getter
 {
@@ -391,5 +382,17 @@ public static class IGameOptionsExtensions_GetAdjustedNumImpostors
         __result = GameOptionsManager.Instance.CurrentGameOptions.NumImpostors;
 
         return false;
+    }
+}
+
+[HarmonyPatch(typeof(PlayerPurchasesData), nameof(PlayerPurchasesData.GetPurchase))]
+public static class PlayerPurchasesData_GetPurchase
+{
+    // Postfix patch of PlayerPurchasesData.GetPurchase to unlock all cosmetics
+    public static void Postfix(ref bool __result)
+    {
+        if (!CheatToggles.freeCosmetics) return;
+
+        __result = true;
     }
 }
