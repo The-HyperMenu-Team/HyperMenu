@@ -12,7 +12,7 @@ namespace MalumMenu;
 [HarmonyPatch(typeof(Constants), nameof(Constants.GetPlatformData))]
 public static class Constants_GetPlatformData
 {
-    // Prefix patch of Constants.GetPlatformData to spoof the user's platform type
+    // Postfix patch of Constants.GetPlatformData to spoof the user's platform type
     public static void Postfix(ref PlatformSpecificData __result)
     {
         if (Utils.StringToPlatformType(MalumMenu.spoofPlatform.Value, out Platforms? platformType))
