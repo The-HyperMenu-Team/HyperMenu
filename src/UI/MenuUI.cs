@@ -21,10 +21,10 @@ public class MenuUI : MonoBehaviour
     // Create all groups (buttons) and their toggles on start
     private void Start()
     {
-        groups.Add(new GroupInfo("Player", false,
+        groups.Add(new GroupInfo("Movement", false,
             new List<ToggleInfo>() {
                 new ToggleInfo(" NoClip", () => CheatToggles.noClip, x => CheatToggles.noClip = x),
-                new ToggleInfo(" Fake Revive", () => CheatToggles.fakeRevive, x => CheatToggles.fakeRevive = x),
+                //new ToggleInfo(" Fake Revive", () => CheatToggles.fakeRevive, x => CheatToggles.fakeRevive = x),
                 new ToggleInfo(" Invert Controls", () => CheatToggles.invertControls, x => CheatToggles.invertControls = x)
             },
             new List<SubmenuInfo> {
@@ -39,13 +39,13 @@ public class MenuUI : MonoBehaviour
 
         groups.Add(new GroupInfo("ESP", false,
             new List<ToggleInfo>() {
-                new ToggleInfo(" Show Player Info", () => CheatToggles.showPlayerInfo, x => CheatToggles.showPlayerInfo = x),
+                new ToggleInfo(" See Player Info", () => CheatToggles.showPlayerInfo, x => CheatToggles.showPlayerInfo = x),
                 new ToggleInfo(" See Roles", () => CheatToggles.seeRoles, x => CheatToggles.seeRoles = x),
                 new ToggleInfo(" See Ghosts", () => CheatToggles.seeGhosts, x => CheatToggles.seeGhosts = x),
                 new ToggleInfo(" No Shadows", () => CheatToggles.fullBright, x => CheatToggles.fullBright = x),
                 new ToggleInfo(" Task Arrows", () => CheatToggles.taskArrows, x => CheatToggles.taskArrows = x),
                 new ToggleInfo(" Reveal Votes", () => CheatToggles.revealVotes, x => CheatToggles.revealVotes = x),
-                new ToggleInfo(" Show Lobby Info", () => CheatToggles.showLobbyInfo, x => CheatToggles.showLobbyInfo = x),
+                new ToggleInfo(" See Lobby Info", () => CheatToggles.showLobbyInfo, x => CheatToggles.showLobbyInfo = x),
             },
             new List<SubmenuInfo> {
                 new SubmenuInfo("Camera", false,
@@ -177,6 +177,24 @@ public class MenuUI : MonoBehaviour
             }
         ));
 
+        groups.Add(new GroupInfo("Animations", false,
+            new List<ToggleInfo>() {
+                new ToggleInfo(" Shields", () => CheatToggles.animShields, x => CheatToggles.animShields = x),
+                new ToggleInfo(" Asteroids", () => CheatToggles.animAsteroids, x => CheatToggles.animAsteroids = x),
+                new ToggleInfo(" Empty Garbage", () => CheatToggles.animEmptyGarbage, x => CheatToggles.animEmptyGarbage = x),
+                new ToggleInfo(" Medbay Scan", () => CheatToggles.animScan, x => CheatToggles.animScan = x),
+                new ToggleInfo(" Cams In Use", () => CheatToggles.animCamsInUse, x => CheatToggles.animCamsInUse = x),
+                //new ToggleInfo(" Pet", () => CheatToggles.animPet, x => CheatToggles.animPet = x)
+            },
+            new List<SubmenuInfo>() {
+                new SubmenuInfo("Client-Sided", false,
+                    new List<ToggleInfo>() {
+                        new ToggleInfo(" Moonwalk", () => CheatToggles.moonWalk, x => CheatToggles.moonWalk = x)
+                    }
+                )
+            }
+        ));
+
         groups.Add(new GroupInfo("Console", false,
             new List<ToggleInfo>() {
                 new ToggleInfo(" Show Console", () => CheatToggles.showConsole, x => CheatToggles.showConsole = x),
@@ -204,7 +222,8 @@ public class MenuUI : MonoBehaviour
                         new ToggleInfo(" Kill All Crewmates", () => CheatToggles.killAllCrew, x => CheatToggles.killAllCrew = x),
                         new ToggleInfo(" Kill All Impostors", () => CheatToggles.killAllImps, x => CheatToggles.killAllImps = x),
                         new ToggleInfo(" Kill Everyone", () => CheatToggles.killAll, x => CheatToggles.killAll = x)
-                    }),
+                    }
+                ),
                 new SubmenuInfo("Game State", false,
                     new List<ToggleInfo>() {
                         new ToggleInfo(" Force Start Game", () => CheatToggles.forceStartGame, x => CheatToggles.forceStartGame = x),
@@ -228,28 +247,17 @@ public class MenuUI : MonoBehaviour
                 new ToggleInfo(" Unlock Extra Features", () => CheatToggles.unlockFeatures, x => CheatToggles.unlockFeatures = x),
                 new ToggleInfo(" Copy Lobby Code on Disconnect", () => CheatToggles.copyLobbyCodeOnDisconnect, x => CheatToggles.copyLobbyCodeOnDisconnect = x),
                 new ToggleInfo(" Spoof Date to April 1st", () => CheatToggles.spoofAprilFoolsDate, x => CheatToggles.spoofAprilFoolsDate = x),
-                new ToggleInfo(" Stealth Mode", () => CheatToggles.stealthMode, x => CheatToggles.stealthMode = x),
-                new ToggleInfo(" Panic (Disable MalumMenu)", () => CheatToggles.panic, x => CheatToggles.panic = x)
             },
             new List<SubmenuInfo>()
         ));
 
-        groups.Add(new GroupInfo("Animations", false,
+        groups.Add(new GroupInfo("Modes", false,
             new List<ToggleInfo>() {
-                new ToggleInfo(" Shields", () => CheatToggles.animShields, x => CheatToggles.animShields = x),
-                new ToggleInfo(" Asteroids", () => CheatToggles.animAsteroids, x => CheatToggles.animAsteroids = x),
-                new ToggleInfo(" Empty Garbage", () => CheatToggles.animEmptyGarbage, x => CheatToggles.animEmptyGarbage = x),
-                new ToggleInfo(" Medbay Scan", () => CheatToggles.animScan, x => CheatToggles.animScan = x),
-                new ToggleInfo(" Cams In Use", () => CheatToggles.animCamsInUse, x => CheatToggles.animCamsInUse = x),
-                //new ToggleInfo(" Pet", () => CheatToggles.animPet, x => CheatToggles.animPet = x)
+                new ToggleInfo(" Party Mode", () => CheatToggles.rgbMode, x => CheatToggles.rgbMode = x),
+                new ToggleInfo(" Stealth Mode", () => CheatToggles.stealthMode, x => CheatToggles.stealthMode = x),
+                new ToggleInfo(" Panic Mode", () => CheatToggles.panic, x => CheatToggles.panic = x)
             },
-            new List<SubmenuInfo>() {
-                new SubmenuInfo("Client-Sided", false,
-                    new List<ToggleInfo>() {
-                        new ToggleInfo(" Moonwalk", () => CheatToggles.moonWalk, x => CheatToggles.moonWalk = x)
-                    }
-                )
-            }
+            new List<SubmenuInfo>()
         ));
 
         groups.Add(new GroupInfo("Config", false,
@@ -257,8 +265,7 @@ public class MenuUI : MonoBehaviour
                 //new ToggleInfo(" Open Plugin Config", () => false, x => Utils.OpenConfigFile()),
                 new ToggleInfo(" Reload Config", () => CheatToggles.reloadConfig, x => CheatToggles.reloadConfig = x),
                 new ToggleInfo(" Save to Profile", () => false, x => CheatToggles.SaveTogglesToProfile()),
-                new ToggleInfo(" Load from Profile", () => false, x => CheatToggles.LoadTogglesFromProfile()),
-                new ToggleInfo(" RGB Mode", () => CheatToggles.rgbMode, x => CheatToggles.rgbMode = x)
+                new ToggleInfo(" Load from Profile", () => false, x => CheatToggles.LoadTogglesFromProfile())
             },
             new List<SubmenuInfo>()
         ));
@@ -270,7 +277,7 @@ public class MenuUI : MonoBehaviour
 
         tabButtonStyle = new GUIStyle(GUI.skin.button)
         {
-            fontSize = 18,
+            fontSize = 17,
             fontStyle = FontStyle.Bold,
         };
 
@@ -378,8 +385,18 @@ public class MenuUI : MonoBehaviour
         GUILayout.BeginVertical(GUILayout.Width(windowRect.width * 0.15f));
         for (var i = 0; i < groups.Count; i++)
         {
+            Color standardColor = GUI.backgroundColor;
+
+            if (selectedTab == i)
+            {
+                GUI.backgroundColor = new Color(0.2f, 0.2f, 0.2f);
+            }
+
             if (GUILayout.Button(groups[i].name, tabButtonStyle, GUILayout.Height(35)))
                 selectedTab = i;
+
+            GUI.backgroundColor = standardColor;
+
         }
         GUILayout.EndVertical();
 
@@ -410,7 +427,7 @@ public class MenuUI : MonoBehaviour
     {
         return groups[groupId].name switch
         {
-            "Player" => 1,
+            "Movement" => 1,
             "ESP" => 1,
             "Roles" => 4,
             "Ship" => 1,
@@ -419,6 +436,7 @@ public class MenuUI : MonoBehaviour
             "Host-Only" => 2,
             "Passive" => 1,
             "Animations" => 1,
+            "Modes" => 1,
             "Config" => 1,
             _ => 2
         };
@@ -442,7 +460,7 @@ public class MenuUI : MonoBehaviour
             needSpace = true;
         }
 
-        if (group.name == "Player")
+        if (group.name == "Movement")
         {
             try
             {
