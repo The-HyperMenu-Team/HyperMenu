@@ -45,6 +45,11 @@ public class MenuUI : MonoBehaviour
     // Create all groups (buttons) and their toggles on start
     private void Start()
     {
+        groups.Add(new GroupInfo("Home", false,
+            new List<ToggleInfo>(),
+            new List<SubmenuInfo>()
+        ));
+
         groups.Add(new GroupInfo("Movement", false,
             new List<ToggleInfo>() {
                 new ToggleInfo(" NoClip", () => CheatToggles.noClip, x => CheatToggles.noClip = x),
@@ -513,6 +518,13 @@ public class MenuUI : MonoBehaviour
     {
         var group = groups[groupId];
 
+        // Special handling for Home tab
+        if (group.name == "Home")
+        {
+            DrawHomeTab(group);
+            return;
+        }
+
         // Special handling for Config tab
         if (group.name == "Config")
         {
@@ -592,6 +604,33 @@ public class MenuUI : MonoBehaviour
         GUILayout.EndVertical();
 
         GUILayout.EndHorizontal();
+
+        GUILayout.EndScrollView();
+    }
+
+    private void DrawHomeTab(GroupInfo group)
+    {
+        contentScrollPosition = GUILayout.BeginScrollView(contentScrollPosition, false, true, GUILayout.Height(windowRect.height - 90));
+
+        GUILayout.Label("Welcome to HyperMenu!", tabTitleStyle);
+        GUILayout.Space(10);
+
+        GUILayout.Label($"HyperMenu Version: {MalumMenu.hyperVersion}");
+        GUILayout.Label($"Forked from MalumMenu Version: {MalumMenu.malumVersion}");
+        GUILayout.Space(15);
+
+        GUILayout.Label("Information:", tabSubtitleStyle);
+        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Height(1f), GUILayout.Width(windowRect.width * 0.35f));
+        GUILayout.Space(5);
+        GUILayout.Label("Use the tabs on the left to navigate between different categories of features.");
+        GUILayout.Label("Some features are host-only or require certain game states to function properly.");
+        GUILayout.Space(15);
+
+        GUILayout.Label("Credits:", tabSubtitleStyle);
+        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Height(1f), GUILayout.Width(windowRect.width * 0.35f));
+        GUILayout.Space(5);
+        GUILayout.Label("Original MalumMenu by scp222thj");
+        GUILayout.Label("HyperMenu fork by Simon McLaurin");
 
         GUILayout.EndScrollView();
     }
