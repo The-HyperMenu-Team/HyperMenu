@@ -7,17 +7,8 @@
 
         <VersionPrefix>3.0.2</VersionPrefix>
         <Description>all play and no cheats makes among us a dull game</Description>
-        <Authors>scp222thj, astra1dev, ADHyperActive</Authors>
+        <Authors>scp222thj, astra1dev</Authors>
     </PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-		<DebugType>full</DebugType>
-		<!-- Generates full PDB for debugging -->
-		<DebugSymbols>true</DebugSymbols>
-		<!-- Ensures PDB is generated -->
-		<Optimize>false</Optimize>
-		<!-- Typically, Debug builds are not optimized -->
-	</PropertyGroup>
 
     <!--<ItemGroup>
         <EmbeddedResource Include=".\Assets\**" />
