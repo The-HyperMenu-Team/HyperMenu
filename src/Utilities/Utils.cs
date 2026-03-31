@@ -324,14 +324,21 @@ public static class Utils
     // Gets current map ID
     public static byte GetCurrentMapID()
     {
-        // If playing the tutorial
-        if (isFreePlay)
+        try
         {
-            return (byte)AmongUsClient.Instance.TutorialMapId;
-        }
+            // If playing the tutorial
+            if (isFreePlay)
+            {
+                return (byte)AmongUsClient.Instance.TutorialMapId;
+            }
 
-        // Works for local/online games
-        return GameOptionsManager.Instance.currentGameOptions.MapId;
+            // Works for local/online games
+            return GameOptionsManager.Instance.currentGameOptions.MapId;
+        }
+        catch
+        {
+            return 255;
+        }
     }
 
     // Gets SystemType of the room the player is currently in
