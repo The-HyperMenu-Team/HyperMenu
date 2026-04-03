@@ -16,6 +16,7 @@ namespace MalumMenu;
 public partial class MalumMenu : BasePlugin
 {
     public Harmony Harmony { get; } = new(Id);
+    public static MalumMenu Plugin;
     public new static ManualLogSource Log;
 
     public static MenuUI menuUI;
@@ -24,7 +25,7 @@ public partial class MalumMenu : BasePlugin
     public static DoorsUI doorsUI;
     public static TasksUI tasksUI;
     public static ProtectUI protectUI;
-    public static CheatToggles.KeybindListener keybindListener;
+    public static KeybindListener keybindListener;
 
     public static string malumVersion = "3.0.2";
     public static List<string> supportedAU = new List<string> { "2026.2.24", "2026.3.17", "2026.3.31" };
@@ -45,6 +46,7 @@ public partial class MalumMenu : BasePlugin
     public override void Load()
     {
         Log = base.Log;
+        Plugin = this;
 
         // Loads config settings
         menuKeybind = Config.Bind("MalumMenu.GUI",
@@ -100,20 +102,20 @@ public partial class MalumMenu : BasePlugin
                                 "When enabled, it will stop Among Us from collecting analytics of your games and sending them to Innersloth using Unity Analytics");
 
         // Passives are enabled by default
-        CheatToggles.unlockFeatures = CheatToggles.freeCosmetics = CheatToggles.avoidBans = true;
+        CheatToggles.unlockFeatures = CheatToggles.freeCosmetics = CheatToggles.avoidPenalties = true;
 
         Harmony.PatchAll();
 
+        // UI
         menuUI = AddComponent<MenuUI>();
-
         consoleUI = AddComponent<ConsoleUI>();
         rolesUI = AddComponent<RolesUI>();
         doorsUI = AddComponent<DoorsUI>();
         tasksUI = AddComponent<TasksUI>();
         protectUI = AddComponent<ProtectUI>();
 
-        keybindListener = AddComponent<CheatToggles.KeybindListener>();
-        keybindListener.Plugin = this;
+        // Components
+        keybindListener = AddComponent<KeybindListener>();
 
         // Disables Telemetry (haven't fully tested if it works, but according to Unity docs it should)
         if (noTelemetry.Value)

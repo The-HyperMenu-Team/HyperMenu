@@ -85,7 +85,7 @@ public static class MalumCheats
 
     public static void NoKillCdCheat(PlayerControl playerControl)
     {
-        if (CheatToggles.zeroKillCd && playerControl.killTimer > 0f)
+        if (CheatToggles.noKillCd && playerControl.killTimer > 0f)
         {
             playerControl.SetKillTimer(0f);
         }
@@ -214,7 +214,7 @@ public static class MalumCheats
 
 			if (!PlayerControl.LocalPlayer.Data.Role.CanVent && !PlayerControl.LocalPlayer.Data.IsDead)
             {
-				hudManager.ImpostorVentButton.gameObject.SetActive(CheatToggles.useVents);
+				hudManager.ImpostorVentButton.gameObject.SetActive(CheatToggles.unlockVents);
 			}
 
         } catch { }
@@ -224,7 +224,7 @@ public static class MalumCheats
     {
         try
         {
-            if (!CheatToggles.walkVent) return;
+            if (!CheatToggles.walkInVents) return;
 
             PlayerControl.LocalPlayer.inVent = false;
             PlayerControl.LocalPlayer.moveable = true;
@@ -326,6 +326,7 @@ public static class MalumCheats
 
     public static void TeleportCursorCheat()
     {
+        if (PlayerControl.LocalPlayer?.NetTransform == null || Camera.main == null) return;
         if (!CheatToggles.teleportCursor) return;
 
         // Teleport player to cursor's in-world position on right-click
@@ -355,12 +356,12 @@ public static class MalumCheats
 
     public static void PlayScannerCheat()
     {
-        if (CheatToggles.animScan && !_isScanAnimActive)
+        if (CheatToggles.animMedScan && !_isScanAnimActive)
         {
             Utils.ForceSetScanner(PlayerControl.LocalPlayer, true);
             _isScanAnimActive = true;
         }
-        else if (!CheatToggles.animScan && _isScanAnimActive)
+        else if (!CheatToggles.animMedScan && _isScanAnimActive)
         {
             Utils.ForceSetScanner(PlayerControl.LocalPlayer, false);
             _isScanAnimActive = false;

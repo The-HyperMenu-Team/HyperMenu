@@ -265,7 +265,7 @@ public static class Utils
     {
         try
         {
-            return CheatToggles.alwaysChat || MeetingHud.Instance || !ShipStatus.Instance || PlayerControl.LocalPlayer.Data.IsDead;
+            return CheatToggles.enableChat || MeetingHud.Instance || !ShipStatus.Instance || PlayerControl.LocalPlayer.Data.IsDead;
         }
         catch
         {
@@ -460,7 +460,7 @@ public static class Utils
         if (CheatToggles.seeRoles)
         {
 
-            if (CheatToggles.showPlayerInfo)
+            if (CheatToggles.seePlayerInfo)
             {
                 if (isChat)
                 {
@@ -484,7 +484,7 @@ public static class Utils
         }
         else
         {
-            if (CheatToggles.showPlayerInfo)
+            if (CheatToggles.seePlayerInfo)
             {
                 if (PlayerControl.LocalPlayer.Data.Role.NameColor == playerInfo.Role.NameColor)
                 {
