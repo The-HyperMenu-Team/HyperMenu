@@ -321,22 +321,22 @@ public static class Utils
         return outputList.Count <= 0 ? null : outputList;
     }
 
-    // Gets current map ID
+    // Returns current map ID if available
     public static byte GetCurrentMapID()
     {
-        try
+        if (isFreePlay)
         {
-            // If playing the tutorial
-            if (isFreePlay)
-            {
-                return (byte)AmongUsClient.Instance.TutorialMapId;
-            }
-
-            // Works for local/online games
+            // Works for the tutorial
+            return (byte)AmongUsClient.Instance.TutorialMapId;
+        }
+        else if (GameOptionsManager.Instance?.currentGameOptions != null)
+        {
+            // Works for local / online games
             return GameOptionsManager.Instance.currentGameOptions.MapId;
         }
-        catch
+        else
         {
+            // Defaults to byte.MaxValue if the current map ID is unavailable
             return byte.MaxValue;
         }
     }
