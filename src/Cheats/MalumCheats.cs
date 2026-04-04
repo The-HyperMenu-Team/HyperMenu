@@ -381,7 +381,7 @@ public static class MalumCheats
 
         byte mapId = Utils.GetCurrentMapID();
 
-        if (mapId == 255) return;
+        if (mapId == byte.MaxValue) return;
 
         var map = (MapNames)mapId;
 

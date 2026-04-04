@@ -337,7 +337,7 @@ public static class Utils
         }
         catch
         {
-            return 255;
+            return byte.MaxValue;
         }
     }
 
