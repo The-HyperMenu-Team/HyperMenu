@@ -341,7 +341,7 @@ public static class Utils
             {
                 return (byte)AmongUsClient.Instance.TutorialMapId;
             }
-
+        }
         // Works for local / online games
         if (GameOptionsManager.Instance?.currentGameOptions != null)
         {
