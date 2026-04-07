@@ -82,6 +82,8 @@ public struct CheatToggles
     public static bool unfixableLights;
     public static bool callMeeting;
     public static bool reportBody;
+    public static bool kickOffensiveNames;
+    public static bool fakeTasks;
 
     // Sabotage
     public static bool commsSab;
@@ -133,6 +135,7 @@ public struct CheatToggles
     public static bool killAll;
     public static bool killAllCrew;
     public static bool killAllImps;
+    public static bool bypassHostOnly;
 
     // Passive
     public static bool unlockFeatures;
