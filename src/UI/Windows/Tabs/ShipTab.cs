@@ -31,6 +31,11 @@ public class ShipTab : ITab
 
     private void DrawGeneral()
     {
+        // Will implement this later, currently gets user kicked by AC. -ADHyperActive
+        // CheatToggles.completeAllTasks = GUILayout.Toggle(CheatToggles.completeAllTasks, " Allow All Tasks");
+
+        CheatToggles.unfixableLights = GUILayout.Toggle(CheatToggles.unfixableLights, " Unfixable Lights");
+        
         CheatToggles.fakeTasks = GUILayout.Toggle(CheatToggles.fakeTasks, " Fake Tasks");
 
         CheatToggles.unfixableLights = GUILayout.Toggle(CheatToggles.unfixableLights, " Unfixable Lights");

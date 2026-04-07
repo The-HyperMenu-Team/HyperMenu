@@ -120,6 +120,7 @@ public class TasksUI : MonoBehaviour
             CheatToggles.completeMyTasks = true;
         }
 
+
         GUILayout.EndVertical();
 
         GUI.DragWindow();
