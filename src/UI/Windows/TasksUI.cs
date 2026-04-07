@@ -118,6 +118,11 @@ public class TasksUI : MonoBehaviour
             CheatToggles.completeMyTasks = true;
         }
 
+        if (GUILayout.Button("Complete All Tasks", GUIStylePreset.NormalButton))
+        {
+            CheatToggles.completeAllTasks = true;
+        }
+
         GUILayout.EndVertical();
 
         GUI.DragWindow();
