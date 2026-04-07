@@ -276,7 +276,7 @@ public static class Console_CanUse
     {
         if (CheatToggles.fakeTasks)
             __instance.AllowImpostor = true;
-        else if (__instance.TaskTypes != null && __instance.TaskTypes.Any(t => !Utils.SabotageTaskTypes.Contains(t)))
+        else if (__instance.TaskTypes != null && Array.Exists(__instance.TaskTypes, t => !Utils.SabotageTaskTypes.Contains(t)))
             __instance.AllowImpostor = false;
     }
 
