@@ -19,6 +19,17 @@ namespace MalumMenu;
 
 public static class Utils
 {
+    public static readonly HashSet<TaskTypes> SabotageTaskTypes = new()
+    {
+        TaskTypes.ResetReactor,
+        TaskTypes.FixLights,
+        TaskTypes.FixComms,
+        TaskTypes.RestoreOxy,
+        TaskTypes.ResetSeismic,
+        TaskTypes.StopCharles,
+        TaskTypes.MushroomMixupSabotage,
+    };
+
     public static bool isPastingInput;
     public static ReferenceDataManager ReferenceDataManager = DestroyableSingleton<ReferenceDataManager>.Instance; // Useful for getting full lists of all the Among Us cosmetics IDs
     public static SabotageSystemType SabotageSystem => ShipStatus.Instance.Systems[SystemTypes.Sabotage].Cast<SabotageSystemType>();

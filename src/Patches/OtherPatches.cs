@@ -276,6 +276,8 @@ public static class Console_CanUse
     {
         if (CheatToggles.fakeTasks)
             __instance.AllowImpostor = true;
+        else if (__instance.TaskTypes != null && Array.Exists(__instance.TaskTypes, t => !Utils.SabotageTaskTypes.Contains(t)))
+            __instance.AllowImpostor = false;
     }
 
     // Postfix patch of Console.CanUse to allow any player to use any task console when in range
@@ -285,6 +287,9 @@ public static class Console_CanUse
     {
         if (!CheatToggles.fakeTasks) return;
 
+        // Don't show the use button when the player is inside a vent
+        if (PlayerControl.LocalPlayer.inVent) return;
+
         float distance = Vector2.Distance(PlayerControl.LocalPlayer.GetTruePosition(), __instance.transform.position);
 
         if (distance <= __instance.UsableDistance)
@@ -293,6 +298,34 @@ public static class Console_CanUse
             couldUse = true;
             __result = distance;
         }
+    }
+}
+
+[HarmonyPatch(typeof(Console), nameof(Console.Use))]
+public static class Console_Use
+{
+    // Prefix patch of Console.Use to open the task minigame even when the task is not in the player's task list
+    public static bool Prefix(Console __instance)
+    {
+        if (!CheatToggles.fakeTasks) return true;
+
+        // If the player already has a matching task, let the normal Console.Use handle it
+        var localPlayer = PlayerControl.LocalPlayer;
+        foreach (var task in localPlayer.myTasks)
+            foreach (var taskType in __instance.TaskTypes)
+                if (task.TaskType == taskType) return true;
+
+        // No matching task found - open the minigame directly from the console's prefab.
+        // null is passed intentionally: the minigame opens for visual deception only,
+        // so task state tracking and completion are bypassed by design.
+        if (__instance.MinigamePrefab != null && Camera.main != null)
+        {
+            var minigame = UnityEngine.Object.Instantiate(__instance.MinigamePrefab, Camera.main.transform);
+            minigame.transform.localPosition = new Vector3(0f, 0f, -50f);
+            minigame.Begin(null);
+        }
+
+        return false;
     }
 }
 
