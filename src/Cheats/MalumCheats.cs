@@ -112,7 +112,7 @@ public static class MalumCheats
         {
             foreach (var task in player.myTasks)
             {
-                Utils.CompleteTask(player, task);
+                Utils.CompleteTask(player, task.Cast<PlayerTask>());
             }
         }
 
