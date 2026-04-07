@@ -268,18 +268,18 @@ public static class MushroomDoorSabotageMinigame_Begin
     }
 }
 
-// NEEDS FIX : Blocks usage of consoles to which impostor
-// has access to (like those to fix sabotages) when cheat is disabled
-
-// [HarmonyPatch(typeof(Console), nameof(Console.CanUse))]
-// public static class Console_CanUse
-// {
-//     // Prefix patch of Console.CanUse to allow impostors to do tasks
-//     public static void Prefix(Console __instance)
-//     {
-//         __instance.AllowImpostor = CheatToggles.impostorTasks;
-//     }
-// }
+[HarmonyPatch(typeof(Console), nameof(Console.CanUse))]
+public static class Console_CanUse
+{
+    // Prefix patch of Console.CanUse to allow impostors to do tasks
+    public static void Prefix(Console __instance)
+    {
+        if (CheatToggles.impostorTasks)
+        {
+            __instance.AllowImpostor = true;
+        }
+    }
+}
 
 [HarmonyPatch(typeof(IntroCutscene), "CoBegin")]
 public static class IntroCutscene_CoBegin
