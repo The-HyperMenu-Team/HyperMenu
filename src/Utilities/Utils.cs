@@ -657,7 +657,7 @@ public static class Utils
 
         Scene scene = SceneManager.GetActiveScene();
 
-        if (scene.name == "MainMenu")
+        if (scene.name == "MainMenu" || scene.name == "MatchMaking")
         {
             SceneManager.LoadScene(scene.name);
         }
