@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - release # Triggers the workflow on pushes to the 'release' branch
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual run'
+        required: false
+        default: 'Manual trigger'
 
 # Required to allow the GitHub Action to create a release and upload assets
 permissions:
