@@ -61,7 +61,7 @@ public partial class MalumMenu : BasePlugin
 
         menuOpenOnMouse = Config.Bind("MalumMenu.GUI",
                                 "OpenOnMouse",
-                                true,
+                                false,
                                 "When enabled, the MalumMenu GUI will always be opened at the current mouse position");
 
         autoLoadProfile = Config.Bind("MalumMenu.Profile",
