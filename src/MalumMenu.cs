@@ -35,6 +35,7 @@ public partial class MalumMenu : BasePlugin
     public static ConfigEntry<string> menuKeybind;
     public static ConfigEntry<string> menuHtmlColor;
     public static ConfigEntry<bool> menuOpenOnMouse;
+    public static ConfigEntry<bool> menuKeepSubwindowsOpen;
     public static ConfigEntry<string> spoofLevel;
     public static ConfigEntry<string> spoofPlatform;
     public static ConfigEntry<bool> spoofDeviceId;
@@ -63,6 +64,11 @@ public partial class MalumMenu : BasePlugin
                                 "OpenOnMouse",
                                 false,
                                 "When enabled, the MalumMenu GUI will always be opened at the current mouse position");
+
+        menuKeepSubwindowsOpen = Config.Bind("MalumMenu.GUI",
+                                "KeepSubwindowsOpen",
+                                false,
+                                "When enabled, closing the MalumMenu GUI will not automatically close its subwindows");
 
         autoLoadProfile = Config.Bind("MalumMenu.Profile",
                                 "AutoLoadProfile",
