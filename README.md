@@ -37,6 +37,12 @@ https://discord.gg/GZKcdkFD5
 </p>
 
 <!-- omit in toc -->
+
+---
+# NOTE: See our wiki for more information
+https://the-hypermenu-team.github.io/Wiki/
+
+---
 # 😎 Table Of Contents
 
 - [🎁 Releases](#-releases)
