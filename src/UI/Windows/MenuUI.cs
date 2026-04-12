@@ -8,17 +8,16 @@ public class MenuUI : MonoBehaviour
 {
     public static int windowHeight = 550;
     public static int windowWidth = 700;
+    private Rect _windowRect;
 
-    private List<ITab> _tabs = new();
-    private Rect _windowRect = new(10, 10, windowWidth, windowHeight);
     public static bool isGUIActive = false;
+    private List<ITab> _tabs = new();
     private int _selectedTab;
-
     public static float hue; // For RGB mode
 
-    // Add all tabs on start
     private void Start()
     {
+        // Add all tabs on start
         _tabs.Add(new MovementTab());
         _tabs.Add(new ESPTab());
         _tabs.Add(new RolesTab());
@@ -30,6 +29,14 @@ public class MenuUI : MonoBehaviour
         _tabs.Add(new PassiveTab());
         _tabs.Add(new ModesTab());
         _tabs.Add(new ConfigTab());
+
+        // Instantiate 2D area of MenuUI
+        _windowRect = new(
+            Screen.width / 2f - windowWidth / 2f,
+            Screen.height / 2f - windowHeight / 2f,
+            windowWidth,
+            windowHeight
+        );
     }
 
     public void InitStyles()

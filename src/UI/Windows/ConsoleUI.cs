@@ -6,23 +6,24 @@ namespace MalumMenu;
 
 public class ConsoleUI : MonoBehaviour
 {
+    public static int windowHeight = 350;
+    public static int windowWidth = 550;
+    private Rect _windowRect;
+
+    private GUIStyle _logStyle;
     private static Vector2 _scrollPosition = Vector2.zero;
     private static List<string> _logEntries = new();
     private const int MaxLogEntries = 300;
-    private Rect _windowRect = new(320, 10, 550, 350);
-    private GUIStyle _logStyle;
 
-    public static void Log(string message)
+    private void Start()
     {
-        if (_logEntries.Count >= MaxLogEntries) // Limit the number of logs to keep memory usage in check
-        {
-            _logEntries.RemoveAt(0); // Remove the oldest log entry
-        }
-
-        _logEntries.Add(message);
-
-        // Scroll to the bottom
-        _scrollPosition.y = float.MaxValue;
+        // Instantiate 2D area of ConsoleUI
+        _windowRect = new(
+            Screen.width / 2f - windowWidth / 2f,
+            Screen.height / 2f - windowHeight / 2f,
+            windowWidth,
+            windowHeight
+        );
     }
 
     private void OnGUI()
@@ -69,5 +70,18 @@ public class ConsoleUI : MonoBehaviour
         GUILayout.EndHorizontal();
 
         GUI.DragWindow();
+    }
+
+    public static void Log(string message)
+    {
+        if (_logEntries.Count >= MaxLogEntries) // Limit the number of logs to keep memory usage in check
+        {
+            _logEntries.RemoveAt(0); // Remove the oldest log entry
+        }
+
+        _logEntries.Add(message);
+
+        // Scroll to the bottom
+        _scrollPosition.y = float.MaxValue;
     }
 }

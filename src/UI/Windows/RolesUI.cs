@@ -4,8 +4,22 @@ namespace MalumMenu;
 
 public class RolesUI : MonoBehaviour
 {
+    public static int windowHeight = 100;
+    public static int windowWidth = 450;
+    private Rect _windowRect;
+
     private Vector2 _scrollPosition = Vector2.zero;
-    private Rect _windowRect = new(320, 10, 450, 100);
+
+    private void Start()
+    {
+        // Instantiate 2D area of RolesUI
+        _windowRect = new(
+            Screen.width / 2f - windowWidth / 2f,
+            Screen.height / 2f - windowHeight / 2f,
+            windowWidth,
+            windowHeight
+        );
+    }
 
     private void OnGUI()
     {
