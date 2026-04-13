@@ -26,7 +26,7 @@ public static class MalumCheats
 
             // Destroy MeetingHud window gameobject
             MeetingHud.Instance.DespawnOnDestroy = false;
-            Object.Destroy(MeetingHud.Instance.gameObject);
+            UnityEngine.Object.Destroy(MeetingHud.Instance.gameObject);
 
             // Gameplay must be reenabled
             DestroyableSingleton<HudManager>.Instance.StartCoroutine(DestroyableSingleton<HudManager>.Instance.CoFadeFullScreen(Color.black, Color.clear, 0.2f, false));

@@ -12,7 +12,7 @@ public static class MalumRandomizer
         try
         {
             var name = Utils.GetRandomName();
-            var colorId = (byte)Random.Range(0, Palette.PlayerColors.Length);
+            var colorId = (byte)UnityEngine.Random.Range(0, Palette.PlayerColors.Length);
 
             DataManager.Player.Customization.Name = name;
             DataManager.Player.Customization.Color = colorId;
@@ -26,16 +26,16 @@ public static class MalumRandomizer
                 var allPets = hatManager.allPets;
 
                 if (allHats != null && allHats.Count > 0)
-                    DataManager.Player.Customization.Hat = allHats[Random.Range(0, allHats.Count)].ProdId;
+                    DataManager.Player.Customization.Hat = allHats[UnityEngine.Random.Range(0, allHats.Count)].ProdId;
 
                 if (allSkins != null && allSkins.Count > 0)
-                    DataManager.Player.Customization.Skin = allSkins[Random.Range(0, allSkins.Count)].ProdId;
+                    DataManager.Player.Customization.Skin = allSkins[UnityEngine.Random.Range(0, allSkins.Count)].ProdId;
 
                 if (allVisors != null && allVisors.Count > 0)
-                    DataManager.Player.Customization.Visor = allVisors[Random.Range(0, allVisors.Count)].ProdId;
+                    DataManager.Player.Customization.Visor = allVisors[UnityEngine.Random.Range(0, allVisors.Count)].ProdId;
 
                 if (allPets != null && allPets.Count > 0)
-                    DataManager.Player.Customization.Pet = allPets[Random.Range(0, allPets.Count)].ProdId;
+                    DataManager.Player.Customization.Pet = allPets[UnityEngine.Random.Range(0, allPets.Count)].ProdId;
             }
 
             DataManager.Player.Save();
