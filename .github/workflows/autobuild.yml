@@ -11,7 +11,11 @@ on:
         description: 'Version override (e.g. 1.2.3). Leave empty to use vars.VERSION'
         required: false
         type: string
-
+      is_prerelease:
+        description: 'Mark release as a Pre-release'
+        required: true
+        type: boolean
+        default: false
 
 # Required to allow the GitHub Action to create a release and upload assets
 permissions:
@@ -115,7 +119,7 @@ jobs:
           tag_name: v${{ env.MOD_VERSION }}
           name: Release v${{ env.MOD_VERSION }}
           draft: false
-          prerelease: false
+          prerelease: ${{ inputs.is_prerelease }}
           files: |
             ${{ env.RELEASE_ZIP_NAME }}
             ${{ env.DEBUG_ZIP_NAME }}
@@ -141,5 +145,3 @@ jobs:
             
             ---
           generate_release_notes: true
-          # Note: If you prefer to manually trigger releases instead of on every push, 
-          # you can change the 'on:' block at the top to 'on: workflow_dispatch:'
