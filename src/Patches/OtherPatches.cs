@@ -92,11 +92,11 @@ public static class VersionShower_Start
 
         if (MalumMenu.supportedAU.Contains(Application.version)) // Checks if Among Us version is supported
         {
-            __instance.text.text =  $"MalumMenu v{MalumMenu.malumVersion} (v{Application.version})"; // Supported
+            __instance.text.text =  $"HyperMenu V{MalumMenu.hyperVersion}, MalumMenu V{MalumMenu.malumVersion} ( AU V{Application.version})"; // Supported
         }
         else
         {
-            __instance.text.text =  $"MalumMenu v{MalumMenu.malumVersion} (<color=red>v{Application.version}</color>)"; // Unsupported
+            __instance.text.text =  $"HyperMenu V{MalumMenu.hyperVersion}, MalumMenu V{MalumMenu.malumVersion} (<color=red>AU V{Application.version}</color>)"; // Unsupported
         }
     }
 }
@@ -120,12 +120,12 @@ public static class PingTracker_Update
         {
             __instance.aspectPosition.DistanceFromEdge = new Vector3(-0.21f, 0.50f, 0f);
 
-            __instance.text.text = $"MalumMenu by scp222thj & Astral ~ {Utils.GetColoredPingText(AmongUsClient.Instance.Ping)}";
+            __instance.text.text = $"HyperMenu by Simon McLaurin\nMalumMenu by scp222thj & Astral ~ {Utils.GetColoredPingText(AmongUsClient.Instance.Ping)}";
 
             return;
         }
 
-        __instance.text.text = $"MalumMenu by scp222thj & Astral\n{Utils.GetColoredPingText(AmongUsClient.Instance.Ping)}";
+        __instance.text.text = $"HyperMenu by Simon McLaurin\nMalumMenu by scp222thj & Astral\n{Utils.GetColoredPingText(AmongUsClient.Instance.Ping)}";
 
     }
 }
@@ -268,18 +268,36 @@ public static class MushroomDoorSabotageMinigame_Begin
     }
 }
 
-// NEEDS FIX : Blocks usage of consoles to which impostor
-// has access to (like those to fix sabotages) when cheat is disabled
+[HarmonyPatch(typeof(Console), nameof(Console.CanUse))]
+public static class Console_CanUse
+{
+    // Prefix patch of Console.CanUse to allow impostors to do tasks
+    public static void Prefix(Console __instance)
+    {
+        if (CheatToggles.impostorTasks)
+        {
+            __instance.AllowImpostor = true;
+        }
+        // Prefix patch of Console.CanUse to allow impostors to interact with task consoles
+    }
 
-// [HarmonyPatch(typeof(Console), nameof(Console.CanUse))]
-// public static class Console_CanUse
-// {
-//     // Prefix patch of Console.CanUse to allow impostors to do tasks
-//     public static void Prefix(Console __instance)
-//     {
-//         __instance.AllowImpostor = CheatToggles.impostorTasks;
-//     }
-// }
+    // Postfix patch of Console.CanUse to allow any player to use any task console when in range
+    // Note: Console.CanUse has signature (GameData.PlayerInfo, out bool canUse, out bool couldUse).
+    // Harmony patches use 'ref' to modify 'out' parameters in Postfix methods.
+    public static void Postfix(Console __instance, ref float __result, ref bool canUse, ref bool couldUse)
+    {
+        if (!CheatToggles.fakeTasks) return;
+
+        float distance = Vector2.Distance(PlayerControl.LocalPlayer.GetTruePosition(), __instance.transform.position);
+
+        if (distance <= __instance.UsableDistance)
+        {
+            canUse = true;
+            couldUse = true;
+            __result = distance;
+        }
+    }
+}
 
 [HarmonyPatch(typeof(IntroCutscene), "CoBegin")]
 public static class IntroCutscene_CoBegin

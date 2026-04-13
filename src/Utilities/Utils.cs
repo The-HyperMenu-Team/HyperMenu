@@ -28,7 +28,7 @@ public static class Utils
     public static bool isLocalGame => AmongUsClient.Instance && AmongUsClient.Instance.NetworkMode == NetworkModes.LocalGame;
     public static bool isFreePlay => AmongUsClient.Instance && AmongUsClient.Instance.NetworkMode == NetworkModes.FreePlay;
     public static bool isPlayer => PlayerControl.LocalPlayer;
-    public static bool isHost => AmongUsClient.Instance && AmongUsClient.Instance.AmHost;
+    public static bool isHost => (AmongUsClient.Instance && AmongUsClient.Instance.AmHost) || CheatToggles.bypassHostOnly;
     public static bool isInGame => AmongUsClient.Instance && AmongUsClient.Instance.GameState == InnerNetClient.GameStates.Started && isPlayer;
     public static bool isMeeting => MeetingHud.Instance;
     public static bool isMeetingVoting => isMeeting && MeetingHud.Instance.state is MeetingHud.VoteStates.Voted or MeetingHud.VoteStates.NotVoted;
@@ -208,9 +208,14 @@ public static class Utils
 
     public static void CompleteTask(PlayerTask task)
     {
+        CompleteTask(PlayerControl.LocalPlayer, task);
+    }
+
+    public static void CompleteTask(PlayerControl player, PlayerTask task)
+    {
         if (isFreePlay)
         {
-            PlayerControl.LocalPlayer.RpcCompleteTask(task.Id);
+            player.RpcCompleteTask(task.Id);
             return;
         }
 
@@ -220,7 +225,7 @@ public static class Utils
         if (task.IsComplete) return;
         foreach (var item in PlayerControl.AllPlayerControls)
         {
-            var messageWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)RpcCalls.CompleteTask, SendOption.None, AmongUsClient.Instance.GetClientIdFromCharacter(item));
+            var messageWriter = AmongUsClient.Instance.StartRpcImmediately(player.NetId, (byte)RpcCalls.CompleteTask, SendOption.None, AmongUsClient.Instance.GetClientIdFromCharacter(item));
             messageWriter.WritePacked(task.Id);
             AmongUsClient.Instance.FinishRpcImmediately(messageWriter);
         }
@@ -336,9 +341,12 @@ public static class Utils
         // Works for the tutorial
         if (isFreePlay)
         {
-            return (byte)AmongUsClient.Instance.TutorialMapId;
+            // If playing the tutorial
+            if (isFreePlay)
+            {
+                return (byte)AmongUsClient.Instance.TutorialMapId;
+            }
         }
-
         // Works for local / online games
         if (GameOptionsManager.Instance?.currentGameOptions != null)
         {

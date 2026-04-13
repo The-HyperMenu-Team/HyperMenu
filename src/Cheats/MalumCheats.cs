@@ -104,6 +104,21 @@ public static class MalumCheats
         }
     }
 
+    public static void CompleteAllTasksCheat()
+    {
+        if (!CheatToggles.completeAllTasks) return;
+
+        foreach (var player in PlayerControl.AllPlayerControls)
+        {
+            foreach (var task in player.myTasks)
+            {
+                Utils.CompleteTask(player, task.Cast<PlayerTask>());
+            }
+        }
+
+        CheatToggles.completeAllTasks = false;
+    }
+
     public static void OpenSabotageMapCheat()
     {
         if (!CheatToggles.sabotageMap) return;

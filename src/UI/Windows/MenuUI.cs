@@ -6,14 +6,14 @@ namespace MalumMenu;
 
 public class MenuUI : MonoBehaviour
 {
-    public static int windowHeight = 550;
-    public static int windowWidth = 700;
-    private Rect _windowRect;
+    public static int windowHeight = 600;
+    public static int windowWidth = 800;
 
     public static bool isGUIActive = false;
     private List<ITab> _tabs = new();
     private int _selectedTab;
     public static float hue; // For RGB mode
+    private bool _wasInGameplay = false;
 
     private void Start()
     {
@@ -37,11 +37,13 @@ public class MenuUI : MonoBehaviour
             windowWidth,
             windowHeight
         );
+        _tabs.Add(new SettingsTab());
     }
 
     public void InitStyles()
     {
         GUI.skin.toggle.fontSize = GUI.skin.button.fontSize = GUI.skin.label.fontSize = 15;
+        GUI.skin.window.padding = new RectOffset { left = 10, right = 10, top = 28, bottom = 10 };
     }
 
     private void Update()
@@ -89,6 +91,13 @@ public class MenuUI : MonoBehaviour
             CheatToggles.openConfig = false;
         }
 
+        // Check if round just ended and disable sabotage cheats
+        bool currentlyInGameplay = Utils.isPlayer && Utils.isShip;
+        if (_wasInGameplay && !currentlyInGameplay)
+        {
+            DisableSabotageCheats();
+        }
+        _wasInGameplay = currentlyInGameplay;
         if (CheatToggles.reloadConfig)
         {
             MalumMenu.Plugin.Config.Reload();
@@ -182,43 +191,65 @@ public class MenuUI : MonoBehaviour
 
         UIHelpers.ApplyUIColor();
 
-        _windowRect = GUI.Window((int)WindowId.MenuUI, _windowRect, (GUI.WindowFunction)WindowFunction, "MalumMenu v" + MalumMenu.malumVersion);
+        _windowRect = GUI.Window((int)WindowId.MenuUI, _windowRect, (GUI.WindowFunction)WindowFunction, "HyperMenu " + MalumMenu.hyperVersion + ", " + MalumMenu.hyperBuild + " build.");
+    }
+
+    private void DisableSabotageCheats()
+    {
+        CheatToggles.sabotageMap = false;
+        CheatToggles.unfixableLights = false;
+        CheatToggles.commsSab = false;
+        CheatToggles.elecSab = false;
+        CheatToggles.reactorSab = false;
+        CheatToggles.oxygenSab = false;
+        CheatToggles.mushSab = false;
+        CheatToggles.mushSpore = false;
+        CheatToggles.closeAllDoors = false;
+        CheatToggles.openAllDoors = false;
+        CheatToggles.spamCloseAllDoors = false;
+        CheatToggles.spamOpenAllDoors = false;
     }
 
     public void WindowFunction(int windowID)
     {
         GUILayout.BeginHorizontal();
 
-        // Left tab selector (15% width)
-        GUILayout.BeginVertical(GUILayout.Width(windowWidth * 0.15f));
+        // Left tab selector (18% width)
+        GUILayout.BeginVertical(GUILayout.Width(windowWidth * 0.18f));
+        GUILayout.Space(4);
+
         for (var i = 0; i < _tabs.Count; i++)
         {
             Color standardColor = GUI.backgroundColor;
 
             if (_selectedTab == i)
             {
-                GUI.backgroundColor = new Color(0.2f, 0.2f, 0.2f);
+                GUI.backgroundColor = new Color(0.3f, 0.3f, 0.3f);
             }
 
-            if (GUILayout.Button(_tabs[i].name, GUIStylePreset.TabButton, GUILayout.Height(35)))
+            if (GUILayout.Button(_tabs[i].name, GUIStylePreset.TabButton, GUILayout.Height(38)))
                 _selectedTab = i;
 
             GUI.backgroundColor = standardColor;
-
         }
+
+        GUILayout.Space(4);
         GUILayout.EndVertical();
 
         // Vertical separator line + invisible space to create gap between the tab selector and the content
-        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
-        GUILayout.Space(10f);
+        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Width(2f), GUILayout.ExpandHeight(true));
+        GUILayout.Space(12f);
 
-        // Right tab content and controls (85% width)
-        GUILayout.BeginVertical(GUILayout.Width(windowWidth * 0.85f));
+        // Right tab content and controls (82% width)
+        GUILayout.BeginVertical(GUILayout.Width(windowWidth * 0.82f));
+        GUILayout.Space(2);
 
         // Tab-specific content
         if (_selectedTab >= 0 && _selectedTab < _tabs.Count)
         {
             GUILayout.Label(_tabs[_selectedTab].name, GUIStylePreset.TabTitle);
+            GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Height(1.5f), GUILayout.ExpandWidth(true));
+            GUILayout.Space(6);
             _tabs[_selectedTab].Draw();
         }
 
