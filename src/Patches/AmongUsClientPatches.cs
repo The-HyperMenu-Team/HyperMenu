@@ -12,7 +12,7 @@ public static class LobbyBehaviour_Start
     {
         if (!CheatToggles.randomizeCosmetics) return;
 
-        __instance.StartCoroutine(DelayedRandomize());
+        AmongUsClient.Instance.StartCoroutine(DelayedRandomize());
     }
 
     private static System.Collections.IEnumerator DelayedRandomize()
