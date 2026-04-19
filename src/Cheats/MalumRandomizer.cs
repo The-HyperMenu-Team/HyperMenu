@@ -1,51 +1,49 @@
 using System;
 using System.Collections;
 using AmongUs.Data;
-using InnerNet;
+using BepInEx.Unity.IL2CPP.Utils;
 using UnityEngine;
 
 namespace MalumMenu;
 
 public static class MalumRandomizer
 {
-    // True while a leave-randomize-rejoin sequence is in progress.
-    // Used to suppress the auto-randomize trigger in LobbyBehaviour_Start after we rejoin.
+    // Kept for LobbyBehaviour_Start guard compatibility.
     public static bool isRejoinInProgress = false;
+    private static bool isLobbyApplyInProgress;
 
-    // Seconds to wait after ExitGame before attempting to rejoin (allows the disconnect to complete).
-    private const float DisconnectWaitSeconds = 1.5f;
-
-    // Seconds to keep isRejoinInProgress true after calling JoinGame so that the incoming
-    // LobbyBehaviour_Start patch fires while the flag is still set and does not trigger
-    // a second randomize cycle.
-    private const float LobbyStartWaitSeconds = 3.0f;
+    private const float LobbyLoadWaitTimeoutSeconds = 8.0f;
+    private const float LobbyLoadPollSeconds = 0.2f;
+    private const float LobbyPostLoadDelaySeconds = 0.5f;
 
     // Randomly sets a new name, color, and cosmetics for the local player.
-    // When connected to a server the anticheat may flag an in-session RpcSetName call,
-    // so we instead leave the server, apply cosmetics locally, then rejoin so the new
-    // name is sent as part of the join handshake rather than as a mid-session RPC.
     public static void Randomize()
     {
         try
         {
             if (isRejoinInProgress) return;
 
+            var randomizeName = !Utils.isLobby && !Utils.isInGame && !Utils.isPlayer;
+
             // Apply random cosmetics to DataManager (safe at any time, no network calls).
-            ApplyRandomCosmetics();
+            ApplyRandomCosmetics(randomizeName);
 
             if (Utils.isLobby)
             {
-                // Leave the lobby, then rejoin so cosmetics are transmitted via the join
-                // handshake instead of a post-join RpcSetName that can trigger anticheat.
-                var gameIdString = AmongUsClient_OnGameJoined.lastGameIdString;
-                AmongUsClient.Instance.StartCoroutine(RejoinAfterRandomize(gameIdString));
+                if (!Utils.isPlayer) return;
+
+                if (!isLobbyApplyInProgress && AmongUsClient.Instance != null)
+                {
+                    AmongUsClient.Instance.StartCoroutine(ApplyLobbyCosmeticsWhenReady());
+                }
+
                 return;
             }
 
             if (Utils.isInGame)
             {
                 // During an active game, skip RPC calls entirely.
-                // The updated DataManager values will take effect on the next lobby join.
+                // The updated DataManager values (including name) will apply outside the round.
                 return;
             }
 
@@ -53,7 +51,10 @@ public static class MalumRandomizer
 
             // Offline or in free-play: broadcast cosmetics directly via RPC.
             PlayerControl.LocalPlayer.RpcSetColor(DataManager.Player.Customization.Color);
-            PlayerControl.LocalPlayer.RpcSetName(DataManager.Player.Customization.Name);
+            if (randomizeName)
+            {
+                PlayerControl.LocalPlayer.RpcSetName(DataManager.Player.Customization.Name);
+            }
             PlayerControl.LocalPlayer.RpcSetHat(DataManager.Player.Customization.Hat);
             PlayerControl.LocalPlayer.RpcSetSkin(DataManager.Player.Customization.Skin);
             PlayerControl.LocalPlayer.RpcSetVisor(DataManager.Player.Customization.Visor);
@@ -66,9 +67,13 @@ public static class MalumRandomizer
     }
 
     // Applies random cosmetics to DataManager only (no network calls).
-    private static void ApplyRandomCosmetics()
+    private static void ApplyRandomCosmetics(bool randomizeName)
     {
-        DataManager.Player.Customization.Name = Utils.GetRandomName();
+        if (randomizeName)
+        {
+            DataManager.Player.Customization.Name = Utils.GetRandomName();
+        }
+
         DataManager.Player.Customization.Color = (byte)UnityEngine.Random.Range(0, Palette.PlayerColors.Length);
 
         var hatManager = DestroyableSingleton<HatManager>.Instance;
@@ -95,26 +100,39 @@ public static class MalumRandomizer
         DataManager.Player.Save();
     }
 
-    // Leaves the current lobby, waits for disconnect, then rejoins so that the new
-    // cosmetics (already saved to DataManager) are sent via the join handshake rather
-    // than an in-session RpcSetName that anticheat may flag.
-    private static IEnumerator RejoinAfterRandomize(string gameIdString)
+    private static IEnumerator ApplyLobbyCosmeticsWhenReady()
     {
-        isRejoinInProgress = true;
+        isLobbyApplyInProgress = true;
 
-        AmongUsClient.Instance.ExitGame(DisconnectReasons.ExitGame);
-
-        yield return new WaitForSeconds(DisconnectWaitSeconds);
-
-        if (!string.IsNullOrEmpty(gameIdString) && AmongUsClient.Instance != null)
+        float waited = 0f;
+        while (waited < LobbyLoadWaitTimeoutSeconds)
         {
-            AmongUsClient.Instance.JoinGame(GameCode.GameNameToInt(gameIdString), MatchMakerModes.Client);
+            if (Utils.isLobby &&
+                Utils.isPlayer &&
+                PlayerControl.LocalPlayer.Data != null &&
+                !PlayerControl.LocalPlayer.Data.Disconnected &&
+                PlayerControl.LocalPlayer.Collider != null &&
+                PlayerControl.LocalPlayer.NetTransform != null)
+            {
+                break;
+            }
+
+            waited += LobbyLoadPollSeconds;
+            yield return new WaitForSeconds(LobbyLoadPollSeconds);
         }
 
-        // Keep the flag set long enough for LobbyBehaviour_Start to fire on the rejoined
-        // lobby (which would otherwise trigger a second randomize and restart the cycle).
-        yield return new WaitForSeconds(LobbyStartWaitSeconds);
+        if (Utils.isLobby && Utils.isPlayer)
+        {
+            yield return new WaitForSeconds(LobbyPostLoadDelaySeconds);
 
-        isRejoinInProgress = false;
+            PlayerControl.LocalPlayer.RpcSetColor(DataManager.Player.Customization.Color);
+            PlayerControl.LocalPlayer.RpcSetHat(DataManager.Player.Customization.Hat);
+            PlayerControl.LocalPlayer.RpcSetSkin(DataManager.Player.Customization.Skin);
+            PlayerControl.LocalPlayer.RpcSetVisor(DataManager.Player.Customization.Visor);
+            PlayerControl.LocalPlayer.RpcSetPet(DataManager.Player.Customization.Pet);
+        }
+
+        isLobbyApplyInProgress = false;
     }
+
 }
