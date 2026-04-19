@@ -92,11 +92,7 @@ jobs:
         # Copies the release build, extracts split BepInEx base files into it, and zips it up
         run: |
           cp -r staging staging_express
-          unzip -o bepinex_1.zip -d staging_express/
-          unzip -o bepinex_2.zip -d staging_express/
-          unzip -o bepinex_3.zip -d staging_express/
-          unzip -o bepinex_4.zip -d staging_express/
-          unzip -o bepinex_5.zip -d staging_express/
+          unzip -o bepinex.zip -d staging_express/
           cd staging_express
           zip -r ../${{ env.EXPRESS_ZIP_NAME }} .
 
