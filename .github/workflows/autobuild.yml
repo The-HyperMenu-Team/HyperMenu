@@ -67,13 +67,25 @@ jobs:
         # Builds the project in debug config and outputs the files into a temporary staging folder
         run: dotnet build ${{ env.PROJECT_PATH }} --configuration Debug --no-restore --output ./staging_debug/BepInEx/plugins
 
+      - name: Prepare the express project
+        run: |
+          unzip -o bepinex1.zip -d staging_express/
+          unzip -o bepinex2.zip -d staging_express/
+          unzip -o bepinex3.zip -d staging_express/
+          unzip -o bepinex4.zip -d staging_express/
+
+      - name: Build the express project
+        run: dotnet build ${{env.PROJECT_PATH}} --configuration Release --no-restore --output ./staging_express/BepInEx/plugins
+
       - name: Update mod file name
         # Updates the name of the mod file
         run: |
           mv staging/BepInEx/plugins/MalumMenu.dll staging/BepInEx/plugins/HyperMenu.dll
           mv staging_debug/BepInEx/plugins/MalumMenu.dll staging_debug/BepInEx/plugins/HyperMenu.dll
+          mv staging_express/BepInEx/plugins/MalumMenu.dll staging_debug/BepInEx/plugins/HyperMenu.dll
           mv staging/BepInEx/plugins/MalumMenu.deps.json staging/BepInEx/plugins/HyperMenu.deps.json
           mv staging_debug/BepInEx/plugins/MalumMenu.deps.json staging_debug/BepInEx/plugins/HyperMenu.deps.json
+          mv staging_express/BepInEx/plugins/MalumMenu.deps.json staging_debug/BepInEx/plugins/HyperMenu.deps.json
 
 
       - name: Package Mod into Zip (01)
@@ -91,8 +103,6 @@ jobs:
       - name: Package Mod into Zip (03)
         # Copies the release build, extracts split BepInEx base files into it, and zips it up
         run: |
-          cp -r staging staging_express
-          unzip -o bepinex.zip -d staging_express/
           cd staging_express
           zip -r ../${{ env.EXPRESS_ZIP_NAME }} .
 

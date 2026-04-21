@@ -29,7 +29,9 @@ https://discord.gg/GZKcdkFD5
     <img hspace="6" src="https://img.shields.io/github/downloads/The-HyperMenu-Team/HyperMenu/total?style=flat&logo=github&label=Total%20Downloads&color=2ECC71" alt="Downloads">
   </a>
 
-  `I don't want money from this fork since it's just developed because I don't want to burden the devs with my feature requests. Therefore, I'm not including a button to support me. If you would like to support this project, please support the developers of the original MalumMenu instead, as this project would not be possible without their work. -ADHyperActive`
+  `I don't want money from this fork as I have other sources of income. Therefore, I'm not including a button to support me. If you would like to support this project, please either support the developers of the original MalumMenu instead, as this project would not be possible without their work, or boost our discord server.`
+  
+  `-ADHyperActive`
 </p>
 
 <p align="center">
@@ -57,15 +59,18 @@ https://the-hypermenu-team.github.io/Wiki/
 
 | Mod Version| Among Us - Version | Link |
 |----------|-------------|-----------------|
-| v3.0.3 |  2026.3.17  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV3.0.3) |
-| v3.0.2 |  2026.3.17  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV3.0.2) |
-| v3.0.1 |  2026.3.17  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV3.0.1) |
-| v2.1.1 |  2026.3.17  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV2.1.1) |
-| v2.1.0 |  2026.3.17  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV2.1.0) |
-| v2.0.1 |  2026.2.24  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV2.0.1) |
-| v2.0.0 |  2026.2.24  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV2.0.0) |
-| v1.0.1 |  2026.2.24  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV1.0.1) |
-| v1.0.0 |  2026.2.24  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV1.0.0) |
+| v4.0.4 **[LATEST]** |  2026.3.31  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.0.4)      |
+| v4.0.0              |  2026.3.31  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/HYPER-4.0.0) |
+| v3.0.4              |  2026.3.31  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/H3.0.4-02)   |
+| v3.0.3              |  2026.3.17  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV3.0.3)    |
+| v3.0.2              |  2026.3.17  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV3.0.2)    |
+| v3.0.1              |  2026.3.17  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV3.0.1)    |
+| v2.1.1              |  2026.3.17  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV2.1.1)    |
+| v2.1.0              |  2026.3.17  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV2.1.0)    |
+| v2.0.1              |  2026.2.24  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV2.0.1)    |
+| v2.0.0              |  2026.2.24  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV2.0.0)    |
+| v1.0.1              |  2026.2.24  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV1.0.1)    |
+| v1.0.0              |  2026.2.24  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV1.0.0)    |
 
 
 # ⬇️ Installation
