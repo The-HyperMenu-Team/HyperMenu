@@ -67,6 +67,12 @@ jobs:
         # Builds the project in debug config and outputs the files into a temporary staging folder
         run: dotnet build ${{ env.PROJECT_PATH }} --configuration Debug --no-restore --output ./staging_debug/BepInEx/plugins
 
+      - name: Prepare the express project
+        run: unzip -o bepinex.zip -d staging_express/
+
+      - name: Build the express project
+        run: dotnet build ${{env.PROJECT_PATH}} --configuration Release --no-restore --output ./staging_express/BepInEx/plugins
+
       - name: Update mod file name
         # Updates the name of the mod file
         run: |
@@ -91,8 +97,6 @@ jobs:
       - name: Package Mod into Zip (03)
         # Copies the release build, extracts split BepInEx base files into it, and zips it up
         run: |
-          cp -r staging staging_express
-          unzip -o bepinex.zip -d staging_express/
           cd staging_express
           zip -r ../${{ env.EXPRESS_ZIP_NAME }} .
 
