@@ -68,7 +68,11 @@ jobs:
         run: dotnet build ${{ env.PROJECT_PATH }} --configuration Debug --no-restore --output ./staging_debug/BepInEx/plugins
 
       - name: Prepare the express project
-        run: unzip -o bepinex.zip -d staging_express/
+        run: |
+          unzip -o bepinex1.zip -d staging_express/
+          unzip -o bepinex2.zip -d staging_express/
+          unzip -o bepinex3.zip -d staging_express/
+          unzip -o bepinex4.zip -d staging_express/
 
       - name: Build the express project
         run: dotnet build ${{env.PROJECT_PATH}} --configuration Release --no-restore --output ./staging_express/BepInEx/plugins
@@ -78,8 +82,10 @@ jobs:
         run: |
           mv staging/BepInEx/plugins/MalumMenu.dll staging/BepInEx/plugins/HyperMenu.dll
           mv staging_debug/BepInEx/plugins/MalumMenu.dll staging_debug/BepInEx/plugins/HyperMenu.dll
+          mv staging_express/BepInEx/plugins/MalumMenu.dll staging_debug/BepInEx/plugins/HyperMenu.dll
           mv staging/BepInEx/plugins/MalumMenu.deps.json staging/BepInEx/plugins/HyperMenu.deps.json
           mv staging_debug/BepInEx/plugins/MalumMenu.deps.json staging_debug/BepInEx/plugins/HyperMenu.deps.json
+          mv staging_express/BepInEx/plugins/MalumMenu.deps.json staging_debug/BepInEx/plugins/HyperMenu.deps.json
 
 
       - name: Package Mod into Zip (01)
