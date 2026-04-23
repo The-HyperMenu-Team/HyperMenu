@@ -14,7 +14,7 @@ public static class OverloadHandler
     private static float _attackLogTimer;
     private static Dictionary<int, int> _rpcCounters = new();
     private static int _nextTarget = int.MinValue;
-    private static bool _isDone;
+    private static bool _hasRun;
 
     public static void Run()
     {
@@ -23,7 +23,7 @@ public static class OverloadHandler
             _timer = cooldown;
             _attackLogTimer = _AttackLogCooldown;
             _nextTarget = int.MinValue;
-            _isDone = false;
+            _hasRun = false;
             _rpcCounters.Clear();
             return;
         }
@@ -33,9 +33,11 @@ public static class OverloadHandler
 
         if (_timer >= cooldown)
         {
+            // If all possible targets are selected...
+
             if (OverloadUI.maxPossibleTargets == OverloadUI.currentTargets.Count)
             {
-                int broadcastId = -1;
+                int broadcastId = -1; // ... it is more efficient to broadcast RPCs
 
                 Utils.Overload(broadcastId, strength);
                 _timer -= cooldown;
@@ -55,6 +57,9 @@ public static class OverloadHandler
 
                         int newRpcCount = rpcCount + strength;
 
+                        // Log number of broadcasted RPCs since last log
+                        // At most logs once per _AttackLogCooldown interval (in seconds)
+
                         if (_attackLogTimer >= _AttackLogCooldown)
                         {
                             OverloadUI.LogConsole($"> <b><color=#{colorStr}>Broadcasted {newRpcCount} malformed RPCs to all players (ID : {broadcastId})</color></b>");
@@ -68,92 +73,103 @@ public static class OverloadHandler
                             _rpcCounters[broadcastId] = newRpcCount;
                         }
                     }
-                    else
+                    else // Log every single broadcast instead if using verbose logging
                     {
                         OverloadUI.LogConsole($"> <b><color=#{colorStr}>Broadcasted {strength} malformed RPCs to all players (ID : {broadcastId})</color></b>");
                     }
                 }
+
+                return;
+            }
+
+            var currentTargets = OverloadUI.currentTargets;
+
+            foreach (NetworkedPlayerInfo targetData in currentTargets)
+            {
+                int clientId = targetData.ClientId;
+
+                if (!_hasRun)
+                {
+                    if (_nextTarget == int.MinValue || clientId == _nextTarget) // No marked target (new cycle) OR clientId is the marked target
+                    {
+                        Utils.Overload(clientId, strength);
+                        _timer -= cooldown;
+
+                        if (CheatToggles.olLogAttack)
+                        {
+                            string colorStr = ColorUtility.ToHtmlStringRGB(Palette.Orange);
+
+                            if (!CheatToggles.olVerboseLogs)
+                            {
+                                if (!_rpcCounters.ContainsKey(clientId))
+                                {
+                                    _rpcCounters.Add(clientId, 0);
+                                }
+
+                                _rpcCounters.TryGetValue(clientId, out var rpcCount);
+
+                                int newRpcCount = rpcCount + strength;
+
+                                _rpcCounters[clientId] = newRpcCount;
+                            }
+                            else // Log every single send if using verbose logging
+                            {
+                                OverloadUI.LogConsole($"> <b><color=#{colorStr}>Sent {strength} malformed RPCs to {targetData.DefaultOutfit.PlayerName} (ID : {clientId})</color></b>");
+                            }
+                        }
+
+                        _hasRun = true; // Mark that an overload has run this iteration
+                    }
+                }
+                else // If an overload has run this iteration...
+                    // (will always have been previous player sequentially)
+                {
+                    // Mark current player to be target in following iteration
+                    _nextTarget = clientId;
+                    _hasRun = false;
+
+                    // End so following iteration can directly start after cooldown
+                    return;
+                }
+            }
+
+            // After a full iteration (cycle ended)...
+
+            // ... (1) Reset state to begin cycle again from first player
+
+            _nextTarget = int.MinValue;
+            _hasRun = false;
+
+            // ... (2) Log number of sent RPCs since last log for all currentTargets
+            // At most logs once per _AttackLogCooldown interval (in seconds)
+
+            if (!CheatToggles.olVerboseLogs)
+            {
+                if (_attackLogTimer >= _AttackLogCooldown)
+                {
+                    string colorStr = ColorUtility.ToHtmlStringRGB(Palette.Orange);
+
+                    foreach (KeyValuePair<int, int> entry in _rpcCounters)
+                    {
+                        int clientId = entry.Key;
+                        int rpcCount = entry.Value;
+
+                        NetworkedPlayerInfo playerData = OverloadUI.currentTargets.FirstOrDefault(pd => pd.ClientId == clientId);
+
+                        if (playerData != null)
+                        {
+                            OverloadUI.LogConsole($"> <b><color=#{colorStr}>Sent {rpcCount} malformed RPCs to {playerData.DefaultOutfit.PlayerName} (ID : {clientId})</color></b>");
+                        }
+                    }
+
+                    _attackLogTimer -= _AttackLogCooldown;
+
+                    _rpcCounters.Clear();
+                }
             }
             else
             {
-                var currentTargets = OverloadUI.currentTargets;
-
-                foreach (NetworkedPlayerInfo targetData in currentTargets)
-                {
-                    int clientId = targetData.ClientId;
-
-                    if (!_isDone)
-                    {
-                        if (_nextTarget == int.MinValue || clientId == _nextTarget)
-                        {
-                            Utils.Overload(clientId, strength);
-                            _timer -= cooldown;
-
-                            if (CheatToggles.olLogAttack)
-                            {
-                                string colorStr = ColorUtility.ToHtmlStringRGB(Palette.Orange);
-
-                                if (!CheatToggles.olVerboseLogs)
-                                {
-                                    if (!_rpcCounters.ContainsKey(clientId))
-                                    {
-                                        _rpcCounters.Add(clientId, 0);
-                                    }
-
-                                    _rpcCounters.TryGetValue(clientId, out var rpcCount);
-
-                                    int newRpcCount = rpcCount + strength;
-
-                                    _rpcCounters[clientId] = newRpcCount;
-                                }
-                                else
-                                {
-                                    OverloadUI.LogConsole($"> <b><color=#{colorStr}>Sent {strength} malformed RPCs to {targetData.DefaultOutfit.PlayerName} (ID : {clientId})</color></b>");
-                                }
-                            }
-
-                            _isDone = true;
-                        }
-                    }
-                    else
-                    {
-                        _nextTarget = clientId;
-                        _isDone = false;
-                        return;
-                    }
-                }
-
-                _nextTarget = int.MinValue;
-                _isDone = false;
-
-                if (!CheatToggles.olVerboseLogs)
-                {
-                    if (_attackLogTimer >= _AttackLogCooldown)
-                    {
-                        string colorStr = ColorUtility.ToHtmlStringRGB(Palette.Orange);
-
-                        foreach (KeyValuePair<int, int> entry in _rpcCounters)
-                        {
-                            int clientId = entry.Key;
-                            int rpcCount = entry.Value;
-
-                            NetworkedPlayerInfo playerData = OverloadUI.currentTargets.FirstOrDefault(pd => pd.ClientId == clientId);
-
-                            if (playerData != null)
-                            {
-                                OverloadUI.LogConsole($"> <b><color=#{colorStr}>Sent {rpcCount} malformed RPCs to {playerData.DefaultOutfit.PlayerName} (ID : {clientId})</color></b>");
-                            }
-                        }
-
-                        _attackLogTimer -= _AttackLogCooldown;
-
-                        _rpcCounters.Clear();
-                    }
-                }
-                else
-                {
-                    _rpcCounters.Clear();
-                }
+                _rpcCounters.Clear();
             }
         }
     }
@@ -240,6 +256,8 @@ public static class OverloadHandler
         _customTargets.Clear();
     }
 
+    // Iterates through all given players and
+    // adds all that are marked as targets and match given targetType to _customTargets
     public static void PopulateCustomTargets(PlayerControl[] players, TargetType targetType)
     {
         int playerCount = players.Length;
@@ -248,7 +266,7 @@ public static class OverloadHandler
         {
             NetworkedPlayerInfo playerData = players[i].Data;
             var playerTarget = GetTarget(playerData);
-            bool isTarget = playerTarget.isTarget; // ? PlayerId for FreePlay ?
+            bool isTarget = playerTarget.isTarget;
 
             if (isTarget && !IsCustomTarget(playerData))
             {
@@ -261,17 +279,21 @@ public static class OverloadHandler
         }
     }
 
+    // Returns adapted strength and cooldown using number of currentTargets and AmongUsClient ping
+    // Should balance them to aim for low lag but effective output
     public static (int strength, float cooldown) CalculateAdaptedValues()
     {
         int targetCount = OverloadUI.maxPossibleTargets == OverloadUI.currentTargets.Count
-                        ? 1
-                        : Math.Max(1, OverloadUI.currentTargets.Count);
+                        ? 1 // Broadcast mode counts as one target
+                        : Math.Max(1, OverloadUI.currentTargets.Count); // Prevents division by 0
 
-        float cooldown = 1f / targetCount;
+        float maxCooldown = 1f;
+        float cooldown = maxCooldown / targetCount;
 
-        int pingLevel = Math.Max(1, Utils.GetPing() / 100);
+        int pingLevel = Math.Max(1, Utils.GetPing() / 100); // 0-99 ms = Lvl 1, 100-199 ms = Lvl 1, 200-299 ms = Lvl 2, ...
 
-        int strength = 500 / pingLevel / targetCount;
+        int maxStrength = 500;
+        int strength = maxStrength / pingLevel / targetCount;
 
         return (strength, cooldown);
     }

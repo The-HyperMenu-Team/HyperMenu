@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+// Custom equality comparer for NetworkedPlayerInfo that uses ClientId
+// Allows for reliable equality comparison in collections even if cosmetics, color, etc. change
 public sealed class NetPlayerInfoCidComparer : IEqualityComparer<NetworkedPlayerInfo>
 {
     public bool Equals(NetworkedPlayerInfo data1, NetworkedPlayerInfo data2)

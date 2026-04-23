@@ -46,6 +46,7 @@ public static class GameData_HandleDisconnect
     }
 
     // Postfix patch of GameData.HandleDisconnect to keep track of successful overloads
+    // (Avoids race-condition double counting)
     public static void Postfix(PlayerControl player)
     {
         if (!CheatToggles.runOverload) return;
@@ -61,9 +62,9 @@ public static class GameData_HandleDisconnect
 
             if (CheatToggles.olLogDisconnect)
             {
-                int total = OverloadUI.currentTargets.Count
-                            + OverloadUI.numSuccesses
-                            - disconnectQueue.Count;
+                int total = OverloadUI.currentTargets.Count // Targets still connected
+                            + OverloadUI.numSuccesses // Targets already crashed
+                            - disconnectQueue.Count; // Pending disconnect logs (Avoids race-condition double counting)
 
                 string colorStr = ColorUtility.ToHtmlStringRGB(Color.green);
 

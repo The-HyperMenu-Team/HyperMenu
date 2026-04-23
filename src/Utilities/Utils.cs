@@ -261,17 +261,20 @@ public static class Utils
         }
     }
 
-    // Overloads targeted client with set strength using malformed RPCs
-    public static void Overload(int clientId, int strength)
+    // Overloads target with set strength using malformed RPCs
+    public static void Overload(int targetId, int strength)
     {
+        // ClimbLadder RPC is only effective in maps with no ladders or in lobby
+        // SetStartCounter RPC is only effective when NOT in lobby
+
         bool hasLadders = isShip && (isFungleMap || isAirshipMap);
 
         uint netId = hasLadders ? PlayerControl.LocalPlayer.NetId : PlayerControl.LocalPlayer.MyPhysics.NetId;
         byte rpcCall = hasLadders ? (byte)RpcCalls.SetStartCounter : (byte)RpcCalls.ClimbLadder;
 
-        for (int i = 0; i < strength; i++)
+        for (int i = 0; i < strength; i++) // Strength = Num of malformed RPCs sent
         {
-            MessageWriter overloadMsg = AmongUsClient.Instance.StartRpcImmediately(netId, rpcCall, SendOption.None, clientId);
+            MessageWriter overloadMsg = AmongUsClient.Instance.StartRpcImmediately(netId, rpcCall, SendOption.None, targetId);
             AmongUsClient.Instance.FinishRpcImmediately(overloadMsg);
         }
     }
@@ -368,6 +371,7 @@ public static class Utils
         };
     }
 
+    // Returns the current approximate FPS
     public static int GetFps()
     {
         return (int)(1f / Time.unscaledDeltaTime);
@@ -528,6 +532,7 @@ public static class Utils
         return nameTag;
     }
 
+    // Returns a player's NetworkedPlayerInfo from their client ID
     public static NetworkedPlayerInfo GetPlayerDataFromClientId(int clientId)
     {
         var players = PlayerControl.AllPlayerControls.ToArray();
@@ -541,17 +546,18 @@ public static class Utils
 			}
 		}
 
-        return null;
+        return null; // Returns null if no matching player is found
     }
 
+    // Returns a random 1 - 12 characters long name
     public static string GetRandomName()
     {
-        // Randomizes 1-12 characters long names
         var length = UnityEngine.Random.Range(1, 13);
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         return new string(Enumerable.Repeat(chars, length).Select(s => s[UnityEngine.Random.Range(0, s.Length)]).ToArray());
     }
 
+    // Returns current AmongUsClient ping in ms
     public static int GetPing()
     {
         if (isClient && AmongUsClient.Instance.AmClient)
@@ -560,7 +566,7 @@ public static class Utils
         }
         else
         {
-            return 0;
+            return 0; // Returns 0 if not connected to a game
         }
     }
 

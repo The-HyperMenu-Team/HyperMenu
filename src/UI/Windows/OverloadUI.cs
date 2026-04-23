@@ -11,7 +11,7 @@ public class OverloadUI : MonoBehaviour
     public static int killSwitchThreshold = 500;
     public static HashSet<NetworkedPlayerInfo> currentTargets = new HashSet<NetworkedPlayerInfo>(new NetPlayerInfoCidComparer());
     private HashSet<NetworkedPlayerInfo> _tmpTargets = new HashSet<NetworkedPlayerInfo>(new NetPlayerInfoCidComparer());
-    private bool _isUnlocked => !CheatToggles.runOverload || !CheatToggles.olLockTargets;
+    private bool _areTargetsUnlocked => !CheatToggles.runOverload || !CheatToggles.olLockTargets;
     private bool _hasAutoStarted;
 
     private Rect _windowRect = new(320, 10, 595, 500);
@@ -29,16 +29,16 @@ public class OverloadUI : MonoBehaviour
         var players = PlayerControl.AllPlayerControls.ToArray().Where(player => player?.Data != null && !player.AmOwner).ToArray();
         maxPossibleTargets = players.Length;
 
-        if (maxPossibleTargets > 0 && !Utils.isFreePlay)
+        if (!Utils.isFreePlay)
         {
             for (int i = 0; i < maxPossibleTargets; i++)
             {
                 NetworkedPlayerInfo playerData = players[i].Data;
                 var playerTarget = OverloadHandler.GetTarget(playerData);
 
-                bool isTarget = playerTarget.isTarget; // ? PlayerId for FreePlay ?
+                bool isTarget = playerTarget.isTarget;
 
-                if (_isUnlocked)
+                if (_areTargetsUnlocked)
                 {
                     if (isTarget)
                     {
@@ -69,7 +69,11 @@ public class OverloadUI : MonoBehaviour
             }
         }
 
-        if (AmongUsClient.Instance != null && AmongUsClient.Instance.AmClient)
+        // The HashSet swap (currentTargets <-> _tmpTargets) can only be done if AmClient
+        // Otherwise currentTargets gets cleared too early during disconnect with overload on,
+        // causing the STOP message to log the wrong total count
+
+        if (Utils.isClient && AmongUsClient.Instance.AmClient)
         {
             var old = currentTargets;
             currentTargets = _tmpTargets;
@@ -77,6 +81,8 @@ public class OverloadUI : MonoBehaviour
         }
         else
         {
+            // currentTargets is cleared here if STOP log is done / unneeded (overload off)
+
             if (!CheatToggles.runOverload) currentTargets.Clear();
 
             _hasAutoStarted = false;
@@ -98,7 +104,7 @@ public class OverloadUI : MonoBehaviour
         {
             bool doAutoStop = CheatToggles.olAutoStop && numCurrentTargets <= 0;
 
-            bool isLagging = AmongUsClient.Instance != null && Utils.GetPing() > killSwitchThreshold;
+            bool isLagging = Utils.GetPing() > killSwitchThreshold;
             bool doKillSwitch = CheatToggles.olKillSwitch && isLagging;
 
             if (doAutoStop || doKillSwitch)
@@ -280,6 +286,10 @@ public class OverloadUI : MonoBehaviour
             LogConsole($"> <b><color=#{colorStr}>STOP : [{numSuccesses} / {total}] Kicked{extraStr}</color></b>");
         }
 
+        // runOverload must be toggled off after STOP message has been logged
+        // Otherwise currentTargets gets cleared too early during disconnect with overload on,
+        // causing the STOP message to log the wrong total count
+
         CheatToggles.runOverload = false;
 
         numSuccesses = 0;
@@ -292,11 +302,9 @@ public class OverloadUI : MonoBehaviour
             int num = i + 1;
 
             NetworkedPlayerInfo playerData = players[i].Data;
+
             var playerTarget = OverloadHandler.GetTarget(playerData);
-
-            bool isTarget = playerTarget.isTarget; // ? PlayerId for FreePlay ?
-
-            bool isHighlighted = currentTargets.Contains(playerData);
+            bool isTarget = playerTarget.isTarget;
 
             Color playerBackgroundColor = playerData.Color;
             Color playerContentColor = Color.Lerp(playerBackgroundColor, Color.white, 0.5f);
@@ -304,17 +312,21 @@ public class OverloadUI : MonoBehaviour
             Color standardBackgroundColor = GUI.backgroundColor;
             Color standardContentColor = GUI.contentColor;
 
-            GUI.backgroundColor = isHighlighted ? Color.black : playerBackgroundColor;
+            GUI.backgroundColor = isTarget ? Color.black : playerBackgroundColor;
             GUI.contentColor = playerContentColor;
 
-            GUIStyle style = isHighlighted ? _targetButtonStyle : _normalButtonStyle;
+            GUIStyle style = isTarget ? _targetButtonStyle : _normalButtonStyle;
 
             bool isPressed = GUILayout.Button(playerData.DefaultOutfit.PlayerName, style, GUILayout.Width(140f));
 
-            if (isPressed && _isUnlocked)
+            if (isPressed && _areTargetsUnlocked)
             {
                 if (isTarget)
                 {
+                    // If the target being removed was enabled by a filter, that filter is disabled as well
+                    // Any other targets added by the same filter are re-added as custom targets so only
+                    // the intended target is removed
+
                     HashSet<OverloadHandler.TargetType> targetTypes = playerTarget.targetTypes;
 
                     if (targetTypes.Contains(OverloadHandler.TargetType.All))
@@ -348,9 +360,11 @@ public class OverloadUI : MonoBehaviour
                 }
             }
 
+            // Reset UI color
             GUI.backgroundColor = standardBackgroundColor;
             GUI.contentColor = standardContentColor;
 
+            // UI shows rows of 3 buttons (1 button per player)
             if (num % 3 == 0 && num < playerCount)
             {
                 GUILayout.EndHorizontal();
@@ -362,19 +376,19 @@ public class OverloadUI : MonoBehaviour
     private void DrawSelectionToggles()
     {
         bool newOverloadAll = GUILayout.Toggle(CheatToggles.overloadAll, " All");
-        CheatToggles.overloadAll = _isUnlocked ? newOverloadAll : false;
+        CheatToggles.overloadAll = _areTargetsUnlocked ? newOverloadAll : false;
 
         bool newOverloadHost = GUILayout.Toggle(CheatToggles.overloadHost, " Host");
-        CheatToggles.overloadHost = _isUnlocked ? newOverloadHost : false;
+        CheatToggles.overloadHost = _areTargetsUnlocked ? newOverloadHost : false;
 
         bool newOverloadCrew = GUILayout.Toggle(CheatToggles.overloadCrew, " Crewmates");
-        CheatToggles.overloadCrew = _isUnlocked ? newOverloadCrew : false;
+        CheatToggles.overloadCrew = _areTargetsUnlocked ? newOverloadCrew : false;
 
         bool newOverloadImps = GUILayout.Toggle(CheatToggles.overloadImps, " Impostors");
-        CheatToggles.overloadImps = _isUnlocked ? newOverloadImps : false;
+        CheatToggles.overloadImps = _areTargetsUnlocked ? newOverloadImps : false;
 
         bool newOverloadReset = GUILayout.Toggle(CheatToggles.overloadReset, " Reset");
-        CheatToggles.overloadReset = _isUnlocked ? newOverloadReset : false;
+        CheatToggles.overloadReset = _areTargetsUnlocked ? newOverloadReset : false;
     }
 
     private void DrawStateButtons()
@@ -384,15 +398,17 @@ public class OverloadUI : MonoBehaviour
         bool startEnabled = !CheatToggles.runOverload && Utils.isPlayer;
 
         Color startBackgroundColor = Color.green;
-        GUI.backgroundColor = startEnabled ? startBackgroundColor : Color.black; // Needs changing
+        GUI.backgroundColor = startEnabled ? startBackgroundColor : Color.black;
 
         if (GUILayout.Button("START", GUILayout.Width(140f)) && startEnabled)
         {
             StartOverload();
         }
 
+        // Reset UI color
         GUI.backgroundColor = standardBackgroundColor;
 
+        // Utils.isPlayer check is unnecessary as MenuUI check already enforces it for runOverload
         bool stopEnabled = CheatToggles.runOverload;
 
         Color stopBackgroundColor = Color.red;
@@ -403,6 +419,7 @@ public class OverloadUI : MonoBehaviour
             StopOverload();
         }
 
+        // Reset UI color
         GUI.backgroundColor = standardBackgroundColor;
     }
 

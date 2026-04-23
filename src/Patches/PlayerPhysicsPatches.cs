@@ -32,6 +32,8 @@ public static class PlayerPhysics_LateUpdate
         MalumPPMCheats.ForceRolePPM();
         MalumPPMCheats.SetFakeAlivePPM();
 
+        // This check ensures there is only one run per frame
+        // so that OverloadHandler._timer progression remains accurate
         if (__instance.AmOwner)
         {
             OverloadHandler.Run();
