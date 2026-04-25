@@ -108,14 +108,11 @@ public class OverloadTab : ITab
         int rpcPerTarget = numTargetsPerSec > 0 ? (int)(strength * numExecutionsPerSec / numTargetsPerSec) :
                                             (int)(strength * numExecutionsPerSec);
 
-        if (CheatToggles.olShowRpcTotal)
-        {
-            CheatToggles.olShowRpcTotal = GUILayout.Toggle(CheatToggles.olShowRpcTotal, $" RPC/s : {rpcPerTarget*Math.Max(1, numTargetsPerSec)}{extraStr}");
-        }
-        else
-        {
-            CheatToggles.olShowRpcTotal = GUILayout.Toggle(CheatToggles.olShowRpcTotal, $" RPC/s : {rpcPerTarget}x{numTargetsPerSec}{extraStr}");
-        }
+        string rpcStr = CheatToggles.olShowRpcTotal
+                        ? $"{rpcPerTarget*Math.Max(1, numTargetsPerSec)}"
+                        : $"{rpcPerTarget}x{numTargetsPerSec}";
+
+        GUILayout.Toggle(CheatToggles.olShowRpcTotal, $" RPC/s : {rpcStr}{extraStr}");
 
         GUILayout.EndHorizontal();
 
@@ -246,12 +243,12 @@ public class OverloadTab : ITab
 
         while (_maxStrength < OverloadHandler.strength)
         {
-            _maxStrength = _maxStrength*10;
+            _maxStrength *= 10;
         }
 
         while (_maxCooldown < OverloadHandler.cooldown)
         {
-            _maxCooldown = _maxCooldown*10;
+            _maxCooldown *= 10;
         }
 
         if (isPressedMaxStrength)
@@ -268,9 +265,9 @@ public class OverloadTab : ITab
             {
                 CheatToggles.olAutoAdapt = false; // Disable AutoAdapt if user does manual input
 
-                OverloadHandler.strength = OverloadHandler.strength*10; // Adjust value to account for max change (x10)
+                OverloadHandler.strength *= 10; // Adjust value to account for max change (x10)
 
-                _maxStrength = _maxStrength*10; // Increment by x10 steps
+                _maxStrength *= 10; // Increment by x10 steps
             }
         }
 
@@ -280,7 +277,7 @@ public class OverloadTab : ITab
             {
                 CheatToggles.olAutoAdapt = false; // Disable AutoAdapt if user does manual input
 
-                OverloadHandler.cooldown = OverloadHandler.cooldown/10f; // Adjust value to account for max change (÷10)
+                OverloadHandler.cooldown /= 10f; // Adjust value to account for max change (÷10)
 
                 _maxCooldown = 1f; // Min _maxCooldown = 1s
             }
@@ -288,9 +285,9 @@ public class OverloadTab : ITab
             {
                 CheatToggles.olAutoAdapt = false; // Disable AutoAdapt if user does manual input
 
-                OverloadHandler.cooldown = OverloadHandler.cooldown*10; // Adjust value to account for max change (x10)
+                OverloadHandler.cooldown *= 10; // Adjust value to account for max change (x10)
 
-                _maxCooldown = _maxCooldown*10; // Increment by x10 steps
+                _maxCooldown *= 10; // Increment by x10 steps
             }
         }
 

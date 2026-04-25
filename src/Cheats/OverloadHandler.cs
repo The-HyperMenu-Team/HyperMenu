@@ -47,10 +47,7 @@ public static class OverloadHandler
 
                     if (!CheatToggles.olVerboseLogs)
                     {
-                        if (!_rpcCounters.ContainsKey(broadcastId))
-                        {
-                            _rpcCounters.Add(broadcastId, 0);
-                        }
+                        _rpcCounters.TryAdd(broadcastId, 0);
 
                         _rpcCounters.TryGetValue(broadcastId, out var rpcCount);
 
@@ -100,10 +97,7 @@ public static class OverloadHandler
 
                             if (!CheatToggles.olVerboseLogs)
                             {
-                                if (!_rpcCounters.ContainsKey(clientId))
-                                {
-                                    _rpcCounters.Add(clientId, 0);
-                                }
+                                _rpcCounters.TryAdd(clientId, 0);
 
                                 _rpcCounters.TryGetValue(clientId, out var rpcCount);
 
@@ -176,21 +170,13 @@ public static class OverloadHandler
     public static void AddCustomTarget(NetworkedPlayerInfo playerData)
     {
         int clientId = playerData.ClientId;
-
-        if (!_customTargets.Contains(clientId))
-        {
-            _customTargets.Add(clientId);
-        }
+        _customTargets.Add(clientId);
     }
 
     public static void RemoveCustomTarget(NetworkedPlayerInfo playerData)
     {
         int clientId = playerData.ClientId;
-
-        if (_customTargets.Contains(clientId))
-        {
-            _customTargets.Remove(clientId);
-        }
+        _customTargets.Remove(clientId);
     }
 
     public static bool IsCustomTarget(NetworkedPlayerInfo playerData)
