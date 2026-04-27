@@ -173,6 +173,7 @@ public struct CheatToggles
     public static bool rgbMode;
     public static bool stealthMode;
     public static bool panicMode;
+    public static bool streamerMode;
 
     // Config
     public static bool reloadConfig;
