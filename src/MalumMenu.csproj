@@ -5,7 +5,7 @@
         <DebugType>embedded</DebugType>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-        <VersionPrefix>4.1.2</VersionPrefix>
+        <VersionPrefix>4.0.5</VersionPrefix>
         <Description>Among Us cheat menu based on MalumMenu by scp222thj and Astral</Description>
         <Authors>ADHyperActive</Authors>
     </PropertyGroup>
