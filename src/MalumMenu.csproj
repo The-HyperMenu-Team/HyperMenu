@@ -5,10 +5,11 @@
         <DebugType>embedded</DebugType>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-        <VersionPrefix>3.0.2</VersionPrefix>
-        <Description>all play and no cheats makes among us a dull game</Description>
-        <Authors>scp222thj, astra1dev</Authors>
-    </PropertyGroup>
+        <VersionPrefix>4.0.5</VersionPrefix>
+        <Description>Among Us cheat menu based on MalumMenu by scp222thj and Astral</Description>
+        <Authors>ADHyperActive</Authors>
+		<UnityBaseLibsDirectory>C:\Program Files\Unity\Hub\Editor\2022.3.62f3\Editor\Data\PlaybackEngines\windowsstandalonesupport\Variations\il2cpp\Managed</UnityBaseLibsDirectory>
+	</PropertyGroup>
 
     <!--<ItemGroup>
         <EmbeddedResource Include=".\Assets\**" />
