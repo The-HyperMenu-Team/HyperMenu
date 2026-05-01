@@ -3,17 +3,15 @@ using UnityEngine;
 
 namespace MalumMenu;
 
-[HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.FixedUpdate))]
-public static class PlayerControl_FixedUpdate
+[HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.SetKillTimer))]
+public static class PlayerControl_SetKillTimer
 {
-    public static void Postfix(PlayerControl __instance)
+    // Prefix patch of PlayerControl.SetKillTimer to remove kill cooldown
+    public static void Prefix(PlayerControl __instance, ref float time)
     {
+        if (!__instance.AmOwner || !Utils.isHost || !CheatToggles.noKillCd) return;
 
-        if (__instance.AmOwner)
-        {
-            MalumCheats.NoKillCdCheat(__instance);
-        }
-
+        time = 0f;
     }
 }
 
