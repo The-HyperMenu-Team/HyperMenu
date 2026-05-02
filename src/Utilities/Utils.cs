@@ -266,9 +266,7 @@ public static class Utils
     {
         if (strength < 1) return;
 
-        // Host = max 40 / Client = max 10 nested RPCs in a single GameData msg (allowed by AC)
-
-        int maxRpc = AmongUsClient.Instance.AmHost ? 40 : 10;
+        int maxRpc = AmongUsClient.Instance.GetMaxMessagePackingLimit();
 
         // ClimbLadder RPC is only effective in maps with no ladders or in lobby
         // SetStartCounter RPC is only effective when NOT in lobby
