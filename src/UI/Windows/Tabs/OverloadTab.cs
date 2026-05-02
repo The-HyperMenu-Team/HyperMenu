@@ -8,7 +8,7 @@ public class OverloadTab : ITab
     public string name => "Overload";
 
     private GUIStyle _sliderSubtitle;
-    private int _maxStrength = 1000;
+    private int _maxStrength = 10000;
     private float _maxCooldown = 1f;
     private float _fpsEstimate = 0f;
     private float _rawCooldown;
@@ -253,11 +253,11 @@ public class OverloadTab : ITab
 
         if (isPressedMaxStrength)
         {
-            if (_maxStrength >= 1000) // Max _maxStrength = 1000 RPCs
+            if (_maxStrength >= 10000) // Max _maxStrength = 10000 RPCs
             {
                 CheatToggles.olAutoAdapt = false; // Disable AutoAdapt if user does manual input
 
-                OverloadHandler.strength = Mathf.RoundToInt(OverloadHandler.strength/10f); // Adjust value to account for max change (÷10)
+                OverloadHandler.strength = Mathf.RoundToInt(OverloadHandler.strength/100f); // Adjust value to account for max change (÷10)
 
                 _maxStrength = 100; // Min _maxStrength = 100 RPCs
             }
