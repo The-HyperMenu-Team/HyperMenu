@@ -261,12 +261,24 @@ public static class Utils
         }
     }
 
+    public static int GetMaxRpcPackingLimit()
+    {
+        int num = 0;
+
+        if (isClient && AmongUsClient.Instance.AmHost)
+        {
+            num = GameManager.Instance.LogicOptions.MaxPlayers * 2;
+        }
+
+        return 10 + num;
+    }
+
     // Overloads target with set strength using malformed RPCs
     public static void Overload(int targetId, int strength)
     {
         if (strength < 1) return;
 
-        int maxRpc = AmongUsClient.Instance.GetMaxMessagePackingLimit();
+        int maxRpc = GetMaxRpcPackingLimit();
 
         // ClimbLadder RPC is only effective in maps with no ladders or in lobby
         // SetStartCounter RPC is only effective when NOT in lobby
