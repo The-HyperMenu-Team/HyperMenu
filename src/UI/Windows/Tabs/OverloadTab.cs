@@ -204,7 +204,7 @@ public class OverloadTab : ITab
         }
 
         GUILayout.Space(5);
-        bool isPressedMaxStrength = GUILayout.Button($"{_maxStrength}", GUILayout.Width(50f));
+        bool isPressedMaxStrength = GUILayout.Button($"{_maxStrength}", GUILayout.Width(51f));
 
         GUILayout.EndHorizontal();
 
@@ -224,7 +224,7 @@ public class OverloadTab : ITab
         }
 
         GUILayout.Space(5);
-        bool isPressedMaxCooldown = GUILayout.Button($"{_maxCooldown:F0}", GUILayout.Width(50f));
+        bool isPressedMaxCooldown = GUILayout.Button($"{_maxCooldown:F0}", GUILayout.Width(51f));
 
         GUILayout.EndHorizontal();
 
