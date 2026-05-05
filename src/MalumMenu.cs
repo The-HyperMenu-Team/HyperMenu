@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
+using HydraMenu.routines;
+using HydraMenu.ui;
 
 namespace MalumMenu;
 
@@ -29,6 +31,10 @@ public partial class MalumMenu : BasePlugin
     public static ProtectUI protectUI;
     public static StreamerUI streamerUI;
     public static KeybindListener keybindListener;
+
+    // HydraMenu components
+    public static RoutineManager routineManager;
+    public static NotificationManager notificationManager;
 
     public static string malumVersion = "3.2.0";
     public static string hyperVersion = "4.0.5";
@@ -188,6 +194,9 @@ public partial class MalumMenu : BasePlugin
 
         Harmony.PatchAll();
 
+        // Also patch all HydraMenu features
+        Harmony.PatchAll(typeof(HydraMenu.features.Troll).Assembly);
+
         // UI
         menuUI = AddComponent<MenuUI>();
         consoleUI = AddComponent<ConsoleUI>();
@@ -200,6 +209,11 @@ public partial class MalumMenu : BasePlugin
 
         // Components
         keybindListener = AddComponent<KeybindListener>();
+
+        // HydraMenu components
+        notificationManager = AddComponent<NotificationManager>();
+        routineManager = AddComponent<RoutineManager>();
+        AddComponent<HydraMenu.features.Roles>();
 
         // Disables Telemetry (haven't fully tested if it works, but according to Unity docs it should)
         if (noTelemetry.Value)

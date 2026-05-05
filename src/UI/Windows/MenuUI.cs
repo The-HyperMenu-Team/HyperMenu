@@ -32,6 +32,7 @@ public class MenuUI : MonoBehaviour
         _tabs.Add(new PassiveTab());
         _tabs.Add(new AnticheatTab());
         _tabs.Add(new ModesTab());
+        _tabs.Add(new HydraFeaturesTab());
         _tabs.Add(new ConfigTab());
 
         // Instantiate 2D area of MenuUI

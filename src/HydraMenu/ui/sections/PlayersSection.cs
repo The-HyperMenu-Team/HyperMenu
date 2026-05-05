@@ -1,0 +1,417 @@
+﻿using AmongUs.Data;
+using AmongUs.GameOptions;
+using BepInEx.Unity.IL2CPP.Utils.Collections;
+using InnerNet;
+using System;
+using System.Collections;
+using UnityEngine;
+
+namespace HydraMenu.ui.sections
+{
+	internal class PlayersSection : ISection
+	{
+		public PlayersSection()
+		{
+			name = "Players";
+		}
+
+		public static Vector2 PlayerPaneSize
+		{
+			get { return new Vector2(100, MainUI.windowSize.y - MainUI.HeaderSize.y); }
+		}
+
+		public static Vector2 PlayerPanePosition
+		{
+			get { return new Vector2(MainUI.SectionListPosition.x + MainUI.SectionListSize.x, MainUI.HeaderSize.y + MainUI.HeaderPosition.y); }
+		}
+
+		public static Vector2 PlayerButtonSize
+		{
+			get { return new Vector2(PlayerPaneSize.x, 30); }
+		}
+
+		public static Vector2 PlayerOptionsSize
+		{
+			get { return new Vector2(MainUI.windowSize.x - MainUI.SectionListSize.x - PlayerPaneSize.x, MainUI.windowSize.y - MainUI.HeaderSize.y); }
+		}
+
+		public static Vector2 PlayerOptionsPosition
+		{
+			get { return new Vector2(PlayerPanePosition.x + PlayerPaneSize.x, MainUI.HeaderPosition.y + MainUI.HeaderSize.y); }
+		}
+
+		public static Vector2 PlayerColorBoxSize
+		{
+			get { return new Vector2(5, PlayerButtonSize.y); }
+		}
+
+		public static PlayerControl selectedPlayer;
+		private Vector2 subsectionScrollVector;
+
+		private static CrewmateColor selectedColor = CrewmateColor.Red;
+
+		public override void Render()
+		{
+			if(PlayerControl.AllPlayerControls.Count == 0)
+			{
+				GUILayout.Label("There are currently no online players.");
+				return;
+			}
+
+			GUI.Box(new Rect(0, 0, PlayerPaneSize.x, PlayerPaneSize.y), "", Styles.MainBox);
+
+			for(byte i = 0; i < PlayerControl.AllPlayerControls.Count; i++)
+			{
+				PlayerControl player = PlayerControl.AllPlayerControls[i];
+				// Wait for player data to fully load
+				if(player.Data == null) continue;
+
+				RenderPlayerSelection(i, player);
+
+				if(player == selectedPlayer)
+				{
+					GUILayout.BeginArea(new Rect(PlayerPaneSize.x, 0, PlayerOptionsSize.x, PlayerOptionsSize.y));
+					subsectionScrollVector = GUILayout.BeginScrollView(subsectionScrollVector);
+
+					RenderPlayerControls(player);
+
+					GUILayout.EndScrollView();
+					GUILayout.EndArea();
+				}
+			}
+		}
+
+		private void RenderPlayerSelection(byte position, PlayerControl player)
+		{
+			Rect playerInfo = new Rect(0, position * PlayerButtonSize.y, PlayerButtonSize.x, PlayerButtonSize.y);
+
+			string playerName = player.Data.PlayerName;
+			playerName += $"\n<color=\"{GetRoleColor(player.Data.RoleType)}\">{player.Data.RoleType}</color>";
+
+			GUIStyle style = player == selectedPlayer ? Styles.PlayerBoxActive : Styles.PlayerBox;
+
+			if(player.OwnerId == AmongUsClient.Instance.HostId)
+			{
+				style.normal.textColor = new Color(1.0f, 0.84f, 0.0f); // #FFD700
+			}
+
+			if(GUI.Button(playerInfo, playerName, style))
+			{
+				selectedPlayer = player;
+			}
+
+			Rect playerColor = new Rect(0, position * PlayerButtonSize.y, PlayerColorBoxSize.x, PlayerColorBoxSize.y);
+			GUI.Box(playerColor, "", Styles.CreateCrewmateColorBox(player.Data.ColorName, player.Data.Color));
+		}
+
+		private string GetRoleColor(RoleTypes role)
+		{
+			return RoleManager.IsImpostorRole(role) ? "red" : "#8afcfc";
+		}
+
+		private static void RenderPlayerControls(PlayerControl target)
+		{
+			if(target == null)
+			{
+				GUILayout.Label("Specified target is not valid.");
+				return;
+			}
+
+			ClientData clientData = AmongUsClient.Instance.GetClientFromCharacter(target);
+			if(clientData != null)
+			{
+				PlatformSpecificData platform = clientData.PlatformData;
+
+				bool streamerMode = DataManager.Settings.Gameplay.StreamerMode;
+
+				GUILayout.Label(
+					// If we want to get a player's name, we have to use NetworkedPlayerInfo::PlayerName instead of PlayerControl::name to avoid
+					// getting the incorrect name if the player is currently shapeshifted to another player
+					$"Name: {target.Data.PlayerName} {target.Data.ColorName}" +
+					$"\nRole: {target.Data.RoleType}" +
+					$"\nState: " + (target.Data.IsDead ? "Dead" : "Alive") +
+					$"\nFriendcode: " + (streamerMode ? "REDACTED" : target.Data.FriendCode) +
+					$"\nPUID: " + (streamerMode ? "REDACTED" : target.Data.Puid) +
+					$"\nLevel: {target.Data.PlayerLevel + 1}" +
+					$"\nDevice: {platform.Platform}" +
+					(target.OwnerId == AmongUsClient.Instance.HostId ? "\nHost: true" : "")
+				);
+			} else
+			{
+				GUILayout.Label(
+					$"Name: {target.Data.PlayerName} {target.Data.ColorName}" +
+					$"\nRole: {target.Data.RoleType}" +
+					$"\nState: " + (target.Data.IsDead ? "Dead" : "Alive") +
+					$"\nIs Dummy: true"
+				);
+			}
+
+			Hydra.routines.playerFollower.Enabled = GUILayout.Toggle(Hydra.routines.playerFollower.Enabled, "Follow");
+
+			if(GUILayout.Button("Teleport"))
+			{
+				// We do not want to use PlayerControl::GetTruePosition() here as it would teleport us to the player's feet
+				Teleporter.TeleportTo(target.transform.position);
+			}
+
+			if(GUILayout.Button("Murder"))
+			{
+				if(AmongUsClient.Instance.AmHost)
+				{
+					Hydra.Log.LogInfo($"Attempting to kill {target.Data.PlayerName}, we are host so we are using the MurderPlayer RPC");
+					PlayerControl.LocalPlayer.RpcMurderPlayer(target, true);
+				}
+				else
+				{
+					Hydra.Log.LogInfo($"Attempting to kill {target.Data.PlayerName}, we are not the host so we have to use the CheckMurder RPC");
+					PlayerControl.LocalPlayer.CmdCheckMurder(target);
+				}
+			}
+
+			if(GUILayout.Button("Copy Avatar"))
+			{
+				Utilities.CopyPlayer(target);
+			}
+
+			if(GUILayout.Button("Report Body"))
+			{
+				AttemptReportBody(target);
+			}
+
+			GUILayout.Space(5);
+			GUILayout.Label("Host Only Features:" + (AmongUsClient.Instance.AmHost ? "" : "\n(Using these will get you kicked!)"));
+
+			if(GUILayout.Button("Force Meeting As"))
+			{
+				Utilities.OpenMeeting(target, null);
+			}
+
+			GUILayout.BeginHorizontal();
+			if(GUILayout.Button("Force All Votes To"))
+			{
+				if(MeetingHud.Instance == null)
+				{
+					Hydra.notifications.Send("Vote Forcer", "This option can only be used when there is an active meeting.");
+				}
+				else
+				{
+					foreach(PlayerControl player in PlayerControl.AllPlayerControls)
+					{
+						PlayerVoteArea votingArea = MeetingHud.Instance.playerStates[player.PlayerId];
+
+						votingArea.SetVote(target.PlayerId);
+					}
+
+					MeetingHud.Instance.SetDirtyBit(1);
+					MeetingHud.Instance.CheckForEndVoting();
+				}
+			}
+
+			if(GUILayout.Button("Eject"))
+			{
+				if(MeetingHud.Instance == null)
+				{
+					MeetingHud.Instance = UnityEngine.Object.Instantiate<MeetingHud>(HudManager.Instance.MeetingPrefab);
+					AmongUsClient.Instance.Spawn(MeetingHud.Instance, -2, SpawnFlags.None);
+				}
+
+				// Show the Exile screen with the player being ejected
+				MeetingHud.VoterState[] votes = Array.Empty<MeetingHud.VoterState>();
+				MeetingHud.Instance.RpcVotingComplete(votes, target.Data, false);
+				// If we created a MeetingHud object then it will be destroyed by the RpcClose function
+				MeetingHud.Instance.RpcClose();
+			}
+			GUILayout.EndHorizontal();
+
+			if(GUILayout.Button("Frame Shapeshift"))
+			{
+				target.StartCoroutine(AttemptShapeshiftFrame(target).WrapToIl2Cpp());
+			}
+
+			GUILayout.BeginHorizontal();
+			if(GUILayout.Button("Flood Player with Tasks"))
+			{
+				byte[] taskIds = new byte[255];
+
+				for(byte i = 0; i < 255; i++)
+				{
+					taskIds[i] = i;
+				}
+
+				target.Data.RpcSetTasks(taskIds);
+			}
+
+			if(GUILayout.Button("Clear Tasks"))
+			{
+				target.Data.RpcSetTasks(Array.Empty<byte>());
+			}
+			GUILayout.EndHorizontal();
+
+			GUILayout.Space(5);
+			GUILayout.Label("Game Options Modifier:");
+
+			GUILayout.BeginHorizontal();
+			if(GUILayout.Button("Blind"))
+			{
+				IGameOptions gameOptions = GameOptions.CreateCloneOptions(GameManager.Instance.LogicOptions.currentGameOptions);
+				gameOptions.SetFloat(FloatOptionNames.CrewLightMod, -1.0f);
+				gameOptions.SetFloat(FloatOptionNames.ImpostorLightMod, -1.0f);
+
+				GameOptions.SendGameOptionsToClient(gameOptions, target.OwnerId);
+			}
+
+			if(GUILayout.Button("Fullbright"))
+			{
+				IGameOptions gameOptions = GameOptions.CreateCloneOptions(GameManager.Instance.LogicOptions.currentGameOptions);
+				gameOptions.SetFloat(FloatOptionNames.CrewLightMod, 1000f);
+				gameOptions.SetFloat(FloatOptionNames.ImpostorLightMod, 1000f);
+
+				GameOptions.SendGameOptionsToClient(gameOptions, target.OwnerId);
+			}
+			GUILayout.EndHorizontal();
+
+			GUILayout.BeginHorizontal();
+			if(GUILayout.Button("Slow Speed"))
+			{
+				IGameOptions gameOptions = GameOptions.CreateCloneOptions(GameManager.Instance.LogicOptions.currentGameOptions);
+				gameOptions.SetFloat(FloatOptionNames.PlayerSpeedMod, 0.1f);
+
+				GameOptions.SendGameOptionsToClient(gameOptions, target.OwnerId);
+			}
+
+			if(GUILayout.Button("Super Speed"))
+			{
+				IGameOptions gameOptions = GameOptions.CreateCloneOptions(GameManager.Instance.LogicOptions.currentGameOptions);
+				// The vanilla anticheat prevents us from being able to exceed speeds greater than 3.0f
+				gameOptions.SetFloat(FloatOptionNames.PlayerSpeedMod, 3.0f);
+
+				GameOptions.SendGameOptionsToClient(gameOptions, target.OwnerId);
+			}
+			GUILayout.EndHorizontal();
+
+			/*
+			// The problem with changing the TaskBarMode is that if we remove the task bar, we are not able to bring it back
+			GUILayout.BeginHorizontal();
+			if(GUILayout.Button("Hide Task Bar"))
+			{
+				IGameOptions gameOptions = GameOptions.CreateCloneOptions(GameManager.Instance.LogicOptions.currentGameOptions);
+				gameOptions.SetInt(Int32OptionNames.TaskBarMode, (int)TaskBarMode.Invisible);
+
+				GameOptions.SendGameOptionsToClient(gameOptions, target.OwnerId);
+			}
+
+			if(GUILayout.Button("Show Task Bar"))
+			{
+				IGameOptions gameOptions = GameOptions.CreateCloneOptions(GameManager.Instance.LogicOptions.currentGameOptions);
+				gameOptions.SetInt(Int32OptionNames.TaskBarMode, (int)TaskBarMode.Normal);
+
+				GameOptions.SendGameOptionsToClient(gameOptions, target.OwnerId);
+			}
+			GUILayout.EndHorizontal();
+			*/
+
+			if(GUILayout.Button("Reset to Defaults"))
+			{
+				IGameOptions gameOptions = GameOptions.CreateCloneOptions(GameManager.Instance.LogicOptions.currentGameOptions);
+				GameOptions.SendGameOptionsToClient(gameOptions, target.OwnerId);
+			}
+
+			GUILayout.Space(5);
+			GUILayout.Label($"Change color to: {selectedColor}");
+			selectedColor = (CrewmateColor)GUILayout.HorizontalSlider((float)selectedColor, 0, 17);
+
+			if(GUILayout.Button("Set Color"))
+			{
+				target.RpcSetColor((byte)selectedColor);
+			}
+		}
+
+		private static void AttemptReportBody(PlayerControl target)
+		{
+			if(AmongUsClient.Instance.AmHost)
+			{
+				Hydra.Log.LogInfo($"Attempting to report {target.Data.PlayerName}'s body, we are the host so we directly use the StartMeeting RPC");
+				Utilities.OpenMeeting(PlayerControl.LocalPlayer, target.Data);
+				return;
+			}
+
+			Hydra.Log.LogInfo($"Attempting to report {target.Data.PlayerName}'s body, we are not the host so we have to use the ReportDeadBody RPC");
+
+			bool hasAnticheat = AmongUsClient.Instance.NetworkMode == NetworkModes.OnlineGame && !Constants.IsVersionModded();
+			if(hasAnticheat)
+			{
+				// It may seem like this check is redundant as there should be no way for a player to be dead inside the lobby
+				// however there are ways that players can use to mark themselves as dead in the lobby
+				if(LobbyBehaviour.Instance != null)
+				{
+					Hydra.notifications.Send("Report Body", "The game must have started for this option to work.");
+					return;
+				}
+
+				if(!target.Data.IsDead)
+				{
+					Hydra.notifications.Send("Report Body", "You can only report bodies of players who have died in this round.");
+					return;
+				}
+
+				bool bodyExists = false;
+				// Loop over every single dead body that exists and check if it matches our target's player id
+				// From PlayerControl::ReportClosest
+				foreach(Collider2D collider in Physics2D.OverlapCircleAll(new Vector2(0, 0), 99999f, Constants.PlayersOnlyMask))
+				{
+					if(collider.tag != "DeadBody") continue;
+
+					DeadBody bodyComponent = collider.GetComponent<DeadBody>();
+					if(bodyComponent && bodyComponent.ParentId == target.PlayerId)
+					{
+						bodyExists = true;
+						break;
+					}
+				}
+
+				if(!bodyExists)
+				{
+					Hydra.notifications.Send("Report Body", "Unable to find a dead body for this player, you can only report a player's body if they have died this round and their body has not dissolved.");
+					return;
+				}
+			}
+
+			Hydra.Log.LogInfo($"All checks passed, we are able to report {target.Data.PlayerName}'s body.");
+
+			PlayerControl.LocalPlayer.CmdReportDeadBody(target.Data);
+		}
+
+		private static IEnumerator AttemptShapeshiftFrame(PlayerControl target)
+		{
+			bool hasAnticheat = AmongUsClient.Instance.NetworkMode == NetworkModes.OnlineGame && !Constants.IsVersionModded();
+
+			if(ShipStatus.Instance == null && hasAnticheat)
+			{
+				Hydra.notifications.Send("Framer", "The game must have started for this option to work.");
+				yield break;
+			}
+
+			PlayerControl randomPl = Utilities.GetRandomPlayer(false, false, false, false);
+
+			// The vanilla anticheat will ban the host if they attempt to send the Shapeshift RPC for a player whose role is not Shapeshifter
+			// To get around this, we temporarily change the player's role to Shapeshifter, make them shapeshift, and revert them back to their previous role
+			if(target.Data.RoleType != RoleTypes.Shapeshifter && hasAnticheat)
+			{
+				RoleTypes currentRole = target.Data.RoleType;
+
+				// The client that we're attempting to frame shouldn't notice anything as during role selection the SetRole RPC is sent with the canOverrideRole option set to false
+				// meaning any future SetRole RPCs will be ignored (unless the new role is a ghost role)
+				// Just in case this ever gets changed in the future, we could broadcast the SetRole RPC to a junk client ID instead of everyone to avoid the client knowing they became a Shapeshifter
+				target.RpcSetRole(RoleTypes.Shapeshifter, true);
+				// Wait 500ms to make sure the server received the role update request
+				yield return Effects.Wait(0.5f);
+				target.RpcShapeshift(randomPl, true);
+				target.RpcSetRole(currentRole, true);
+			}
+			else
+			{
+				target.RpcShapeshift(randomPl, true);
+			}
+		}
+	}
+}
