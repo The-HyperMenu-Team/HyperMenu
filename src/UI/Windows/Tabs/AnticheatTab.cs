@@ -7,7 +7,7 @@ namespace MalumMenu
     {
         public string name => "Anticheat";
 
-        public override void Draw()
+        public void Draw()
         {
             Anticheat.Enabled = GUILayout.Toggle(Anticheat.Enabled, "Enable HyperMenu Anticheat");
 
