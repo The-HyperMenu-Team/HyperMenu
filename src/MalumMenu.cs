@@ -36,13 +36,15 @@ public partial class MalumMenu : BasePlugin
     public static KeybindListener keybindListener;
 
     public static string malumVersion = "3.1.1";
-    public static string hyperVersion = "4.1.1";
+    public static string hyperVersion = "4.1.2";
     public static string hyperBuild = "Stable";
     public static List<string> supportedAU = new List<string> { "2026.3.31" };
     public static List<string> toleratedAU = new List<string> { "2026.2.24", "2026.3.17" };
     public static bool isPanicked = false;
     public static bool inStealthMode = false;
     public static bool overloadFixed = true;
+
+    public static bool isDevRelease = false;
 
     public static ConfigEntry<string> menuKeybind;
     public static ConfigEntry<string> menuHtmlColor;
