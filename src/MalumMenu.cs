@@ -36,7 +36,7 @@ public partial class MalumMenu : BasePlugin
     public static KeybindListener keybindListener;
 
     public static string malumVersion = "3.1.1";
-    public static string hyperVersion = "4.1.1";
+    public static string hyperVersion = "4.1.2";
     public static string hyperBuild = "Stable";
     public static List<string> supportedAU = new List<string> { "2026.3.31" };
     public static List<string> toleratedAU = new List<string> { "2026.2.24", "2026.3.17" };
