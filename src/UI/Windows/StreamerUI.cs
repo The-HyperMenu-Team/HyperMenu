@@ -18,6 +18,9 @@ public class StreamerUI : MonoBehaviour
     private bool _hostStarted;
     private bool _captureQueued;
 
+	public static float NotificationDuration = 10.0f;
+
+
     private void OnDestroy()
     {
         Cleanup();
@@ -36,6 +39,7 @@ public class StreamerUI : MonoBehaviour
             _captureQueued = false;
             return;
         }
+
 
         var sourceCamera = ResolveSourceCamera();
         if (!sourceCamera)
@@ -66,6 +70,7 @@ public class StreamerUI : MonoBehaviour
             {
                 yield break;
             }
+
 
             var sourceCamera = ResolveSourceCamera();
             if (!sourceCamera)
@@ -368,6 +373,14 @@ internal static class StreamerNativeWindowHost
     public static void Start()
     {
         if (_running) return;
+
+        if(!MalumMenu.isDevRelease)
+        {
+            CheatToggles.streamerMode = false;
+            MalumMenu.notifications.Send("WIP Feature", "This feature is still in progress and is not yet working, so it is currently disabled.");
+            Stop();
+            return;
+        }
 
         _running = true;
         _thread = new Thread(WindowThread)

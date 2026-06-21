@@ -44,6 +44,8 @@ public partial class MalumMenu : BasePlugin
     public static bool inStealthMode = false;
     public static bool overloadFixed = true;
 
+    public static bool isDevRelease = false;
+
     public static ConfigEntry<string> menuKeybind;
     public static ConfigEntry<string> menuHtmlColor;
     public static ConfigEntry<string> menuChatColor;
