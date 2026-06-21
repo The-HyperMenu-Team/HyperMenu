@@ -23,6 +23,7 @@ public class TrollTab : ITab
 
         if (GUILayout.Button(" Fuck Start Timer"))
         {
+            MalumMenu.notifications.Send("Feature Pathed", "This feature has been patched by Innersloth. Until it is updated, it will be disabled.");
             System.Random rnd = new System.Random();
             int counter = rnd.Next(-128, 127);
 
