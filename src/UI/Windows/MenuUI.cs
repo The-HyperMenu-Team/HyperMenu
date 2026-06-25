@@ -30,7 +30,6 @@ public class MenuUI : MonoBehaviour
         _tabs.Add(new SabotageTab());
         _tabs.Add(new ChatTab());
         _tabs.Add(new AnimationsTab());
-        _tabs.Add(new OverloadTab());
         _tabs.Add(new ConsoleTab());
         _tabs.Add(new HostOnlyTab());
         _tabs.Add(new HostOnlyTab2());
@@ -40,6 +39,7 @@ public class MenuUI : MonoBehaviour
         _tabs.Add(new AnticheatTab());
         _tabs.Add(new ModesTab());
         _tabs.Add(new ConfigTab());
+        // _tabs.Add(new OverloadTab());
 
         // Instantiate 2D area of MenuUI
         _windowRect = new(

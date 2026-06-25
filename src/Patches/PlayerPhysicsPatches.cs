@@ -35,10 +35,10 @@ public static class PlayerPhysics_LateUpdate
 
         // This check ensures there is only one run per frame
         // so that OverloadHandler._timer progression remains accurate
-        if (__instance.AmOwner)
-        {
-            OverloadHandler.Run();
-        }
+        // if (__instance.AmOwner)
+        // {
+        //     OverloadHandler.Run();
+        // }
 
         TracersHandler.DrawPlayerTracer(__instance);
 
