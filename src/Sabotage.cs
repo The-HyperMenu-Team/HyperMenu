@@ -50,6 +50,7 @@ namespace MalumMenu
         {
             { "Office", SystemTypes.Office },
             { "Laboratory", SystemTypes.Laboratory },
+            { "Decontamination", SystemTypes.Decontamination },
             { "Electrical", SystemTypes.Electrical },
             { "Oxygen", SystemTypes.LifeSupp },
             { "Communications", SystemTypes.Comms },
@@ -262,34 +263,55 @@ namespace MalumMenu
             ShipStatus.Instance.RpcCloseDoorsOfType(door);
         }
 
-        public static void UnlockDoor(byte id)
+        public static void UnlockDoor(SystemTypes system)
         {
-            if (AmongUsClient.Instance.AmHost)
+            for (byte i = 0; i < ShipStatus.Instance.AllDoors.Count; i++)
             {
-                MapNames currentMap = Utilities.GetCurrentMap();
+                OpenableDoor door = ShipStatus.Instance.AllDoors[i];
+                if (door.Room != system) continue;
 
-                // On Skeld, all doors have an id of 0, so unfourtunately getting a door by its ID by using ShipStatus.Instance.AllDoors[id] wont work
-                for (byte i = 0; i < ShipStatus.Instance.AllDoors.Count; i++)
-                {
-                    OpenableDoor door = ShipStatus.Instance.AllDoors[i];
-                    if (door.Id != id) continue;
-                    door.SetDoorway(true);
+                UnlockDoor(door);
+            }
+        }
 
-                    if (currentMap == MapNames.Skeld)
-                    {
-                        AutoDoorsSystemType doorSystem = ShipStatus.Instance.Systems[SystemTypes.Doors].Cast<AutoDoorsSystemType>();
-                        doorSystem.dirtyBits |= 1U << i;
-                    }
-                    else
-                    {
-                        DoorsSystemType doorSystem = ShipStatus.Instance.Systems[SystemTypes.Doors].Cast<DoorsSystemType>();
-                        doorSystem.IsDirty = true;
-                    }
-                }
+        public static void UnlockDoor(int id)
+        {
+            MapNames currentMap = Utilities.GetCurrentMap();
+            if (currentMap != MapNames.Skeld)
+            {
+                UnlockDoor(ShipStatus.Instance.AllDoors[id]);
                 return;
             }
 
-            ShipStatus.Instance.RpcUpdateSystem(SystemTypes.Doors, (byte)(id | 64));
+            // On Skeld, all doors have an id of 0, so unfourtunately getting a door by its ID by using ShipStatus.Instance.AllDoors[id] wont work
+            for (byte i = 0; i < ShipStatus.Instance.AllDoors.Count; i++)
+            {
+                OpenableDoor door = ShipStatus.Instance.AllDoors[i];
+                if (door.Id == id) UnlockDoor(door, i);
+            }
+        }
+
+        public static void UnlockDoor(OpenableDoor door, int index = 0)
+        {
+            if (!AmongUsClient.Instance.AmHost)
+            {
+                ShipStatus.Instance.RpcUpdateSystem(SystemTypes.Doors, (byte)(door.Id | 64));
+                return;
+            }
+
+            door.SetDoorway(true);
+
+            MapNames currentMap = Utilities.GetCurrentMap();
+            if (currentMap == MapNames.Skeld)
+            {
+                AutoDoorsSystemType doorSystem = ShipStatus.Instance.Systems[SystemTypes.Doors].Cast<AutoDoorsSystemType>();
+                doorSystem.dirtyBits |= 1U << index;
+            }
+            else
+            {
+                DoorsSystemType doorSystem = ShipStatus.Instance.Systems[SystemTypes.Doors].Cast<DoorsSystemType>();
+                doorSystem.IsDirty = true;
+            }
         }
 
         public static void SabotageAll()
@@ -321,10 +343,9 @@ namespace MalumMenu
 
         public static void UnlockAll()
         {
-            // 'AllDoors' also includes entries for Polus' decontamination doors, funnily enough
-            foreach (OpenableDoor door in ShipStatus.Instance.AllDoors)
+            for (byte i = 0; i < ShipStatus.Instance.AllDoors.Count; i++)
             {
-                UnlockDoor((byte)door.Id);
+                UnlockDoor(ShipStatus.Instance.AllDoors[i], i);
             }
         }
     }

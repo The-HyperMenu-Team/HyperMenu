@@ -1,5 +1,6 @@
 ﻿using AmongUs.GameOptions;
 using Hazel;
+using MalumMenu.features;
 
 namespace MalumMenu
 {
@@ -26,6 +27,8 @@ namespace MalumMenu
                 GameManager.Instance.LogicOptions.SetGameOptions(options);
                 return;
             }
+
+            if(Protections.BypassShapeshiftRatelimits.Enabled) options.SetFloat(FloatOptionNames.ShapeshifterCooldown, 0.0f);
 
             MessageWriter writer = MessageWriter.Get(SendOption.Reliable);
             writer.StartMessage((byte)FindLogicOptionsIndex());

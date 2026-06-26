@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using AmongUs.GameOptions;
+using HarmonyLib;
 using Hazel;
 using InnerNet;
 
@@ -169,6 +170,48 @@ namespace MalumMenu.features
 
 				// Prevent players from being able to votekick you as host
 				return !(Enabled && AmongUsClient.Instance.AmHost);
+			}
+		}
+
+		[HarmonyPatch(typeof(AmongUsClient), nameof(InnerNetClient.CoStartGame))]
+		public static class BypassShapeshiftRatelimits
+		{
+			public static bool Enabled { get; set; } = true;
+
+			static void Postfix()
+			{
+				if(!Enabled || !AmongUsClient.Instance.AmHost) return;
+
+				PlayerControl player = Utilities.GetRandomPlayer();
+				if(player == null) return;
+
+				IGameOptions options = GameOptions.CreateCloneOptions(GameManager.Instance.LogicOptions.currentGameOptions);
+				options.SetFloat(FloatOptionNames.ShapeshifterCooldown, 0.0f);
+
+				GameOptions.SendGameOptionsToClient(options, player.OwnerId);
+			}
+		}
+
+		[HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.HandleRpc))]
+		public static class MemoryAllocationOverload
+		{
+			public static bool Enabled { get; set; } = true;
+
+			static bool Prefix(PlayerControl __instance, byte callId, MessageReader reader)
+			{
+				if(!Enabled || callId != (byte)RpcCalls.VotingComplete) return true;
+
+				int oldReadPosition = reader.Position;
+
+				int arrayLength = reader.ReadPackedInt32();
+
+				if(arrayLength > 1024 || arrayLength > reader.BytesRemaining)
+				{
+					return false;
+				}
+
+				reader.Position = oldReadPosition;
+				return true;
 			}
 		}
 	}

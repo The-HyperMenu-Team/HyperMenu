@@ -3,16 +3,13 @@ using System;
 
 namespace MalumMenu.anticheat.rpc
 {
-	internal class RpcCheck
+	internal abstract class RpcCheck
 	{
 		public virtual bool Enabled { get; set; } = true;
 
 		public virtual void Validate(PlayerControl player, MessageReader reader, ref bool blockRpc) { }
 
-		public virtual RpcCalls GetRpcCall()
-		{
-			throw new InvalidOperationException("Unimplemented");
-		}
+		public abstract RpcCalls GetRpcCall();
 
 		public virtual bool IsHostOnly()
 		{

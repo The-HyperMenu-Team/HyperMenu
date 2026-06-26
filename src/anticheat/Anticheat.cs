@@ -27,6 +27,7 @@ namespace MalumMenu.anticheat
 			{ RpcCalls.SnapTo, new SnapTo() },
 			{ RpcCalls.CloseDoorsOfType, new CloseDoorsOfType() },
 			{ RpcCalls.ClimbLadder, new ClimbLadder() },
+			{ RpcCalls.UsePlatform, new UsePlatform() },
 			{ RpcCalls.UpdateSystem, new UpdateSystem() },
 			{ RpcCalls.SetLevel, new SetLevel() }
 		};
@@ -88,7 +89,7 @@ namespace MalumMenu.anticheat
 			RpcHandlers.TryGetValue(rpc, out RpcCheck rpcCheck);
 			if(!Enabled || rpcCheck == null || !rpcCheck.Enabled) return true;
 
-			if(rpcCheck.GetExpectedNetObject() != sourceNetObj)
+			if(sourceNetObj != rpcCheck.GetExpectedNetObject())
 			{
 				// Recieved a RPC that should've been sent for a different net object, some sort of exploit attempt?
 				return false;
@@ -105,21 +106,17 @@ namespace MalumMenu.anticheat
 			bool blockRpc = false;
 
 			rpcCheck.Validate(player, reader, ref blockRpc);
+			if(discardRpc && blockRpc) return false;
 
-			if(!discardRpc || !blockRpc)
-			{
-				// Put the read position back to its previous spot to not mess up the HandleRpc function
-				reader.Position = oldReadPosition;
-				return true;
-			}
-			else
-			{
-				return false;
-			}
+			// Put the read position back to its previous spot to not mess up the HandleRpc function
+			reader.Position = oldReadPosition;
+			return true;
 		}
 
 		public static void Flag(PlayerControl player, string reason, bool shouldPunish = true)
 		{
+			if(player == PlayerControl.LocalPlayer) return;
+
 			if(sendNotification)
 			{
 				MalumMenu.notifications.Send("Anticheat", reason, NotificationDuration);
@@ -143,7 +140,7 @@ namespace MalumMenu.anticheat
 					MalumMenu.Log.LogMessage($"{player.Data.PlayerName} was kicked by HyperMenu Anticheat for hacking");
 
 					// The vanilla anticheat prevents using the ErrorKick method if the game has not started yet
-					if(punishment == Punishments.Kick || LobbyBehaviour.Instance != null)
+					if(punishment == Punishments.Kick || AmongUsClient.Instance.GameState != InnerNet.InnerNetClient.GameStates.Started)
 					{
 						AmongUsClient.Instance.KickPlayer(player.OwnerId, false);
 					}

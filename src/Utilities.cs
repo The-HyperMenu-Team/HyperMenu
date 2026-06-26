@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using AmongUs.GameOptions;
+using MalumMenu.features;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 namespace MalumMenu
 {
@@ -10,16 +14,32 @@ namespace MalumMenu
         private static readonly Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppReferenceArray<PetData> allPets = HatManager.Instance.allPets;
         private static readonly Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppReferenceArray<NamePlateData> allNameplates = HatManager.Instance.allNamePlates;
 
+        public static int GetRandomUnusedColor()
+        {
+            List<int> colors = Enumerable.Range(0, 18).ToList();
+
+            foreach (PlayerControl player in PlayerControl.AllPlayerControls)
+            {
+                colors.Remove(player.Data.DefaultOutfit.ColorId);
+            }
+
+            System.Random rnd = new System.Random();
+
+            if (colors.Count == 0)
+            {
+                return rnd.Next(0, 18);
+            }
+
+            return colors[rnd.Next(0, colors.Count)];
+        }
+
         public static void RandomizePlayer(bool ingame = false)
         {
             System.Random rnd = new System.Random();
 
             if (ingame)
             {
-                PlayerControl.LocalPlayer.CmdCheckColor((byte)rnd.Next(0, 15));
-
-                // string randomName = AccountManager.Instance.GetRandomName();
-                // PlayerControl.LocalPlayer.CmdCheckName(randomName);
+                PlayerControl.LocalPlayer.CmdCheckColor((byte)GetRandomUnusedColor());
 
                 PlayerControl.LocalPlayer.RpcSetHat(allHats[rnd.Next(0, allHats.Length)].ProductId);
                 PlayerControl.LocalPlayer.RpcSetVisor(allVisors[rnd.Next(0, allVisors.Length)].ProductId);
@@ -55,6 +75,8 @@ namespace MalumMenu
                 validPlayers.Add(player);
             }
 
+            if (validPlayers.Count == 0) return null;
+
             System.Random rnd = new System.Random();
             return validPlayers[rnd.Next(validPlayers.Count)];
         }
@@ -63,22 +85,89 @@ namespace MalumMenu
         {
             NetworkedPlayerInfo.PlayerOutfit outfit = player.CurrentOutfit;
 
-            if (AmongUsClient.Instance.AmHost)
+            bool hasAnticheat = IsAnticheatPresent();
+
+            Network.BatchedMessage batch = new Network.BatchedMessage();
+
+            if (!hasAnticheat)
             {
-                // Changing names, even when host, is not possible on Vanilla servers
-                PlayerControl.LocalPlayer.RpcSetName(outfit.PlayerName);
-                PlayerControl.LocalPlayer.RpcSetColor((byte)outfit.ColorId);
-            }
-            else
-            {
-                PlayerControl.LocalPlayer.CmdCheckColor((byte)outfit.ColorId);
+                batch.QueueSetName(PlayerControl.LocalPlayer, outfit.PlayerName);
             }
 
-            PlayerControl.LocalPlayer.RpcSetNamePlate(outfit.NamePlateId);
-            PlayerControl.LocalPlayer.RpcSetHat(outfit.HatId);
-            PlayerControl.LocalPlayer.RpcSetVisor(outfit.VisorId);
-            PlayerControl.LocalPlayer.RpcSetSkin(outfit.SkinId);
-            PlayerControl.LocalPlayer.RpcSetPet(outfit.PetId);
+            if (!hasAnticheat || AmongUsClient.Instance.AmHost)
+            {
+                batch.QueueSetColor(PlayerControl.LocalPlayer, (byte)outfit.ColorId);
+            }
+
+            batch.QueueSetNameplateStr(PlayerControl.LocalPlayer, outfit.NamePlateId, ++outfit.NamePlateSequenceId);
+            batch.QueueSetHatStr(PlayerControl.LocalPlayer, outfit.HatId, ++outfit.HatSequenceId);
+            batch.QueueSetVisorStr(PlayerControl.LocalPlayer, outfit.VisorId, ++outfit.VisorSequenceId);
+            batch.QueueSetSkinStr(PlayerControl.LocalPlayer, outfit.SkinId, ++outfit.SkinSequenceId);
+            batch.QueueSetPetStr(PlayerControl.LocalPlayer, outfit.PetId, ++outfit.PetSequenceId);
+
+            batch.FinishBatch();
+        }
+
+        public static void AttemptStartMeeting(PlayerControl reporter, NetworkedPlayerInfo target)
+        {
+            MalumMenu.Log.LogInfo($"Attempting to start a meeting for {reporter.Data.PlayerName}");
+
+            bool hasAnticheat = IsAnticheatPresent();
+
+            if (hasAnticheat && AmongUsClient.Instance.GameState != InnerNet.InnerNetClient.GameStates.Started)
+            {
+                MalumMenu.notifications.Send("Start Meeting", "The game must have started in order for this feature to work.");
+                return;
+            }
+
+            if (AmongUsClient.Instance.AmHost)
+            {
+                MalumMenu.Log.LogInfo($"We are the host so we can directly use the StartMeeting RPC");
+
+                if (ShipStatus.Instance == null)
+                {
+                    MalumMenu.notifications.Send("Start Meeting", "There must be a valid instance of ShipStatus for this feature to work.");
+                }
+                else
+                {
+                    OpenMeeting(reporter, target);
+                }
+
+                return;
+            }
+
+            MalumMenu.Log.LogInfo("We are not the host so we have to use the ReportDeadBody RPC");
+
+            if (hasAnticheat && reporter != PlayerControl.LocalPlayer)
+            {
+                MalumMenu.notifications.Send("Start Meeting", "You must be the host of the lobby to make another player start a meeting.");
+                return;
+            }
+
+            if (reporter.Data.IsDead)
+            {
+                MalumMenu.notifications.Send("Start Meeting", "You can only call meetings or report bodies if you are alive.");
+                return;
+            }
+
+            if (hasAnticheat && target != null)
+            {
+                if (!target.IsDead)
+                {
+                    MalumMenu.notifications.Send("Start Meeting", "You can only report bodies of players who have died in this round.");
+                    return;
+                }
+
+                if (!DoesDeadBodyExist(target.PlayerId))
+                {
+                    MalumMenu.notifications.Send("Start Meeting", "Unable to find a dead body for this player, you can only report a player's body if they have died this round and their body has not dissolved.");
+                    return;
+                }
+            }
+
+            Network.BatchedMessage batch = new Network.BatchedMessage();
+            batch.QueueReportDeadBody(reporter, target);
+            batch.FinishBatch();
         }
 
         public static void OpenMeeting(PlayerControl reporter, NetworkedPlayerInfo target)
@@ -86,6 +175,56 @@ namespace MalumMenu
             MeetingRoomManager.Instance.AssignSelf(reporter, target);
             reporter.RpcStartMeeting(target);
             HudManager.Instance.OpenMeetingRoom(reporter);
+        }
+
+        public static bool DoesDeadBodyExist(byte playerId)
+        {
+            foreach (Collider2D collider in Physics2D.OverlapCircleAll(new Vector2(0, 0), 99999f, Constants.PlayersOnlyMask))
+            {
+                if (collider.tag != "DeadBody") continue;
+
+                DeadBody bodyComponent = collider.GetComponent<DeadBody>();
+                if (bodyComponent && bodyComponent.ParentId == playerId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static void ShapeshiftPlayer(PlayerControl victim, PlayerControl target, bool shouldAnimate = true)
+        {
+            bool hasAnticheat = IsAnticheatPresent();
+
+            if (hasAnticheat && !AmongUsClient.Instance.AmHost)
+            {
+                MalumMenu.notifications.Send("Shapeshift Player", "You must be the host of the lobby in order to use this feature.");
+                return;
+            }
+
+            if (hasAnticheat && AmongUsClient.Instance.GameState != InnerNet.InnerNetClient.GameStates.Started)
+            {
+                MalumMenu.notifications.Send("Shapeshift Player", "The game must have started for this option to work.");
+                return;
+            }
+
+            Network.BatchedMessage batch = new Network.BatchedMessage();
+
+            if (hasAnticheat && victim.Data.RoleType != RoleTypes.Shapeshifter)
+            {
+                RoleTypes currentRole = victim.Data.RoleType;
+
+                batch.QueueSetRole(victim, RoleTypes.Shapeshifter, true);
+                batch.QueueShapeshift(victim, target, shouldAnimate);
+                batch.QueueSetRole(victim, currentRole, true);
+            }
+            else
+            {
+                batch.QueueShapeshift(victim, target, shouldAnimate);
+            }
+
+            batch.FinishBatch();
         }
 
         public static MapNames GetCurrentMap()
@@ -99,15 +238,24 @@ namespace MalumMenu
                 return (MapNames)GameOptionsManager.Instance.CurrentGameOptions.MapId;
             }
         }
+
         public static bool IsAnticheatPresent()
         {
             if (Constants.IsVersionModded() || PlayerControl.LocalPlayer == null || PlayerControl.LocalPlayer.Data == null) return false;
 
-            // On freeplay, local, and modded lobbies, NetworkedPlayerInfo net objects are owned by the host (-2)
-            // On vanilla lobbies, NetworkedPlayerInfo net objects are owned by the backend among us servers (-4)
-            // If our NetworkedPlayerInfo net object is owned by the host, we can assume that the lobby has a lax anticheat without server authority
-            // which does not require us to use any sort of bypasses
             return PlayerControl.LocalPlayer.Data.OwnerId == -4;
+        }
+
+        public static string GetPlayerColor(NetworkedPlayerInfo player)
+        {
+            int colorId = player.DefaultOutfit.ColorId;
+
+            if (colorId < 0 || colorId >= Palette.ColorNames.Length)
+            {
+                return "Fortegreen";
+            }
+
+            return player.GetPlayerColorString();
         }
     }
 }
