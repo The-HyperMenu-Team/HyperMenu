@@ -49,10 +49,11 @@ namespace MalumMenu
         public static Dictionary<string, SystemTypes> polusDoors = new Dictionary<string, SystemTypes>()
         {
             { "Office", SystemTypes.Office },
+            { "Communications", SystemTypes.Comms },
             { "Laboratory", SystemTypes.Laboratory },
+            { "Decontamination", SystemTypes.Decontamination },
             { "Electrical", SystemTypes.Electrical },
             { "Oxygen", SystemTypes.LifeSupp },
-            { "Communications", SystemTypes.Comms },
             { "Weapons", SystemTypes.Weapons },
             { "Storage", SystemTypes.Storage }
         };
@@ -71,7 +72,8 @@ namespace MalumMenu
             { "Communications", SystemTypes.Comms },
             { "Main Hall", SystemTypes.MainHall },
             { "Kitchen", SystemTypes.Kitchen },
-            { "Medical", SystemTypes.Medical }
+            { "Medical", SystemTypes.Medical },
+            { "Lounge", SystemTypes.Lounge }
         };
 
         public static Dictionary<string, SystemTypes> fungleSabotages = new Dictionary<string, SystemTypes>()
@@ -84,53 +86,28 @@ namespace MalumMenu
         public static Dictionary<string, SystemTypes> GetSabotages()
         {
             MapNames map = Utilities.GetCurrentMap();
-            switch (map)
+            return map switch
             {
-                case MapNames.Skeld:
-                case MapNames.Dleks:
-                    return skeldSabotages;
-
-                case MapNames.MiraHQ:
-                    return miraSabotages;
-
-                case MapNames.Polus:
-                    return polusSabotages;
-
-                case MapNames.Airship:
-                    return airshipSabotages;
-
-                case MapNames.Fungle:
-                    return fungleSabotages;
-
-                // If we don't have any sabotages for the current map then just default to the Skeld ones
-                default:
-                    return skeldSabotages;
-            }
+                MapNames.Skeld or MapNames.Dleks => skeldSabotages,
+                MapNames.MiraHQ => miraSabotages,
+                MapNames.Polus => polusSabotages,
+                MapNames.Airship => airshipSabotages,
+                MapNames.Fungle => fungleSabotages,
+                _ => skeldSabotages,
+            };
         }
 
         public static Dictionary<string, SystemTypes> GetDoors()
         {
             MapNames map = Utilities.GetCurrentMap();
-            switch (map)
+            return map switch
             {
-                case MapNames.Skeld:
-                case MapNames.Dleks:
-                    return skeldDoors;
-
-                // Mira has no closable doors
-                case MapNames.MiraHQ:
-                    return [];
-
-                case MapNames.Polus:
-                    return polusDoors;
-
-                case MapNames.Airship:
-                    return airshipDoors;
-
-                // If we don't have any doors for the current map then just default to the Skeld ones
-                default:
-                    return skeldDoors;
-            }
+                MapNames.Skeld or MapNames.Dleks => skeldDoors,
+                MapNames.MiraHQ => [],
+                MapNames.Polus => polusDoors,
+                MapNames.Airship => airshipDoors,
+                _ => skeldDoors,
+            };
         }
 
         // I thought that maybe we could check if ShipStatus::Systems included an entry for the doors system type
@@ -262,34 +239,55 @@ namespace MalumMenu
             ShipStatus.Instance.RpcCloseDoorsOfType(door);
         }
 
-        public static void UnlockDoor(byte id)
+        public static void UnlockDoor(SystemTypes system)
         {
-            if (AmongUsClient.Instance.AmHost)
+            for (byte i = 0; i < ShipStatus.Instance.AllDoors.Count; i++)
             {
-                MapNames currentMap = Utilities.GetCurrentMap();
+                OpenableDoor door = ShipStatus.Instance.AllDoors[i];
+                if (door.Room != system) continue;
 
-                // On Skeld, all doors have an id of 0, so unfourtunately getting a door by its ID by using ShipStatus.Instance.AllDoors[id] wont work
-                for (byte i = 0; i < ShipStatus.Instance.AllDoors.Count; i++)
-                {
-                    OpenableDoor door = ShipStatus.Instance.AllDoors[i];
-                    if (door.Id != id) continue;
-                    door.SetDoorway(true);
+                UnlockDoor(door);
+            }
+        }
 
-                    if (currentMap == MapNames.Skeld)
-                    {
-                        AutoDoorsSystemType doorSystem = ShipStatus.Instance.Systems[SystemTypes.Doors].Cast<AutoDoorsSystemType>();
-                        doorSystem.dirtyBits |= 1U << i;
-                    }
-                    else
-                    {
-                        DoorsSystemType doorSystem = ShipStatus.Instance.Systems[SystemTypes.Doors].Cast<DoorsSystemType>();
-                        doorSystem.IsDirty = true;
-                    }
-                }
+        public static void UnlockDoor(int id)
+        {
+            MapNames currentMap = Utilities.GetCurrentMap();
+            if (currentMap != MapNames.Skeld)
+            {
+                UnlockDoor(ShipStatus.Instance.AllDoors[id]);
                 return;
             }
 
-            ShipStatus.Instance.RpcUpdateSystem(SystemTypes.Doors, (byte)(id | 64));
+            // On Skeld, all doors have an id of 0, so unfortunately getting a door by its ID by using ShipStatus.Instance.AllDoors[id] wont work
+            for (byte i = 0; i < ShipStatus.Instance.AllDoors.Count; i++)
+            {
+                OpenableDoor door = ShipStatus.Instance.AllDoors[i];
+                if (door.Id == id) UnlockDoor(door, i);
+            }
+        }
+
+        public static void UnlockDoor(OpenableDoor door, int index = 0)
+        {
+            if (!AmongUsClient.Instance.AmHost)
+            {
+                ShipStatus.Instance.RpcUpdateSystem(SystemTypes.Doors, (byte)(door.Id | 64));
+                return;
+            }
+
+            door.SetDoorway(true);
+
+            MapNames currentMap = Utilities.GetCurrentMap();
+            if (currentMap == MapNames.Skeld)
+            {
+                AutoDoorsSystemType doorSystem = ShipStatus.Instance.Systems[SystemTypes.Doors].Cast<AutoDoorsSystemType>();
+                doorSystem.dirtyBits |= 1U << index;
+            }
+            else
+            {
+                DoorsSystemType doorSystem = ShipStatus.Instance.Systems[SystemTypes.Doors].Cast<DoorsSystemType>();
+                doorSystem.IsDirty = true;
+            }
         }
 
         public static void SabotageAll()
@@ -321,10 +319,9 @@ namespace MalumMenu
 
         public static void UnlockAll()
         {
-            // 'AllDoors' also includes entries for Polus' decontamination doors, funnily enough
-            foreach (OpenableDoor door in ShipStatus.Instance.AllDoors)
+            for (byte i = 0; i < ShipStatus.Instance.AllDoors.Count; i++)
             {
-                UnlockDoor((byte)door.Id);
+                UnlockDoor(ShipStatus.Instance.AllDoors[i], i);
             }
         }
     }

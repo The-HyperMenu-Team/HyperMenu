@@ -1,5 +1,7 @@
-﻿using HarmonyLib;
+﻿using AmongUs.InnerNet.GameDataMessages;
+using HarmonyLib;
 using Hazel;
+using MalumMenu.anticheat.gamedata;
 using MalumMenu.anticheat.rpc;
 using System;
 using System.Collections.Generic;
@@ -9,6 +11,11 @@ namespace MalumMenu.anticheat
 	internal class Anticheat
 	{
 		public static bool Enabled { get; set; } = true;
+
+		public static Dictionary<GameDataTypes, GameDataCheck> GameDataHandlers = new Dictionary<GameDataTypes, GameDataCheck>()
+		{
+			{ GameDataTypes.ReadyFlag, new ClientReady() }
+		};
 
 		public static Dictionary<RpcCalls, RpcCheck> RpcHandlers = new Dictionary<RpcCalls, RpcCheck>()
 		{
@@ -25,8 +32,10 @@ namespace MalumMenu.anticheat
 			{ RpcCalls.EnterVent, new EnterVent() },
 			{ RpcCalls.ExitVent, new ExitVent() },
 			{ RpcCalls.SnapTo, new SnapTo() },
+			{ RpcCalls.AddVote, new AddVote() },
 			{ RpcCalls.CloseDoorsOfType, new CloseDoorsOfType() },
 			{ RpcCalls.ClimbLadder, new ClimbLadder() },
+			{ RpcCalls.UsePlatform, new UsePlatform() },
 			{ RpcCalls.UpdateSystem, new UpdateSystem() },
 			{ RpcCalls.SetLevel, new SetLevel() }
 		};
@@ -77,7 +86,7 @@ namespace MalumMenu.anticheat
 		[HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.HandleRpc))]
 		class OnShipStatusRPC
 		{
-			static bool Prefix(ShipStatus __instance, byte callId, MessageReader reader)
+			static bool Prefix(byte callId, MessageReader reader)
 			{
 				return HandleRpc(typeof(ShipStatus), null, (RpcCalls)callId, reader);
 			}
@@ -88,7 +97,7 @@ namespace MalumMenu.anticheat
 			RpcHandlers.TryGetValue(rpc, out RpcCheck rpcCheck);
 			if(!Enabled || rpcCheck == null || !rpcCheck.Enabled) return true;
 
-			if(rpcCheck.GetExpectedNetObject() != sourceNetObj)
+			if(sourceNetObj != rpcCheck.GetExpectedNetObject())
 			{
 				// Recieved a RPC that should've been sent for a different net object, some sort of exploit attempt?
 				return false;
@@ -105,21 +114,32 @@ namespace MalumMenu.anticheat
 			bool blockRpc = false;
 
 			rpcCheck.Validate(player, reader, ref blockRpc);
+			if(discardRpc && blockRpc) return false;
 
-			if(!discardRpc || !blockRpc)
-			{
-				// Put the read position back to its previous spot to not mess up the HandleRpc function
-				reader.Position = oldReadPosition;
-				return true;
-			}
-			else
-			{
-				return false;
-			}
+			// Put the read position back to its previous spot to not mess up the HandleRpc function
+			reader.Position = oldReadPosition;
+			return true;
+		}
+
+		public static bool HandleGameData(GameDataTypes type, MessageReader reader)
+		{
+			GameDataHandlers.TryGetValue(type, out GameDataCheck gameDataCheck);
+			if(!Enabled || gameDataCheck == null || !gameDataCheck.Enabled) return true;
+
+			int oldReadPosition = reader.Position;
+			bool blockMessage = false;
+
+			gameDataCheck.Validate(reader, ref blockMessage);
+			if(discardRpc && blockMessage) return false;
+
+			reader.Position = oldReadPosition;
+			return true;
 		}
 
 		public static void Flag(PlayerControl player, string reason, bool shouldPunish = true)
 		{
+			if(player == PlayerControl.LocalPlayer) return;
+
 			if(sendNotification)
 			{
 				MalumMenu.notifications.Send("Anticheat", reason, NotificationDuration);
@@ -128,6 +148,14 @@ namespace MalumMenu.anticheat
 			if(AmongUsClient.Instance.AmHost && shouldPunish)
 			{
 				Punish(player);
+			}
+		}
+
+		public static void Flag(string reason)
+		{
+			if(sendNotification)
+			{
+				MalumMenu.notifications.Send("Anticheat", reason, NotificationDuration);
 			}
 		}
 
@@ -143,7 +171,7 @@ namespace MalumMenu.anticheat
 					MalumMenu.Log.LogMessage($"{player.Data.PlayerName} was kicked by HyperMenu Anticheat for hacking");
 
 					// The vanilla anticheat prevents using the ErrorKick method if the game has not started yet
-					if(punishment == Punishments.Kick || LobbyBehaviour.Instance != null)
+					if(punishment == Punishments.Kick || AmongUsClient.Instance.GameState != InnerNet.InnerNetClient.GameStates.Started)
 					{
 						AmongUsClient.Instance.KickPlayer(player.OwnerId, false);
 					}

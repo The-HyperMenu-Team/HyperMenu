@@ -1,10 +1,38 @@
 ﻿namespace MalumMenu.routines
 {
-	public abstract class IRoutine
-	{
-		public virtual string RoutineName { get; set; } = "";
-		public virtual bool Enabled { get; set; } = false;
+    public abstract class IRoutine
+    {
+        public readonly string name;
 
-		public virtual void Run() { }
-	}
+        public bool _enabled = false;
+        public virtual bool Enabled
+        {
+            get { return _enabled; }
+            set
+            {
+                if(value == _enabled) return;
+                _enabled = value;
+
+                if(value)
+                {
+                    OnEnable();
+                }
+                else
+                {
+                    OnDisable();
+                }
+            }
+        }
+
+        public IRoutine(string name)
+        {
+            this.name = name;
+        }
+
+        public abstract void Run();
+
+        protected virtual void OnEnable() { }
+        protected virtual void OnDisable() { }
+        public virtual void OnDisconnect() { }
+    }
 }

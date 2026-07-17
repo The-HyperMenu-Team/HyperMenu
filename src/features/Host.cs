@@ -1,5 +1,7 @@
-﻿using HarmonyLib;
+﻿using AmongUs.GameOptions;
+using HarmonyLib;
 using Hazel;
+using Il2CppSystem.Collections.Generic;
 using InnerNet;
 using UnityEngine.AddressableAssets;
 
@@ -104,6 +106,53 @@ namespace MalumMenu.features
 			}
 		}
 
+		[HarmonyPatch(typeof(LogicRoleSelectionNormal), nameof(LogicRoleSelectionNormal.AssignRolesFromList))]
+		public static class AlwaysImposter
+		{
+			public static bool Enabled { get; set; } = false;
+			public static RoleTypes assignedRole = RoleTypes.Viper;
+
+			static void Prefix(ref List<NetworkedPlayerInfo> players, ref List<RoleTypes> roleList, ref int rolesAssigned)
+			{
+				if(!Enabled || !AmongUsClient.Instance.AmHost) return;
+
+				MalumMenu.Log.LogInfo($"Attempting to assign ourselves the {assignedRole} role");
+
+				Il2CppSystem.Predicate<NetworkedPlayerInfo> predicate = (Il2CppSystem.Predicate<NetworkedPlayerInfo>)(player => player == PlayerControl.LocalPlayer.Data);
+				int playerIndex = players.FindIndex(predicate);
+
+				if(playerIndex == -1)
+				{
+					MalumMenu.Log.LogInfo("Our NetworkedPlayerInfo does not exist in this list, skipping");
+					return;
+				}
+
+				MalumMenu.Log.LogInfo($"Found our NetworkedPlayerInfo in the players list at index {playerIndex}, removing from the list");
+				players.RemoveAt(playerIndex);
+
+				Il2CppSystem.Predicate<RoleTypes> predicate2 = (Il2CppSystem.Predicate<RoleTypes>)(roleType => roleType == assignedRole);
+				int roleIndex = roleList.FindIndex(predicate2);
+
+				MalumMenu.Log.LogMessage($"Player index is {roleIndex}");
+
+				if(roleIndex != -1)
+				{
+					MalumMenu.Log.LogInfo($"Found an instance of our role in the roles list at index {roleIndex}, removing from the list");
+					roleList.RemoveAt(roleIndex);
+				}
+
+				if(RoleManager.IsGhostRole(assignedRole) && players.Count == 0)
+				{
+					PlayerControl.LocalPlayer.RpcSetRole(RoleManager.IsImpostorRole(assignedRole) ? RoleTypes.Impostor : RoleTypes.Crewmate);
+				}
+
+				PlayerControl.LocalPlayer.RpcSetRole(assignedRole);
+				rolesAssigned++;
+
+				MalumMenu.Log.LogInfo($"Assigned ourself the {assignedRole} role!");
+			}
+		}
+
         [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.SetKillTimer))]
         public static class NoKillCooldown
         {
@@ -150,7 +199,9 @@ namespace MalumMenu.features
 				systemUpdate.Write(operation == 1);
 				systemUpdate.EndMessage();
 
-				Network.SendDataFlag(ShipStatus.Instance.NetId, systemUpdate, player.OwnerId);
+				Network.BatchedMessage batch = new Network.BatchedMessage(player.OwnerId);
+				batch.QueueDataFlag(ShipStatus.Instance.NetId, systemUpdate);
+				batch.FinishBatch();
 			}
 		}
 

@@ -10,7 +10,7 @@ namespace MalumMenu.features
 		{
 			static void Postfix(PlayerControl __instance)
 			{
-				if(__instance.PlayerId == PlayerControl.LocalPlayer?.PlayerId || AmongUsClient.Instance.NetworkMode == NetworkModes.FreePlay) return;
+				if(__instance == PlayerControl.LocalPlayer || AmongUsClient.Instance.NetworkMode == NetworkModes.FreePlay) return;
 
 				ClientData clientData = AmongUsClient.Instance.GetClientFromCharacter(__instance);
 				if(clientData == null) return;

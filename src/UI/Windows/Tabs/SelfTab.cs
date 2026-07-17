@@ -71,7 +71,7 @@ namespace MalumMenu
             {
                 if (!Utils.isLobby)
                 {
-                    Network.SendSetScanner(true);
+                    Network.RPCEmitter.SendSetScanner(true);
                 }else
                 {
                     MalumMenu.notifications.Send("Anticheat Notice", "This cheat is disabled in lobby due to anticheat detection. You can use it once the game starts.");
@@ -82,7 +82,7 @@ namespace MalumMenu
             {
                 if (!Utils.isLobby)
                 {
-                    Network.SendSetScanner(false);
+                    Network.RPCEmitter.SendSetScanner(false);
                 }else
                 {
                     MalumMenu.notifications.Send("Anticheat Notice", "This cheat is disabled in lobby due to anticheat detection. You can use it once the game starts.");
@@ -95,7 +95,7 @@ namespace MalumMenu
             {
                 if (!Utils.isLobby)
                 {
-                    Network.SendPlayAnimation((byte)TaskTypes.ClearAsteroids);
+                    Network.RPCEmitter.SendPlayAnimation((byte)TaskTypes.ClearAsteroids);
                 }else
                 {
                     MalumMenu.notifications.Send("Anticheat Notice", "This cheat is disabled in lobby due to anticheat detection. You can use it once the game starts.");
@@ -106,7 +106,7 @@ namespace MalumMenu
             {
                 if (!Utils.isLobby)
                 {
-                    Network.SendPlayAnimation((byte)TaskTypes.EmptyGarbage);
+                    Network.RPCEmitter.SendPlayAnimation((byte)TaskTypes.EmptyGarbage);
                 }else
                 {
                     MalumMenu.notifications.Send("Anticheat Notice", "This cheat is disabled in lobby due to anticheat detection. You can use it once the game starts.");
@@ -118,7 +118,7 @@ namespace MalumMenu
             {
                 if (!Utils.isLobby)
                 {
-                    Network.SendPlayAnimation((byte)TaskTypes.PrimeShields);
+                    Network.RPCEmitter.SendPlayAnimation((byte)TaskTypes.PrimeShields);
                 } else
                 {
                     MalumMenu.notifications.Send("Anticheat Notice", "This cheat is disabled in lobby due to anticheat detection. You can use it once the game starts.");

@@ -1,4 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using AmongUs.GameOptions;
+using Hazel;
+using MalumMenu.features;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 namespace MalumMenu
 {
@@ -10,16 +15,32 @@ namespace MalumMenu
         private static readonly Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppReferenceArray<PetData> allPets = HatManager.Instance.allPets;
         private static readonly Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppReferenceArray<NamePlateData> allNameplates = HatManager.Instance.allNamePlates;
 
+        public static int GetRandomUnusedColor()
+        {
+            List<int> colors = Enumerable.Range(0, 18).ToList();
+
+            foreach (PlayerControl player in PlayerControl.AllPlayerControls)
+            {
+                colors.Remove(player.Data.DefaultOutfit.ColorId);
+            }
+
+            System.Random rnd = new System.Random();
+
+            if (colors.Count == 0)
+            {
+                return rnd.Next(0, 18);
+            }
+
+            return colors[rnd.Next(0, colors.Count)];
+        }
+
         public static void RandomizePlayer(bool ingame = false)
         {
             System.Random rnd = new System.Random();
 
             if (ingame)
             {
-                PlayerControl.LocalPlayer.CmdCheckColor((byte)rnd.Next(0, 15));
-
-                // string randomName = AccountManager.Instance.GetRandomName();
-                // PlayerControl.LocalPlayer.CmdCheckName(randomName);
+                PlayerControl.LocalPlayer.CmdCheckColor((byte)GetRandomUnusedColor());
 
                 PlayerControl.LocalPlayer.RpcSetHat(allHats[rnd.Next(0, allHats.Length)].ProductId);
                 PlayerControl.LocalPlayer.RpcSetVisor(allVisors[rnd.Next(0, allVisors.Length)].ProductId);
@@ -28,13 +49,13 @@ namespace MalumMenu
             }
             else
             {
-                PlayerCustomization.EquipSkin(allSkins[rnd.Next(0, allSkins.Length)]);
+                AccountManager.Instance.RandomizeName();
+
                 PlayerCustomization.EquipHat(allHats[rnd.Next(0, allHats.Length)]);
                 PlayerCustomization.EquipVisor(allVisors[rnd.Next(0, allVisors.Length)]);
+                PlayerCustomization.EquipSkin(allSkins[rnd.Next(0, allSkins.Length)]);
                 PlayerCustomization.EquipPet(allPets[rnd.Next(0, allPets.Length)]);
                 PlayerCustomization.EquipNameplate(allNameplates[rnd.Next(0, allNameplates.Length)]);
-
-                AccountManager.Instance.RandomizeName();
             }
         }
 
@@ -55,6 +76,8 @@ namespace MalumMenu
                 validPlayers.Add(player);
             }
 
+            if (validPlayers.Count == 0) return null;
+
             System.Random rnd = new System.Random();
             return validPlayers[rnd.Next(validPlayers.Count)];
         }
@@ -63,22 +86,87 @@ namespace MalumMenu
         {
             NetworkedPlayerInfo.PlayerOutfit outfit = player.CurrentOutfit;
 
-            if (AmongUsClient.Instance.AmHost)
+            bool hasAnticheat = IsAnticheatPresent();
+
+            Network.BatchedMessage batch = new Network.BatchedMessage();
+
+            if (!hasAnticheat)
             {
-                // Changing names, even when host, is not possible on Vanilla servers
-                PlayerControl.LocalPlayer.RpcSetName(outfit.PlayerName);
-                PlayerControl.LocalPlayer.RpcSetColor((byte)outfit.ColorId);
-            }
-            else
-            {
-                PlayerControl.LocalPlayer.CmdCheckColor((byte)outfit.ColorId);
+                batch.QueueSetName(PlayerControl.LocalPlayer, outfit.PlayerName);
             }
 
-            PlayerControl.LocalPlayer.RpcSetNamePlate(outfit.NamePlateId);
-            PlayerControl.LocalPlayer.RpcSetHat(outfit.HatId);
-            PlayerControl.LocalPlayer.RpcSetVisor(outfit.VisorId);
-            PlayerControl.LocalPlayer.RpcSetSkin(outfit.SkinId);
-            PlayerControl.LocalPlayer.RpcSetPet(outfit.PetId);
+            if (!hasAnticheat || AmongUsClient.Instance.AmHost)
+            {
+                batch.QueueSetColor(PlayerControl.LocalPlayer, (byte)outfit.ColorId);
+            }
+
+            batch.QueueSetNameplateStr(PlayerControl.LocalPlayer, outfit.NamePlateId, ++outfit.NamePlateSequenceId);
+            batch.QueueSetHatStr(PlayerControl.LocalPlayer, outfit.HatId, ++outfit.HatSequenceId);
+            batch.QueueSetVisorStr(PlayerControl.LocalPlayer, outfit.VisorId, ++outfit.VisorSequenceId);
+            batch.QueueSetSkinStr(PlayerControl.LocalPlayer, outfit.SkinId, ++outfit.SkinSequenceId);
+            batch.QueueSetPetStr(PlayerControl.LocalPlayer, outfit.PetId, ++outfit.PetSequenceId);
+
+            batch.FinishBatch();
+        }
+
+        public static void AttemptStartMeeting(PlayerControl reporter, NetworkedPlayerInfo target)
+        {
+            MalumMenu.Log.LogInfo($"Attempting to start a meeting for {reporter.Data.PlayerName}");
+
+            bool hasAnticheat = IsAnticheatPresent();
+
+            if (hasAnticheat && AmongUsClient.Instance.GameState != InnerNet.InnerNetClient.GameStates.Started)
+            {
+                MalumMenu.notifications.Send("Start Meeting", "The game must have started in order for this feature to work.");
+                return;
+            }
+
+            if (AmongUsClient.Instance.AmHost)
+            {
+                MalumMenu.Log.LogInfo($"We are the host so we can directly use the StartMeeting RPC");
+
+                if (ShipStatus.Instance == null)
+                {
+                    MalumMenu.notifications.Send("Start Meeting", "There must be a valid instance of ShipStatus for this feature to work.");
+                }
+                else
+                {
+                    OpenMeeting(reporter, target);
+                }
+
+                return;
+            }
+
+            MalumMenu.Log.LogInfo("We are not the host so we have to use the ReportDeadBody RPC");
+
+            if (hasAnticheat && reporter != PlayerControl.LocalPlayer)
+            {
+                MalumMenu.notifications.Send("Start Meeting", "You must be the host of the lobby to make another player start a meeting.");
+                return;
+            }
+
+            if (reporter.Data.IsDead)
+            {
+                MalumMenu.notifications.Send("Start Meeting", "You can only call meetings or report bodies if you are alive.");
+                return;
+            }
+
+            if (hasAnticheat && target != null)
+            {
+                if (!target.IsDead)
+                {
+                    MalumMenu.notifications.Send("Start Meeting", "You can only report bodies of players who have died in this round.");
+                    return;
+                }
+
+                if (!DoesDeadBodyExist(target.PlayerId))
+                {
+                    MalumMenu.notifications.Send("Start Meeting", "Unable to find a dead body for this player, you can only report a player's body if they have died this round and their body has not dissolved.");
+                    return;
+                }
+            }
+
+            reporter.CmdReportDeadBody(target);
         }
 
         public static void OpenMeeting(PlayerControl reporter, NetworkedPlayerInfo target)
@@ -88,26 +176,156 @@ namespace MalumMenu
             HudManager.Instance.OpenMeetingRoom(reporter);
         }
 
-        public static MapNames GetCurrentMap()
+        public static bool DoesDeadBodyExist(byte playerId)
         {
-            if (AmongUsClient.Instance.NetworkMode == NetworkModes.FreePlay)
+            foreach (Collider2D collider in Physics2D.OverlapCircleAll(new Vector2(0, 0), 99999f, Constants.PlayersOnlyMask))
             {
-                return (MapNames)AmongUsClient.Instance.TutorialMapId;
+                if (collider.tag != "DeadBody") continue;
+
+                DeadBody bodyComponent = collider.GetComponent<DeadBody>();
+                if (bodyComponent && bodyComponent.ParentId == playerId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static void ShapeshiftPlayer(PlayerControl victim, PlayerControl target, bool shouldAnimate = true)
+        {
+            bool hasAnticheat = IsAnticheatPresent();
+
+            if (hasAnticheat && !AmongUsClient.Instance.AmHost)
+            {
+                MalumMenu.notifications.Send("Shapeshift Player", "You must be the host of the lobby in order to use this feature.");
+                return;
+            }
+
+            if (hasAnticheat && AmongUsClient.Instance.GameState != InnerNet.InnerNetClient.GameStates.Started)
+            {
+                MalumMenu.notifications.Send("Shapeshift Player", "The game must have started for this option to work.");
+                return;
+            }
+
+            Network.BatchedMessage batch = new Network.BatchedMessage();
+
+            if (hasAnticheat && victim.Data.RoleType != RoleTypes.Shapeshifter)
+            {
+                RoleTypes currentRole = victim.Data.RoleType;
+
+                batch.QueueSetRole(victim, RoleTypes.Shapeshifter, true);
+                batch.QueueShapeshift(victim, target, shouldAnimate);
+                batch.QueueSetRole(victim, currentRole, true);
             }
             else
             {
-                return (MapNames)GameOptionsManager.Instance.CurrentGameOptions.MapId;
+                batch.QueueShapeshift(victim, target, shouldAnimate);
             }
+
+            batch.FinishBatch();
         }
+
+        public static MapNames GetCurrentMap()
+        {
+            if(ShipStatus.Instance == null)
+            {
+                if(AmongUsClient.Instance.NetworkMode == NetworkModes.FreePlay)
+                {
+                    return (MapNames)AmongUsClient.Instance.TutorialMapId;
+                }
+                else
+                {
+                    return (MapNames)GameOptionsManager.Instance.CurrentGameOptions.MapId;
+                }
+            }
+
+            return (Network.Constants.SpawnType)ShipStatus.Instance.SpawnId switch
+            {
+                Network.Constants.SpawnType.SkeldShipStatus => MapNames.Skeld,
+                Network.Constants.SpawnType.DleksShipStatus => MapNames.Dleks,
+                Network.Constants.SpawnType.MiraShipStatus => MapNames.MiraHQ,
+                Network.Constants.SpawnType.PolusShipStatus => MapNames.Polus,
+                Network.Constants.SpawnType.AirshipShipStatus => MapNames.Airship,
+                Network.Constants.SpawnType.FungleShipStatus => MapNames.Fungle,
+                _ => MapNames.Skeld
+            };
+        }
+
         public static bool IsAnticheatPresent()
         {
             if (Constants.IsVersionModded() || PlayerControl.LocalPlayer == null || PlayerControl.LocalPlayer.Data == null) return false;
 
-            // On freeplay, local, and modded lobbies, NetworkedPlayerInfo net objects are owned by the host (-2)
-            // On vanilla lobbies, NetworkedPlayerInfo net objects are owned by the backend among us servers (-4)
-            // If our NetworkedPlayerInfo net object is owned by the host, we can assume that the lobby has a lax anticheat without server authority
-            // which does not require us to use any sort of bypasses
-            return PlayerControl.LocalPlayer.Data.OwnerId == -4;
+            return PlayerControl.LocalPlayer.Data.OwnerId != (int)Network.Constants.OwnerIds.Host;
+        }
+
+        public static string GetPlayerColor(NetworkedPlayerInfo player)
+        {
+            int colorId = player.DefaultOutfit.ColorId;
+
+            if (colorId < 0 || colorId >= Palette.ColorNames.Length)
+            {
+                return "Fortegreen";
+            }
+
+            return player.GetPlayerColorString();
+        }
+
+        public static void KickPlayer(PlayerControl player, bool skipFirstStage = false)
+        {
+            if(AmongUsClient.Instance.AmHost)
+            {
+                AmongUsClient.Instance.KickPlayer(player.OwnerId, true);
+                MalumMenu.notifications.Send("Kick Player", $"{player.Data.PlayerName} has been kicked from the game.");
+                return;
+            }
+
+            if(player.OwnerId == AmongUsClient.Instance.HostId)
+            {
+                MalumMenu.notifications.Send("Kick Player", "You are not able to kick out the host of the lobby");
+                return;
+            }
+
+            if(ShipStatus.Instance == null)
+            {
+                MalumMenu.notifications.Send("Kick Player", "The game must have started in order for this feature to work.");
+                return;
+            }
+
+            if(!IsAnticheatPresent())
+            {
+                MalumMenu.notifications.Send("Kick Player", "This feature only works in server-authoritative lobbies.");
+                return;
+            }
+
+            Network.BatchedMessage batch = new Network.BatchedMessage(player.OwnerId);
+
+            if(!skipFirstStage)
+            {
+                MalumMenu.Log.LogInfo($"Sending Enter ventilation system update to {player.OwnerId}");
+
+                MessageWriter writer = MessageWriter.Get(SendOption.Reliable);
+                writer.Write((ushort)0);
+                writer.Write((byte)VentilationSystem.Operation.Enter);
+                writer.Write((byte)0);
+
+                batch.QueueUpdateSystem(PlayerControl.LocalPlayer, SystemTypes.Ventilation, writer);
+                writer.Recycle();
+            }
+
+            MalumMenu.Log.LogInfo($"Sending BootImposters ventilation system update to {player.OwnerId}");
+
+            MessageWriter writer2 = MessageWriter.Get(SendOption.Reliable);
+            writer2.Write((ushort)1);
+            writer2.Write((byte)VentilationSystem.Operation.BootImpostors);
+            writer2.Write((byte)0);
+
+            batch.QueueUpdateSystem(PlayerControl.LocalPlayer, SystemTypes.Ventilation, writer2);
+            writer2.Recycle();
+
+            batch.FinishBatch();
+
+            MalumMenu.notifications.Send("Kick Player", $"{player.Data.PlayerName} has been kicked from the game.");
         }
     }
 }
