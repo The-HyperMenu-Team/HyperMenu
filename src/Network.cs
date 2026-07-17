@@ -97,6 +97,11 @@ namespace MalumMenu
                 }
             }
 
+            private bool AmTarget
+            {
+                get { return targetClientId == -1 || targetClientId == AmongUsClient.Instance.ClientId; }
+            }
+
             public void QueueDataFlag(InnerNetObject netObj)
             {
                 writer.StartMessage((byte)GameDataTypes.DataFlag);
@@ -111,6 +116,12 @@ namespace MalumMenu
                 writer.WritePacked(netId);
                 writer.Write(msg, false);
                 writer.EndMessage();
+            }
+
+            public void QueueSpawn(InnerNetObject netObject, int ownerId = -2, SpawnFlags flags = SpawnFlags.None)
+            {
+                SpawnGameDataMessage spawn = AmongUsClient.Instance.CreateSpawnMessage(netObject, ownerId, flags);
+                spawn.Serialize(writer);
             }
 
             public void QueueDespawn(uint netId)
@@ -150,7 +161,10 @@ namespace MalumMenu
 
             public void QueueSetName(PlayerControl source, string name)
             {
-                source.SetName(name);
+                if(AmTarget)
+                {
+                    source.SetName(name);
+                }
 
                 writer.StartMessage((byte)GameDataTypes.RpcFlag);
                 writer.WritePacked(source.NetId);
@@ -162,7 +176,10 @@ namespace MalumMenu
 
             public void QueueSetColor(PlayerControl source, byte color)
             {
-                source.SetColor(color);
+                if(AmTarget)
+                {
+                    source.SetColor(color);
+                }
 
                 writer.StartMessage((byte)GameDataTypes.RpcFlag);
                 writer.WritePacked(source.NetId);
@@ -189,7 +206,10 @@ namespace MalumMenu
 
             public void QueueMurderPlayer(PlayerControl source, PlayerControl target, MurderResultFlags result)
             {
-                source.MurderPlayer(target, result);
+                if(AmTarget)
+                {
+                    source.MurderPlayer(target, result);
+                }
 
                 writer.StartMessage((byte)GameDataTypes.RpcFlag);
                 writer.WritePacked(source.NetId);
@@ -235,21 +255,29 @@ namespace MalumMenu
                 writer.EndMessage();
             }
 
-            public void QueueSnapTo(PlayerControl source, ushort seq, Vector2 position)
+            public void QueueSnapTo(PlayerControl source, Vector2 position)
             {
-                source.NetTransform.SnapTo(position, seq);
+                if(AmTarget)
+                {
+                    source.NetTransform.SnapTo(position, (ushort)(source.NetTransform.lastSequenceId + 1));
+                }
+
+                ushort seqId = (ushort)(source.NetTransform.lastSequenceId + 2);
 
                 writer.StartMessage((byte)GameDataTypes.RpcFlag);
                 writer.WritePacked(source.NetTransform.NetId);
                 writer.Write((byte)RpcCalls.SnapTo);
                 NetHelpers.WriteVector2(position, writer);
-                writer.Write(seq);
+                writer.Write(seqId);
                 writer.EndMessage();
             }
 
             public void QueueCloseMeeting()
             {
-                MeetingHud.Instance.Close();
+                if(AmTarget)
+                {
+                    MeetingHud.Instance.Close();
+                }
 
                 writer.StartMessage((byte)GameDataTypes.RpcFlag);
                 writer.WritePacked(MeetingHud.Instance.NetId);
@@ -259,7 +287,10 @@ namespace MalumMenu
 
             public void QueueVotingComplete(MeetingHud.VoterState[] voteStates, NetworkedPlayerInfo ejectedPlayer, bool isTie)
             {
-                MeetingHud.Instance.VotingComplete(voteStates, ejectedPlayer, isTie);
+                if(AmTarget)
+                {
+                    MeetingHud.Instance.VotingComplete(voteStates, ejectedPlayer, isTie);
+                }
 
                 writer.StartMessage((byte)GameDataTypes.RpcFlag);
                 writer.WritePacked(MeetingHud.Instance.NetId);
@@ -280,7 +311,10 @@ namespace MalumMenu
 
             public void QueueAddVote(int sourceId, int targetId)
             {
-                VoteBanSystem.Instance.AddVote(sourceId, targetId);
+                if(AmTarget)
+                {
+                    VoteBanSystem.Instance.AddVote(sourceId, targetId);
+                }
 
                 writer.StartMessage((byte)GameDataTypes.RpcFlag);
                 writer.WritePacked(VoteBanSystem.Instance.NetId);
@@ -314,7 +348,10 @@ namespace MalumMenu
 
             public void QueueSetHatStr(PlayerControl source, string hat, byte seqid)
             {
-                source.SetHat(hat, source.Data.DefaultOutfit.ColorId);
+                if(AmTarget)
+                {
+                    source.SetHat(hat, source.Data.DefaultOutfit.ColorId);
+                }
 
                 writer.StartMessage((byte)GameDataTypes.RpcFlag);
                 writer.WritePacked(source.NetId);
@@ -326,7 +363,10 @@ namespace MalumMenu
 
             public void QueueSetSkinStr(PlayerControl source, string skin, byte seqid)
             {
-                source.SetSkin(skin, source.Data.DefaultOutfit.ColorId);
+                if(AmTarget)
+                {
+                    source.SetSkin(skin, source.Data.DefaultOutfit.ColorId);
+                }
 
                 writer.StartMessage((byte)GameDataTypes.RpcFlag);
                 writer.WritePacked(source.NetId);
@@ -338,7 +378,10 @@ namespace MalumMenu
 
             public void QueueSetPetStr(PlayerControl source, string pet, byte seqid)
             {
-                source.SetPet(pet, source.Data.DefaultOutfit.ColorId);
+                if(AmTarget)
+                {
+                    source.SetPet(pet, source.Data.DefaultOutfit.ColorId);
+                }
 
                 writer.StartMessage((byte)GameDataTypes.RpcFlag);
                 writer.WritePacked(source.NetId);
@@ -350,7 +393,10 @@ namespace MalumMenu
 
             public void QueueSetVisorStr(PlayerControl source, string visor, byte seqid)
             {
-                source.SetVisor(visor, source.Data.DefaultOutfit.ColorId);
+                if(AmTarget)
+                {
+                    source.SetVisor(visor, source.Data.DefaultOutfit.ColorId);
+                }
 
                 writer.StartMessage((byte)GameDataTypes.RpcFlag);
                 writer.WritePacked(source.NetId);
@@ -362,7 +408,10 @@ namespace MalumMenu
 
             public void QueueSetNameplateStr(PlayerControl source, string nameplate, byte seqid)
             {
-                source.SetVisor(nameplate, source.Data.DefaultOutfit.ColorId);
+                if(AmTarget)
+                {
+                    source.SetNamePlate(nameplate);
+                }
 
                 writer.StartMessage((byte)GameDataTypes.RpcFlag);
                 writer.WritePacked(source.NetId);
@@ -374,7 +423,10 @@ namespace MalumMenu
 
             public void QueueSetRole(PlayerControl source, RoleTypes role, bool canOverride = false)
             {
-                source.StartCoroutine(source.CoSetRole(role, canOverride));
+                if(AmTarget)
+                {
+                    source.StartCoroutine(source.CoSetRole(role, canOverride));
+                }
 
                 writer.StartMessage((byte)GameDataTypes.RpcFlag);
                 writer.WritePacked(source.NetId);
@@ -386,7 +438,10 @@ namespace MalumMenu
 
             public void QueueShapeshift(PlayerControl source, PlayerControl target, bool shouldAnimate)
             {
-                source.Shapeshift(target, shouldAnimate);
+                if(AmTarget)
+                {
+                    source.Shapeshift(target, shouldAnimate);
+                }
 
                 writer.StartMessage((byte)GameDataTypes.RpcFlag);
                 writer.WritePacked(source.NetId);
@@ -407,6 +462,17 @@ namespace MalumMenu
                 writer.WritePacked(source.NetId);
                 writer.Write((byte)RpcCalls.CheckMurder);
                 writer.WriteNetObject(target);
+                writer.EndMessage();
+            }
+
+            public void QueueUpdateSystem(PlayerControl source, SystemTypes system, MessageWriter msg)
+            {
+                writer.StartMessage((byte)GameDataTypes.RpcFlag);
+                writer.WritePacked(ShipStatus.Instance.NetId);
+                writer.Write((byte)RpcCalls.UpdateSystem);
+                writer.Write((byte)system);
+                writer.WriteNetObject(source);
+                writer.Write(msg, false);
                 writer.EndMessage();
             }
 

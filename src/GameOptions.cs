@@ -35,7 +35,9 @@ namespace MalumMenu
             writer.WriteBytesAndSize(GameManager.Instance.LogicOptions.gameOptionsFactory.ToBytes(options, AprilFoolsMode.IsAprilFoolsModeToggledOn));
             writer.EndMessage();
 
-            Network.SendDataFlag(GameManager.Instance.NetId, writer, targetClientId);
+            Network.BatchedMessage batch = new Network.BatchedMessage(targetClientId);
+            batch.QueueDataFlag(GameManager.Instance.NetId, writer);
+            batch.FinishBatch();
         }
 
         private static int FindLogicOptionsIndex()

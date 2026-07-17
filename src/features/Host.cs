@@ -199,7 +199,9 @@ namespace MalumMenu.features
 				systemUpdate.Write(operation == 1);
 				systemUpdate.EndMessage();
 
-				Network.SendDataFlag(ShipStatus.Instance.NetId, systemUpdate, player.OwnerId);
+				Network.BatchedMessage batch = new Network.BatchedMessage(player.OwnerId);
+				batch.QueueDataFlag(ShipStatus.Instance.NetId, systemUpdate);
+				batch.FinishBatch();
 			}
 		}
 
