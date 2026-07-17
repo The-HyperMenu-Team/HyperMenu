@@ -1,37 +1,81 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 namespace MalumMenu.routines
 {
-	public class DiscoHostRoutine : IRoutine
-	{
-		public DiscoHostRoutine()
-		{
-			RoutineName = "DiscoHost";
-		}
+    public class DiscoHostRoutine : IRoutine
+    {
+        public DiscoHostRoutine() : base("DiscoHost") { }
+        public HashSet<int> targets = new HashSet<int>();
 
-		public float randomizationDelay = 0.5f;
-		private float timeElapsed = 0f;
+        public float randomizationDelay = 0.5f;
+        private float timeElapsed = 0f;
 
-		public override void Run()
-		{
-			if(PlayerControl.LocalPlayer == null || !AmongUsClient.Instance.AmHost)
-			{
-				Enabled = false;
-                MalumMenu.notifications.Send("Disco", "Disco mode has been disabled as you are not the host or you left the lobby.", 5);
+        private System.Random rnd = new System.Random();
 
-				return;
-			}
+        public override void Run()
+        {
+            timeElapsed += Time.deltaTime;
+            if(timeElapsed < randomizationDelay) return;
+            timeElapsed = 0f;
 
-			timeElapsed += Time.deltaTime;
-			if(timeElapsed < randomizationDelay) return;
+            List<int> colors = Enumerable.Range(0, 18).ToList();
 
-			System.Random rnd = new System.Random();
-			foreach(PlayerControl player in PlayerControl.AllPlayerControls)
-			{
-				player.RpcSetColor((byte)rnd.Next(0, 18));
-			}
+            Network.BatchedMessage batch = new Network.BatchedMessage();
 
-			timeElapsed = 0f;
-		}
-	}
+            foreach(PlayerControl player in PlayerControl.AllPlayerControls)
+            {
+                if(!IsGlobal && !targets.Contains(player.GetHashCode())) continue;
+
+                int color;
+                if(colors.Count != 0)
+                {
+                    color = colors[rnd.Next(0, colors.Count)];
+                    colors.Remove(color);
+                }
+                else
+                {
+                    color = rnd.Next(0, 18);
+                }
+
+                batch.QueueSetColor(player, (byte)color);
+            }
+
+            batch.FinishBatch();
+        }
+
+        public bool IsGlobal
+        {
+            get { return targets.Count == 1 && targets.Contains(int.MaxValue); }
+        }
+
+        protected override void OnEnable()
+        {
+            if(PlayerControl.LocalPlayer == null)
+            {
+                MalumMenu.notifications.Send("Disco Party", "Disco Party can only be used inside of a game.", 10);
+                Enabled = false;
+                return;
+            }
+
+            if(Utilities.IsAnticheatPresent() && !AmongUsClient.Instance.AmHost)
+            {
+                MalumMenu.notifications.Send("Disco Party", "Disco Party can only be used if you are the host of the lobby.", 10);
+                Enabled = false;
+                return;
+            }
+        }
+
+        protected override void OnDisable()
+        {
+            targets.Clear();
+        }
+
+        public override void OnDisconnect()
+        {
+            MalumMenu.notifications.Send("Disco Party", "Disco Party was disabled as you left the game.", 10);
+            Enabled = false;
+        }
+    }
 }

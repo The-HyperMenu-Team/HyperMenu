@@ -13,7 +13,8 @@ namespace MalumMenu.anticheat.rpc
 			SystemTypes.MedBay,
 			SystemTypes.Sabotage,
 			// Ghosts update the Security system when closing cameras, but not opening them
-			SystemTypes.Security
+			SystemTypes.Security,
+			SystemTypes.Ventilation
 		};
 
 		public override void Validate(PlayerControl player, MessageReader reader, ref bool blockRpc)

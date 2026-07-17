@@ -1,24 +1,31 @@
-﻿using HarmonyLib;
+﻿using System.Collections.Generic;
+using HarmonyLib;
 
 namespace MalumMenu.features
 {
 	internal class Troll
 	{
+		public static Dictionary<PlayerControl, ushort> VentSeqIds = new Dictionary<PlayerControl, ushort>();
 		[HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.MurderPlayer))]
 		public static class AutoReportBodies
 		{
+			public static PlayerControl source;
+
 			public static bool Enabled { get; set; } = false;
 
-			static void Prefix(PlayerControl __instance, PlayerControl target, MurderResultFlags resultFlags)
+			static void Postfix(PlayerControl __instance, PlayerControl target, MurderResultFlags resultFlags)
 			{
-				if(!Enabled || PlayerControl.LocalPlayer.Data.IsDead) return;
+				if(!Enabled || !resultFlags.HasFlag(MurderResultFlags.Succeeded)) return;
 
-				MalumMenu.Log.LogInfo($"Recieved MurderPlayer for {target.Data.PlayerName} with result flags {resultFlags}");
+				if(AmongUsClient.Instance.AmHost)
+				{
+					Utilities.OpenMeeting(source ?? PlayerControl.LocalPlayer, target.Data);
+					return;
+				}
 
-				if(!resultFlags.HasFlag(MurderResultFlags.Succeeded)) return;
+				if(PlayerControl.LocalPlayer.Data.IsDead) return;
 
-				// NetworkedPlayerInfo::ColorName automatically appends parentheses at the start and end of the color's name, so we don't need to add them ourselves in the notification
-				MalumMenu.notifications.Send("Auto Report Bodies", $"{target.Data.PlayerName} was just killed by {__instance.Data.PlayerName} {__instance.Data.ColorName}, their body has been automatically reported.");
+				MalumMenu.notifications.Send("Auto Report Bodies", $"{target.Data.PlayerName} was killed by {__instance.Data.PlayerName} ({Utilities.GetPlayerColor(__instance.Data)}), their body has been automatically reported.");
 				PlayerControl.LocalPlayer.CmdReportDeadBody(target.Data);
 			}
 		}
@@ -50,12 +57,12 @@ namespace MalumMenu.features
 			}
 		}
 
-		// When the host recieves a Sabotage system update, it first ensures that there is no active meeting, and that the sabotage cooldown has ended
+		// When the host receives a Sabotage system update, it first ensures that there is no active meeting, and that the sabotage cooldown has ended
 		// If all checks pass, the host sets the sabotage cooldown to 30.0s and then handles which system to update based off of the sabotage type
 		// The only problem is that the host updates the sabotage cooldown without first confirming that the attempted sabotage actually succeeded
 		// Meaning that if we were to sabotage a system that does not have an associated sabotage, the host would just reset the sabotage cooldown
 		// We can use flaw to create an anti-sabotage by sabotaging an invalid system every time the sabotage cooldown ends
-		// which gives the impostors pratically no time to be able to do any sabotages themselves
+		// which gives the impostors practically no time to be able to do any sabotages themselves
 		[HarmonyPatch(typeof(SabotageSystemType), nameof(SabotageSystemType.Deserialize))]
 		public static class BlockSabotages
 		{

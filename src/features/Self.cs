@@ -29,11 +29,11 @@ namespace MalumMenu.features
 		{
 			static bool Prefix(PlayerControl __instance, bool value)
 			{
-				if(__instance.PlayerId != PlayerControl.LocalPlayer.PlayerId) return true;
+				if(__instance != PlayerControl.LocalPlayer) return true;
 
 				if(AlwaysShowTaskAnimations)
 				{
-					Network.SendSetScanner(value);
+					Network.RPCEmitter.SendSetScanner(value);
 					return false;
 				}
 				else
@@ -48,11 +48,11 @@ namespace MalumMenu.features
 		{
 			static bool Prefix(PlayerControl __instance, byte animType)
 			{
-				if(__instance.PlayerId != PlayerControl.LocalPlayer.PlayerId) return true;
+				if(__instance != PlayerControl.LocalPlayer) return true;
 
 				if(AlwaysShowTaskAnimations)
 				{
-					Network.SendPlayAnimation(animType);
+					Network.RPCEmitter.SendPlayAnimation(animType);
 					return false;
 				}
 				else

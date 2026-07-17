@@ -1,5 +1,6 @@
 ﻿using AmongUs.GameOptions;
 using Hazel;
+using MalumMenu.features;
 
 namespace MalumMenu
 {
@@ -27,12 +28,16 @@ namespace MalumMenu
                 return;
             }
 
+            if(Protections.BypassShapeshiftRatelimits.Enabled) options.SetFloat(FloatOptionNames.ShapeshifterCooldown, 0.0f);
+
             MessageWriter writer = MessageWriter.Get(SendOption.Reliable);
             writer.StartMessage((byte)FindLogicOptionsIndex());
             writer.WriteBytesAndSize(GameManager.Instance.LogicOptions.gameOptionsFactory.ToBytes(options, AprilFoolsMode.IsAprilFoolsModeToggledOn));
             writer.EndMessage();
 
-            Network.SendDataFlag(GameManager.Instance.NetId, writer, targetClientId);
+            Network.BatchedMessage batch = new Network.BatchedMessage(targetClientId);
+            batch.QueueDataFlag(GameManager.Instance.NetId, writer);
+            batch.FinishBatch();
         }
 
         private static int FindLogicOptionsIndex()

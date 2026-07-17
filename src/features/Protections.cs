@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using AmongUs.GameOptions;
+using HarmonyLib;
 using Hazel;
 using InnerNet;
 
@@ -6,8 +7,10 @@ namespace MalumMenu.features
 {
 	internal class Protections
 	{
-		public static bool BlockInvalidVentOverload { get; set; } = true;
-		public static bool BlockInvalidLadderOverload { get; set; } = true;
+		public static bool BlockLargeGameMessages { get; set; } = true;
+		public static bool BlockInvalidGameDataMessages { get; set; } = true;
+		public static bool BlockUnauthorizedSystemUpdates { get; set; } = true;
+		public static bool ProtectAgainstNonHostKickExploit { get; set; } = true;
 
 		[HarmonyPatch(typeof(InnerNetClient), nameof(InnerNetClient.SetEndpoint))]
 		public static class ForceDTLS
@@ -27,9 +30,9 @@ namespace MalumMenu.features
 
 			static bool Prefix(CustomNetworkTransform __instance, byte callId)
 			{
-				if(!Enabled || callId != (byte)RpcCalls.SnapTo || __instance.myPlayer.PlayerId != PlayerControl.LocalPlayer.PlayerId) return true;
+				if(!Enabled || callId != (byte)RpcCalls.SnapTo || __instance.myPlayer != PlayerControl.LocalPlayer) return true;
 
-				MalumMenu.Log.LogMessage($"Recived SnapTo RPC for our player, since block server teleports is enabled we will disregard the RPC");
+				MalumMenu.Log.LogMessage($"Received SnapTo RPC for our player, since block server teleports is enabled we will disregard the RPC");
 				return false;
 			}
 		}
@@ -99,60 +102,6 @@ namespace MalumMenu.features
 			}
 		}
 
-		[HarmonyPatch(typeof(PlayerPhysics), nameof(PlayerPhysics.HandleRpc))]
-		public static class OnPlayerPhysicsRpc
-		{
-			static bool Prefix(byte callId, MessageReader reader)
-			{
-				int oldReadPosition = reader.Position;
-				RpcCalls rpcId = (RpcCalls)callId;
-
-				switch(rpcId)
-				{
-					case RpcCalls.EnterVent:
-					case RpcCalls.ExitVent:
-					case RpcCalls.BootFromVent:
-						int ventId = reader.ReadPackedInt32();
-
-						if(BlockInvalidVentOverload && !IsValidVentId(ventId))
-						{
-							return false;
-						}
-						break;
-
-					case RpcCalls.ClimbLadder:
-						byte ladderId = reader.ReadByte();
-
-						if(BlockInvalidLadderOverload && (!ShipStatus.Instance || ladderId > ShipStatus.Instance.Ladders.Length - 1))
-						{
-							return false;
-						}
-						break;
-				}
-
-				reader.Position = oldReadPosition;
-				return true;
-			}
-		}
-
-		private static bool IsValidVentId(int ventId)
-		{
-			if(ShipStatus.Instance == null) return false;
-
-			MapNames map = Utilities.GetCurrentMap();
-			// On Mira, there is no vent with ID 0 for whatever reason
-			if(map == MapNames.MiraHQ && (ventId == 0 || ShipStatus.Instance.AllVents.Length > ventId))
-			{
-				return false;
-			}
-			else if(map != MapNames.MiraHQ && ShipStatus.Instance.AllVents.Length - 1 > ventId)
-			{
-				return false;
-			}
-
-			return true;
-		}
-
 		[HarmonyPatch(typeof(VoteBanSystem), nameof(VoteBanSystem.AddVote))]
 		public static class Votekicks
 		{
@@ -163,12 +112,85 @@ namespace MalumMenu.features
 				MalumMenu.Log.LogInfo($"[VotekickLogger] {srcClient} voted to kick out {clientId}");
 				if(clientId != PlayerControl.LocalPlayer.OwnerId) return true;
 
-				ClientData player = AmongUsClient.Instance.GetClient(srcClient);
+				ClientData player = AmongUsClient.Instance.FindClientById(srcClient);
+				if(player == null) return false;
 
 				MalumMenu.notifications.Send("Votekick Logger", $"{player.PlayerName} has voted to kick you out.");
 
 				// Prevent players from being able to votekick you as host
 				return !(Enabled && AmongUsClient.Instance.AmHost);
+			}
+		}
+
+		[HarmonyPatch(typeof(AmongUsClient), nameof(InnerNetClient.CoStartGame))]
+		public static class BypassShapeshiftRatelimits
+		{
+			public static bool Enabled { get; set; } = true;
+
+			static void Postfix()
+			{
+				if(!Enabled || !AmongUsClient.Instance.AmHost) return;
+
+				PlayerControl player = Utilities.GetRandomPlayer();
+				if(player == null) return;
+
+				IGameOptions options = GameOptions.CreateCloneOptions(GameManager.Instance.LogicOptions.currentGameOptions);
+				options.SetFloat(FloatOptionNames.ShapeshifterCooldown, 0.0f);
+
+				GameOptions.SendGameOptionsToClient(options, player.OwnerId);
+			}
+		}
+
+		[HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.HandleRpc))]
+		public static class MemoryAllocationOverload
+		{
+			public static bool Enabled { get; set; } = true;
+
+			static bool Prefix(byte callId, MessageReader reader)
+			{
+				if(!Enabled || callId != (byte)RpcCalls.VotingComplete) return true;
+
+				int oldReadPosition = reader.Position;
+
+				// The game creates an array with the size of the following value
+				// If this value is very large, then the client will attempt to allocate several gigabytes of memory
+
+				int arrayLength = reader.ReadPackedInt32();
+
+				if(arrayLength > 1024 || arrayLength > reader.BytesRemaining)
+				{
+					return false;
+				}
+
+				reader.Position = oldReadPosition;
+				return true;
+			}
+		}
+
+		[HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.HandleRpc))]
+		class OnShipStatusRPC
+		{
+			static bool Prefix(byte callId, MessageReader reader)
+			{
+				int oldReadPosition = reader.Position;
+				switch((RpcCalls)callId)
+				{
+					case RpcCalls.CloseDoorsOfType:
+						if(BlockUnauthorizedSystemUpdates && !AmongUsClient.Instance.AmHost) return false;
+						break;
+					case RpcCalls.UpdateSystem:
+						SystemTypes system = (SystemTypes)reader.ReadByte();
+						PlayerControl player = reader.ReadNetObject<PlayerControl>();
+						if(ProtectAgainstNonHostKickExploit && system == SystemTypes.Ventilation && !AmongUsClient.Instance.AmHost)
+						{
+							MalumMenu.notifications.Send("Protections Alert", $"{player.Data.PlayerName} attempted to use the VentilationSystem kick exploit on you!");
+							return false;
+						}
+						if(BlockUnauthorizedSystemUpdates && !AmongUsClient.Instance.AmHost) return false;
+						break;
+				}
+				reader.Position = oldReadPosition;
+				return true;
 			}
 		}
 	}

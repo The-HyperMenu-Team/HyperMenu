@@ -1,44 +1,43 @@
-﻿using UnityEngine;
+﻿using Hazel;
+using UnityEngine;
 
 namespace MalumMenu.routines
 {
-	public class AutoTriggerSporesRoutine : IRoutine
-	{
-		public AutoTriggerSporesRoutine()
-		{
-			RoutineName = "AutoTriggerSpores";
-		}
+    public class AutoTriggerSporesRoutine : IRoutine
+    {
+        public AutoTriggerSporesRoutine() : base("AutoTriggerSpores") { }
 
-		public readonly float SPORE_TRIGGER_LENGTH = 5.0f;
-		private float timeElapsed = 0f;
+        private float scanDelay = 0.5f;
+        private float timeElapsed = 0f;
 
-		public override void Run()
-		{
-			if(ShipStatus.Instance == null)
-			{
-				Enabled = false;
-                MalumMenu.notifications.Send("Trigger Spores", "Auto-Trigger Spores was disabled as you left the game.", 10);
+        public override void Run()
+        {
+            if(ShipStatus.Instance == null) return;
 
-				return;
-			}
+            timeElapsed += Time.deltaTime;
+            if(timeElapsed < scanDelay) return;
+            timeElapsed = 0f;
 
-			if(Utilities.GetCurrentMap() != MapNames.Fungle)
-			{
-				Enabled = false;
-                MalumMenu.notifications.Send("Trigger Spores", "Auto-Trigger Spores was disabled as this option only works in The Fungle.", 10);
+            MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId, (byte)RpcCalls.SetScanner, SendOption.Reliable, -1);
+            writer.Write(true);
+            writer.Write(++PlayerControl.LocalPlayer.scannerCount);
+            AmongUsClient.Instance.FinishRpcImmediately(writer);
+        }
 
-				return;
-			}
+        protected override void OnEnable()
+        {
+            if(PlayerControl.LocalPlayer == null || ShipStatus.Instance == null)
+            {
+                MalumMenu.notifications.Send("Auto Medbay Scan", "Auto Medbay Scan can only be used once the game has started.", 10);
+                Enabled = false;
+                return;
+            }
+        }
 
-			timeElapsed += Time.deltaTime;
-			if(timeElapsed < SPORE_TRIGGER_LENGTH) return;
-			timeElapsed = 0f;
-
-			FungleShipStatus shipStatus = ShipStatus.Instance.Cast<FungleShipStatus>();
-			foreach(Mushroom mushroom in shipStatus.sporeMushrooms.Values)
-			{
-				PlayerControl.LocalPlayer.RpcTriggerSpores(mushroom);
-			}
-		}
-	}
+        public override void OnDisconnect()
+        {
+            MalumMenu.notifications.Send("Auto Medbay Scan", "Auto Medbay Scan was disabled as you left the game.", 10);
+            Enabled = false;
+        }
+    }
 }
