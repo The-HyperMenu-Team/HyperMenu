@@ -495,5 +495,58 @@ namespace MalumMenu
                 writer.Recycle();
             }
         }
+
+        internal class DataHandler
+        {
+            public static readonly int MAX_MESSAGE_LENGTH = 1400;
+
+            [HarmonyPatch(typeof(InnerNetClient), nameof(InnerNetClient.HandleGameData))]
+            class HandleGameData
+            {
+                static bool Prefix(InnerNetClient __instance, MessageReader parentReader)
+                {
+                    if(features.Protections.BlockLargeGameMessages && parentReader.Length > MAX_MESSAGE_LENGTH)
+                    {
+                        parentReader.Recycle();
+                        return false;
+                    }
+
+                    try
+                    {
+                        while(parentReader.BytesRemaining > 0)
+                        {
+                            MessageReader reader = parentReader.ReadMessageAsNewBuffer();
+                            HandleGameDataInner(__instance, reader, ++__instance.msgNum);
+                        }
+                    }
+                    finally
+                    {
+                        parentReader.Recycle();
+                    }
+
+                    return false;
+                }
+            }
+
+            public static void HandleGameDataInner(InnerNetClient innerNetClient, MessageReader reader, int msgNum)
+            {
+                GameDataTypes type = (GameDataTypes)reader.Tag;
+
+                if(features.Protections.BlockInvalidGameDataMessages && (type == GameDataTypes.Invalid || type == (GameDataTypes)3 || type > GameDataTypes.ReadyFlag))
+                {
+                    reader.Recycle();
+                    return;
+                }
+
+                bool isValid = anticheat.Anticheat.HandleGameData(type, reader);
+                if(!isValid)
+                {
+                    reader.Recycle();
+                    return;
+                }
+
+                innerNetClient.StartCoroutine(innerNetClient.HandleGameDataInner(reader, msgNum));
+            }
+        }
     }
 }

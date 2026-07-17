@@ -1,5 +1,7 @@
-﻿using HarmonyLib;
+﻿using AmongUs.InnerNet.GameDataMessages;
+using HarmonyLib;
 using Hazel;
+using MalumMenu.anticheat.gamedata;
 using MalumMenu.anticheat.rpc;
 using System;
 using System.Collections.Generic;
@@ -9,6 +11,11 @@ namespace MalumMenu.anticheat
 	internal class Anticheat
 	{
 		public static bool Enabled { get; set; } = true;
+
+		public static Dictionary<GameDataTypes, GameDataCheck> GameDataHandlers = new Dictionary<GameDataTypes, GameDataCheck>()
+		{
+			{ GameDataTypes.ReadyFlag, new ClientReady() }
+		};
 
 		public static Dictionary<RpcCalls, RpcCheck> RpcHandlers = new Dictionary<RpcCalls, RpcCheck>()
 		{
@@ -113,6 +120,21 @@ namespace MalumMenu.anticheat
 			return true;
 		}
 
+		public static bool HandleGameData(GameDataTypes type, MessageReader reader)
+		{
+			GameDataHandlers.TryGetValue(type, out GameDataCheck gameDataCheck);
+			if(!Enabled || gameDataCheck == null || !gameDataCheck.Enabled) return true;
+
+			int oldReadPosition = reader.Position;
+			bool blockMessage = false;
+
+			gameDataCheck.Validate(reader, ref blockMessage);
+			if(discardRpc && blockMessage) return false;
+
+			reader.Position = oldReadPosition;
+			return true;
+		}
+
 		public static void Flag(PlayerControl player, string reason, bool shouldPunish = true)
 		{
 			if(player == PlayerControl.LocalPlayer) return;
@@ -125,6 +147,14 @@ namespace MalumMenu.anticheat
 			if(AmongUsClient.Instance.AmHost && shouldPunish)
 			{
 				Punish(player);
+			}
+		}
+
+		public static void Flag(string reason)
+		{
+			if(sendNotification)
+			{
+				MalumMenu.notifications.Send("Anticheat", reason, NotificationDuration);
 			}
 		}
 

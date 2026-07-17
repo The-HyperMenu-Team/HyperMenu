@@ -3,7 +3,7 @@ using System;
 
 namespace MalumMenu.anticheat.rpc
 {
-	internal abstract class RpcCheck
+	internal abstract class RpcCheck : ICheck
 	{
 		public virtual bool Enabled { get; set; } = true;
 
