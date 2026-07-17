@@ -1,82 +1,42 @@
-﻿
+﻿using UnityEngine;
+
 namespace MalumMenu.routines
 {
-	public class PlayerFollowerRoutine : IRoutine
-	{
-		public PlayerFollowerRoutine()
-		{
-			RoutineName = "PlayerFollower";
-		}
+    public class PlayerFollowerRoutine : IRoutine
+    {
+        public PlayerFollowerRoutine() : base("PlayerFollower") { }
 
-		public bool _enabled = false;
-		private PlayerControl following;
+        public PlayerControl target;
+        public bool moveable = true;
 
-		// This routine can only be enabled for a specific player, so we want the Players UI to only show the routine as being enabled when selecting a certain player
-		public override bool Enabled
-		{
-			get
-			{
-				// If the selected player in the Players UI is the person we are attached to then return the routine as being enabled
-				return AmAttachedTo(PlayersSection.selectedPlayer);
-			}
-			set
-			{
-				// If we are attempting to enable Follow Player, and the routine isn't already enabled OR we are attempting to follow another player, set the target
-				if(value && (_enabled != value || !AmAttachedTo(PlayersSection.selectedPlayer)))
-				{
-					following = PlayersSection.selectedPlayer;
-					_enabled = true;
-					PlayerControl.LocalPlayer.moveable = false;
+        public override void Run()
+        {
+            if(target == null || PlayerControl.LocalPlayer == null || ShipStatus.Instance == null)
+            {
+                MalumMenu.notifications.Send("Player Follower", "You are no longer following a player.", 10);
+                Enabled = false;
+                return;
+            }
 
-                    MalumMenu.notifications.Send("Player Follower", $"You are now attached to {following.Data.PlayerName}", 5);
-				}
-				// If we are attempting to disable Follow Player, and the Player UI shows the player we are currently following, then disable the routine
-				else if(!value && AmAttachedTo(PlayersSection.selectedPlayer))
-				{
-					Disable();
-				}
-			}
-		}
+            if(PlayerControl.LocalPlayer.inVent) return;
 
-		public override void Run()
-		{
-			if(PlayerControl.LocalPlayer == null)
-			{
-				Disable();
-                MalumMenu.notifications.Send("Player Follower", "Player Follower was disabled as you left the game.");
-				return;
-			}
+            PlayerControl.LocalPlayer.NetTransform.SnapTo(target.transform.position);
+        }
 
-			if(following == null)
-			{
-				Disable();
-                MalumMenu.notifications.Send("Player Follower", "Player Follower was disabled as the person you attached to left the game.");
-				return;
-			}
+        protected override void OnEnable()
+        {
+            if(PlayerControl.LocalPlayer == null)
+            {
+                MalumMenu.notifications.Send("Player Follower", "Player Follower can only be used once the game has started.", 10);
+                Enabled = false;
+                return;
+            }
+        }
 
-            /*
-			float distance = Vector3.Distance(following.transform.position, PlayerControl.LocalPlayer.transform.position);
-			if(distance > 2)
-			{
-				MalumMenu.Log.LogInfo($"We drifted too far away from the player we are following, teleporting back to course. Distance: {distance}");
-				Teleporter.TeleportTo(following.transform.position);
-			}
-			*/
-
-            // We could probably see how haunting as a ghost makes the follower walks towards a player's position so we don't have to directly teleport, but this works fine for now
-            PlayerControl.LocalPlayer.transform.position = following.transform.position;
-		}
-
-		public bool AmAttachedTo(PlayerControl player)
-		{
-			return following != null && player.PlayerId == following.PlayerId;
-		}
-
-		private void Disable()
-		{
-			_enabled = false;
-			following = null;
-			if(PlayerControl.LocalPlayer) PlayerControl.LocalPlayer.moveable = true;
-		}
-	}
+        public override void OnDisconnect()
+        {
+            MalumMenu.notifications.Send("Player Follower", "Player Follower was disabled as you left the game.", 10);
+            Enabled = false;
+        }
+    }
 }

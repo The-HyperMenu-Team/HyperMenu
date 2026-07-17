@@ -2,45 +2,36 @@
 
 namespace MalumMenu.routines
 {
-	public class ReportBodySpam : IRoutine
-	{
-		public ReportBodySpam()
-		{
-			RoutineName = "ReportBodySpam";
-		}
+    public class ReportBodySpam : IRoutine
+    {
+        public ReportBodySpam() : base("ReportBodySpam") { }
 
-		public float reportDelay = 2.5f;
-		private float timeElapsed = 0f;
+        private float reportDelay = 0.5f;
+        private float timeElapsed = 0f;
 
-		public override void Run()
-		{
-			if(PlayerControl.LocalPlayer == null || !AmongUsClient.Instance.AmHost)
-			{
-                MalumMenu.notifications.Send("Report Body Spam", "Report body spammer has been disabled as you are not the host or you left the lobby.", 5);
-				Enabled = false;
-				return;
-			}
+        public override void Run()
+        {
+            timeElapsed += Time.deltaTime;
+            if(timeElapsed < reportDelay) return;
+            timeElapsed = 0f;
 
-			if(ShipStatus.Instance == null)
-			{
-                MalumMenu.notifications.Send("Report Body Spam", "Report body spammer has been disabled as the game must have started first.", 5);
-				Enabled = false;
-				return;
-			}
+            PlayerControl.LocalPlayer.CmdReportDeadBody(null);
+        }
 
-			timeElapsed += Time.deltaTime;
-			if(timeElapsed < reportDelay) return;
+        protected override void OnEnable()
+        {
+            if(PlayerControl.LocalPlayer == null || ShipStatus.Instance == null)
+            {
+                MalumMenu.notifications.Send("Report Body Spam", "Report Body Spam can only be used once the game has started.", 10);
+                Enabled = false;
+                return;
+            }
+        }
 
-			PlayerControl player = Utilities.GetRandomPlayer(false, false, false, false);
-
-			if(MeetingHud.Instance == null)
-			{
-				Utilities.OpenMeeting(PlayerControl.LocalPlayer, player.Data);
-			}
-
-			PlayerControl.LocalPlayer.RpcStartMeeting(player.Data);
-
-			timeElapsed = 0f;
-		}
-	}
+        public override void OnDisconnect()
+        {
+            MalumMenu.notifications.Send("Report Body Spam", "Report Body Spam was disabled as you left the game.", 10);
+            Enabled = false;
+        }
+    }
 }

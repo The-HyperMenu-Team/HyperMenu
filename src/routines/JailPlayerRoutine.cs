@@ -3,129 +3,109 @@ using UnityEngine;
 
 namespace MalumMenu.routines
 {
-	public class JailPlayerRoutine : IRoutine
-	{
-		public JailPlayerRoutine()
-		{
-			RoutineName = "JailPlayer";
-		}
+    public class JailPlayerRoutine : IRoutine
+    {
+        public JailPlayerRoutine() : base("JailPlayer") { }
 
-		public bool _enabled = false;
-		public HashSet<uint> targets = new HashSet<uint>();
+        public HashSet<int> targets = new HashSet<int>();
 
-		public float delay = 0.5f;
-		private float timeElapsed = 0f;
+        public float delay = 0.5f;
+        private float timeElapsed = 0f;
 
-		public override bool Enabled
-		{
-			get { return _enabled; }
-			set
-			{
-				if(value == _enabled) return;
+        public override void Run()
+        {
+            timeElapsed += Time.deltaTime;
+            if(timeElapsed < delay) return;
+            timeElapsed = 0f;
 
-				if(value)
-				{
-					if(PlayerControl.LocalPlayer == null || ShipStatus.Instance == null)
-					{
-						MalumMenu.notifications.Send("Jail Player", "Jail Player can only be used inside of a game.", 10);
-						return;
-					}
+            GetMapData(out SystemTypes jailRoom, out int ventId);
 
-					if(Utilities.IsAnticheatPresent() && !AmongUsClient.Instance.AmHost)
-					{
-						MalumMenu.notifications.Send("Jail Player", "Jail Player can only be used if you are the host of the lobby.", 10);
-						return;
-					}
-				}
-				else
-				{
-					targets.Clear();
-				}
+            foreach(PlayerControl player in PlayerControl.AllPlayerControls)
+            {
+                if(!targets.Contains(player.GetHashCode())) continue;
 
-				_enabled = value;
-			}
-		}
+                SystemTypes room = GetRoomForPlayer(player);
+                if(room != jailRoom)
+                {
+                    Teleporter.TeleportToVent(player, ventId);
+                }
+            }
+        }
 
-		public override void Run()
-		{
-			timeElapsed += Time.deltaTime;
-			if(timeElapsed < delay) return;
-			timeElapsed = 0f;
+        private SystemTypes GetRoomForPlayer(PlayerControl player)
+        {
+            foreach(PlainShipRoom room in ShipStatus.Instance.AllRooms)
+            {
+                if(room.roomArea == null) continue;
 
-			if(PlayerControl.LocalPlayer == null || ShipStatus.Instance == null)
-			{
-				MalumMenu.notifications.Send("Jail Player", "Jail Player has been disabled as you left the game.", 10);
-				_enabled = false;
-				return;
-			}
+                int collisions = room.roomArea.OverlapCollider(HudManager.Instance.roomTracker.filter, HudManager.Instance.roomTracker.detectiveBuffer);
+                if(RoomTracker.CheckHitsForPlayer(HudManager.Instance.roomTracker.detectiveBuffer, collisions, player))
+                {
+                    return room.RoomId;
+                }
+            }
 
-			GetMapData(out SystemTypes jailRoom, out int ventId);
+            return (SystemTypes)255;
+        }
 
-			foreach(PlayerControl player in PlayerControl.AllPlayerControls)
-			{
-				if(!targets.Contains(player.NetId)) continue;
+        private void GetMapData(out SystemTypes room, out int ventId)
+        {
+            MapNames currentMap = Utilities.GetCurrentMap();
 
-				SystemTypes room = GetRoomForPlayer(player);
-				if(room != jailRoom)
-				{
-					player.MyPhysics.RpcBootFromVent(ventId);
-				}
-			}
-		}
+            switch(currentMap)
+            {
+                case MapNames.Skeld:
+                case MapNames.Dleks:
+                    room = SystemTypes.Nav;
+                    ventId = 12;
+                    break;
 
-		private SystemTypes GetRoomForPlayer(PlayerControl player)
-		{
-			foreach(PlainShipRoom room in ShipStatus.Instance.AllRooms)
-			{
-				if(room.roomArea == null) continue;
+                case MapNames.MiraHQ:
+                    room = SystemTypes.Decontamination;
+                    ventId = 9;
+                    break;
 
-				int collisions = room.roomArea.OverlapCollider(HudManager.Instance.roomTracker.filter, HudManager.Instance.roomTracker.detectiveBuffer);
-				if(RoomTracker.CheckHitsForPlayer(HudManager.Instance.roomTracker.detectiveBuffer, collisions, player))
-				{
-					return room.RoomId;
-				}
-			}
+                case MapNames.Polus:
+                    room = SystemTypes.Storage;
+                    ventId = 8;
+                    break;
 
-			return (SystemTypes)255;
-		}
+                case MapNames.Airship:
+                    room = SystemTypes.GapRoom;
+                    ventId = 7;
+                    break;
 
-		private void GetMapData(out SystemTypes room, out int ventId)
-		{
-			MapNames currentMap = Utilities.GetCurrentMap();
+                case MapNames.Fungle:
+                    room = SystemTypes.Laboratory;
+                    ventId = 4;
+                    break;
 
-			switch(currentMap)
-			{
-				case MapNames.Skeld:
-				case MapNames.Dleks:
-					room = SystemTypes.Nav;
-					ventId = 12;
-					break;
+                default:
+                    room = SystemTypes.Nav;
+                    ventId = 12;
+                    break;
+            }
+        }
 
-				case MapNames.MiraHQ:
-					room = SystemTypes.Decontamination;
-					ventId = 9;
-					break;
+        protected override void OnEnable()
+        {
+            if(PlayerControl.LocalPlayer == null || ShipStatus.Instance == null)
+            {
+                MalumMenu.notifications.Send("Jail Player", "Jail Player can only be used inside of a game.", 10);
+                Enabled = false;
+                return;
+            }
+        }
 
-				case MapNames.Polus:
-					room = SystemTypes.Storage;
-					ventId = 8;
-					break;
+        protected override void OnDisable()
+        {
+            targets.Clear();
+        }
 
-				case MapNames.Airship:
-					room = SystemTypes.GapRoom;
-					ventId = 7;
-					break;
-
-				case MapNames.Fungle:
-					room = SystemTypes.Laboratory;
-					ventId = 4;
-					break;
-
-				default:
-					room = SystemTypes.Nav;
-					ventId = 12;
-					break;
-			}
-		}
-	}
+        public override void OnDisconnect()
+        {
+            MalumMenu.notifications.Send("Jail Player", "Jail Player has been disabled as you left the game.", 10);
+            Enabled = false;
+        }
+    }
 }

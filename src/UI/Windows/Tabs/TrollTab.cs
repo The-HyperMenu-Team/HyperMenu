@@ -62,8 +62,8 @@ public class TrollTab : ITab
         GUILayout.Label("Door Troller:");
         MalumMenu.routines.doorTroller.Enabled = GUILayout.Toggle(MalumMenu.routines.doorTroller.Enabled, "Enabled");
 
-        GUILayout.Label($"Lock and Unlock Delay: {MalumMenu.routines.doorTroller.lockAndUnlockDelay:F2}s");
-        MalumMenu.routines.doorTroller.lockAndUnlockDelay = GUILayout.HorizontalSlider(MalumMenu.routines.doorTroller.lockAndUnlockDelay, 0.1f, 2.0f);
+        GUILayout.Label($"Lock and Unlock Delay: {MalumMenu.routines.doorTroller.doorDelay:F2}s");
+        MalumMenu.routines.doorTroller.doorDelay = GUILayout.HorizontalSlider(MalumMenu.routines.doorTroller.doorDelay, 0.1f, 2.0f);
 
         GUILayout.EndVertical();
     }
