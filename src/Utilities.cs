@@ -1,4 +1,5 @@
 ﻿using AmongUs.GameOptions;
+using Hazel;
 using MalumMenu.features;
 using System.Collections.Generic;
 using System.Linq;
@@ -229,21 +230,35 @@ namespace MalumMenu
 
         public static MapNames GetCurrentMap()
         {
-            if (AmongUsClient.Instance.NetworkMode == NetworkModes.FreePlay)
+            if(ShipStatus.Instance == null)
             {
-                return (MapNames)AmongUsClient.Instance.TutorialMapId;
+                if(AmongUsClient.Instance.NetworkMode == NetworkModes.FreePlay)
+                {
+                    return (MapNames)AmongUsClient.Instance.TutorialMapId;
+                }
+                else
+                {
+                    return (MapNames)GameOptionsManager.Instance.CurrentGameOptions.MapId;
+                }
             }
-            else
+
+            return (Network.Constants.SpawnType)ShipStatus.Instance.SpawnId switch
             {
-                return (MapNames)GameOptionsManager.Instance.CurrentGameOptions.MapId;
-            }
+                Network.Constants.SpawnType.SkeldShipStatus => MapNames.Skeld,
+                Network.Constants.SpawnType.DleksShipStatus => MapNames.Dleks,
+                Network.Constants.SpawnType.MiraShipStatus => MapNames.MiraHQ,
+                Network.Constants.SpawnType.PolusShipStatus => MapNames.Polus,
+                Network.Constants.SpawnType.AirshipShipStatus => MapNames.Airship,
+                Network.Constants.SpawnType.FungleShipStatus => MapNames.Fungle,
+                _ => MapNames.Skeld
+            };
         }
 
         public static bool IsAnticheatPresent()
         {
             if (Constants.IsVersionModded() || PlayerControl.LocalPlayer == null || PlayerControl.LocalPlayer.Data == null) return false;
 
-            return PlayerControl.LocalPlayer.Data.OwnerId == -4;
+            return PlayerControl.LocalPlayer.Data.OwnerId != (int)Network.Constants.OwnerIds.Host;
         }
 
         public static string GetPlayerColor(NetworkedPlayerInfo player)
