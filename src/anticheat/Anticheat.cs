@@ -32,6 +32,7 @@ namespace MalumMenu.anticheat
 			{ RpcCalls.EnterVent, new EnterVent() },
 			{ RpcCalls.ExitVent, new ExitVent() },
 			{ RpcCalls.SnapTo, new SnapTo() },
+			{ RpcCalls.AddVote, new AddVote() },
 			{ RpcCalls.CloseDoorsOfType, new CloseDoorsOfType() },
 			{ RpcCalls.ClimbLadder, new ClimbLadder() },
 			{ RpcCalls.UsePlatform, new UsePlatform() },
@@ -85,7 +86,7 @@ namespace MalumMenu.anticheat
 		[HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.HandleRpc))]
 		class OnShipStatusRPC
 		{
-			static bool Prefix(ShipStatus __instance, byte callId, MessageReader reader)
+			static bool Prefix(byte callId, MessageReader reader)
 			{
 				return HandleRpc(typeof(ShipStatus), null, (RpcCalls)callId, reader);
 			}
