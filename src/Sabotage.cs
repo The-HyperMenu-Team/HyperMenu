@@ -259,7 +259,7 @@ namespace MalumMenu
                 return;
             }
 
-            // On Skeld, all doors have an id of 0, so unfourtunately getting a door by its ID by using ShipStatus.Instance.AllDoors[id] wont work
+            // On Skeld, all doors have an id of 0, so unfortunately getting a door by its ID by using ShipStatus.Instance.AllDoors[id] wont work
             for (byte i = 0; i < ShipStatus.Instance.AllDoors.Count; i++)
             {
                 OpenableDoor door = ShipStatus.Instance.AllDoors[i];

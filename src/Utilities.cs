@@ -49,13 +49,13 @@ namespace MalumMenu
             }
             else
             {
-                PlayerCustomization.EquipSkin(allSkins[rnd.Next(0, allSkins.Length)]);
+                AccountManager.Instance.RandomizeName();
+
                 PlayerCustomization.EquipHat(allHats[rnd.Next(0, allHats.Length)]);
                 PlayerCustomization.EquipVisor(allVisors[rnd.Next(0, allVisors.Length)]);
+                PlayerCustomization.EquipSkin(allSkins[rnd.Next(0, allSkins.Length)]);
                 PlayerCustomization.EquipPet(allPets[rnd.Next(0, allPets.Length)]);
                 PlayerCustomization.EquipNameplate(allNameplates[rnd.Next(0, allNameplates.Length)]);
-
-                AccountManager.Instance.RandomizeName();
             }
         }
 
@@ -166,9 +166,7 @@ namespace MalumMenu
                 }
             }
 
-            Network.BatchedMessage batch = new Network.BatchedMessage();
-            batch.QueueReportDeadBody(reporter, target);
-            batch.FinishBatch();
+            reporter.CmdReportDeadBody(target);
         }
 
         public static void OpenMeeting(PlayerControl reporter, NetworkedPlayerInfo target)
@@ -271,6 +269,63 @@ namespace MalumMenu
             }
 
             return player.GetPlayerColorString();
+        }
+
+        public static void KickPlayer(PlayerControl player, bool skipFirstStage = false)
+        {
+            if(AmongUsClient.Instance.AmHost)
+            {
+                AmongUsClient.Instance.KickPlayer(player.OwnerId, true);
+                MalumMenu.notifications.Send("Kick Player", $"{player.Data.PlayerName} has been kicked from the game.");
+                return;
+            }
+
+            if(player.OwnerId == AmongUsClient.Instance.HostId)
+            {
+                MalumMenu.notifications.Send("Kick Player", "You are not able to kick out the host of the lobby");
+                return;
+            }
+
+            if(ShipStatus.Instance == null)
+            {
+                MalumMenu.notifications.Send("Kick Player", "The game must have started in order for this feature to work.");
+                return;
+            }
+
+            if(!IsAnticheatPresent())
+            {
+                MalumMenu.notifications.Send("Kick Player", "This feature only works in server-authoritative lobbies.");
+                return;
+            }
+
+            Network.BatchedMessage batch = new Network.BatchedMessage(player.OwnerId);
+
+            if(!skipFirstStage)
+            {
+                MalumMenu.Log.LogInfo($"Sending Enter ventilation system update to {player.OwnerId}");
+
+                MessageWriter writer = MessageWriter.Get(SendOption.Reliable);
+                writer.Write((ushort)0);
+                writer.Write((byte)VentilationSystem.Operation.Enter);
+                writer.Write((byte)0);
+
+                batch.QueueUpdateSystem(PlayerControl.LocalPlayer, SystemTypes.Ventilation, writer);
+                writer.Recycle();
+            }
+
+            MalumMenu.Log.LogInfo($"Sending BootImposters ventilation system update to {player.OwnerId}");
+
+            MessageWriter writer2 = MessageWriter.Get(SendOption.Reliable);
+            writer2.Write((ushort)1);
+            writer2.Write((byte)VentilationSystem.Operation.BootImpostors);
+            writer2.Write((byte)0);
+
+            batch.QueueUpdateSystem(PlayerControl.LocalPlayer, SystemTypes.Ventilation, writer2);
+            writer2.Recycle();
+
+            batch.FinishBatch();
+
+            MalumMenu.notifications.Send("Kick Player", $"{player.Data.PlayerName} has been kicked from the game.");
         }
     }
 }
