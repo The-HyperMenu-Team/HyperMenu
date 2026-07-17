@@ -1,5 +1,6 @@
 ﻿using AmongUs.GameOptions;
 using AmongUs.InnerNet.GameDataMessages;
+using HarmonyLib;
 using Hazel;
 using InnerNet;
 using UnityEngine;
@@ -8,61 +9,80 @@ namespace MalumMenu
 {
     internal class Network
     {
-        // The PlayerControl::RpcSetScanner function does not send the RPC if visual tasks are off
-        // If we want the scan animation to show up even if visual tasks are enabled, then we will need to reimplement it
-        public static void SendSetScanner(bool scanning)
+        internal class Constants
         {
-            byte scanCount = ++PlayerControl.LocalPlayer.scannerCount;
+            public enum OwnerIds
+            {
+                Everyone = -1,
+                Host = -2,
+                Self = -3,
+                Server = -4
+            }
 
-            // Render the medbay animation for ourselves
-            PlayerControl.LocalPlayer.SetScanner(scanning, scanCount);
-
-            MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(
-                PlayerControl.LocalPlayer.NetId,
-                (byte)RpcCalls.SetScanner,
-                SendOption.Reliable,
-                -1
-            );
-
-            writer.Write(scanning);
-            writer.Write(scanCount);
-
-            AmongUsClient.Instance.FinishRpcImmediately(writer);
+            public enum SpawnType
+            {
+                SkeldShipStatus = 0,
+                MeetingHud = 1,
+                LobbyBehavior = 2,
+                PlayerControl = 4,
+                MiraShipStatus = 5,
+                PolusShipStatus = 6,
+                DleksShipStatus = 7,
+                AirshipShipStatus = 8,
+                GameManager = 10,
+                NetworkedPlayerInfo = 11,
+                VoteBanSysten = 12,
+                FungleShipStatus = 13
+            }
         }
 
-        // The PlayerControl::RpcPlayAnimation function does not send the RPC if visual tasks are off
-        // If we want the task animation to show up even if visual tasks are enabled, then we will need to reimplement it
-        public static void SendPlayAnimation(byte animation)
+        internal class RPCEmitter
         {
-            // Render the task animation for ourselves
-            PlayerControl.LocalPlayer.PlayAnimation(animation);
+            public static void SendSetScanner(bool scanning)
+            {
+                byte scanCount = ++PlayerControl.LocalPlayer.scannerCount;
 
-            MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(
-                PlayerControl.LocalPlayer.NetId,
-                (byte)RpcCalls.PlayAnimation,
-                SendOption.None,
-                -1
-            );
+                PlayerControl.LocalPlayer.SetScanner(scanning, scanCount);
 
-            writer.Write(animation);
+                MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(
+                    PlayerControl.LocalPlayer.NetId,
+                    (byte)RpcCalls.SetScanner,
+                    SendOption.Reliable,
+                    -1
+                );
 
-            AmongUsClient.Instance.FinishRpcImmediately(writer);
-        }
+                writer.Write(scanning);
+                writer.Write(scanCount);
 
-        public static void SendDataFlag(uint netId, MessageWriter msg, int targetClientId = -1)
-        {
-            BatchedMessage batch = new BatchedMessage(targetClientId);
-            batch.QueueDataFlag(netId, msg);
-            batch.FinishBatch();
+                AmongUsClient.Instance.FinishRpcImmediately(writer);
+            }
+
+            public static void SendPlayAnimation(byte animation)
+            {
+                PlayerControl.LocalPlayer.PlayAnimation(animation);
+
+                MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(
+                    PlayerControl.LocalPlayer.NetId,
+                    (byte)RpcCalls.PlayAnimation,
+                    SendOption.None,
+                    -1
+                );
+
+                writer.Write(animation);
+
+                AmongUsClient.Instance.FinishRpcImmediately(writer);
+            }
         }
 
         public class BatchedMessage
         {
-            public MessageWriter writer;
+            public readonly MessageWriter writer;
+            public readonly int targetClientId;
 
             public BatchedMessage(int targetClientId = -1)
             {
                 writer = MessageWriter.Get(SendOption.Reliable);
+                this.targetClientId = targetClientId;
 
                 if (targetClientId == -1)
                 {
