@@ -78,6 +78,27 @@ public class SettingsTab : ITab
         GUILayout.Space(5);
 
         MalumMenu.autoLoadProfile.Value = GUILayout.Toggle(MalumMenu.autoLoadProfile.Value, " Auto-Load Profile on Startup");
+
+        GUILayout.Space(5);
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Label($"Menu Scale: {MalumMenu.menuScale.Value:F2}", GUILayout.Width(150));
+        MalumMenu.menuScale.Value = GUILayout.HorizontalSlider(MalumMenu.menuScale.Value, 0.5f, 2.0f);
+        GUILayout.EndHorizontal();
+
+        GUILayout.Space(5);
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Label($"Width: {MalumMenu.menuWidthMult.Value:F2}", GUILayout.Width(150));
+        MalumMenu.menuWidthMult.Value = GUILayout.HorizontalSlider(MalumMenu.menuWidthMult.Value, 0.5f, 2.0f);
+        GUILayout.EndHorizontal();
+
+        GUILayout.Space(5);
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Label($"Height: {MalumMenu.menuHeightMult.Value:F2}", GUILayout.Width(150));
+        MalumMenu.menuHeightMult.Value = GUILayout.HorizontalSlider(MalumMenu.menuHeightMult.Value, 0.5f, 2.0f);
+        GUILayout.EndHorizontal();
     }
 
     private void DrawSpoofingSettings()
