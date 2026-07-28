@@ -53,12 +53,12 @@ public class MenuUI : MonoBehaviour
 
     public void InitStyles()
     {
-        int fontSize = (int)(14 * MalumMenu.menuScale.Value);
+        int fontSize = (int)(14 * MalumMenu.menuTextScale.Value);
         GUI.skin.toggle.fontSize = GUI.skin.button.fontSize = GUI.skin.label.fontSize = fontSize;
         GUI.skin.window.padding = new RectOffset { left = 12, right = 12, top = 30, bottom = 12 };
         GUI.skin.window.margin = new RectOffset { left = 8, right = 8, top = 8, bottom = 8 };
 
-        GUIStylePreset.ApplyScale(MalumMenu.menuScale.Value);
+        GUIStylePreset.ApplyScale(MalumMenu.menuTextScale.Value);
     }
 
     private void Update()

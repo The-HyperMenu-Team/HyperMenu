@@ -68,6 +68,7 @@ public partial class MalumMenu : BasePlugin
     public static ConfigEntry<float> menuScale;
     public static ConfigEntry<float> menuWidthMult;
     public static ConfigEntry<float> menuHeightMult;
+    public static ConfigEntry<float> menuTextScale;
 
     public static RoutineManager routines;
     public static NotificationManager notifications;
@@ -133,6 +134,14 @@ public partial class MalumMenu : BasePlugin
                                 1.0f,
                                 new ConfigDescription(
                                     "Height multiplier for the menu UI. Applied on top of menu scale.",
+                                    new AcceptableValueRange<float>(0.5f, 2.0f)
+                                ));
+
+        menuTextScale = Config.Bind("MalumMenu.GUI",
+                                "MenuTextScale",
+                                1.0f,
+                                new ConfigDescription(
+                                    "Scale factor for menu font sizes. Independent of window scale.",
                                     new AcceptableValueRange<float>(0.5f, 2.0f)
                                 ));
 
