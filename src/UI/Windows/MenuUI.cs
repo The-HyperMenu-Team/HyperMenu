@@ -17,6 +17,7 @@ public class MenuUI : MonoBehaviour
     private Vector2 _tabScrollPosition = Vector2.zero;
     public static float hue; // For RGB mode
     private bool _wasInGameplay = false;
+    private Vector2 _contentScrollPosition = Vector2.zero;
 
     private void Start()
     {
@@ -281,7 +282,9 @@ public class MenuUI : MonoBehaviour
             GUILayout.Label(_tabs[_selectedTab].name, GUIStylePreset.TabTitle);
             GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Height(2f), GUILayout.ExpandWidth(true));
             GUILayout.Space(6);
+            _contentScrollPosition = GUILayout.BeginScrollView(_contentScrollPosition, false, false);
             _tabs[_selectedTab].Draw();
+            GUILayout.EndScrollView();
         }
 
         GUILayout.EndVertical();
