@@ -21,8 +21,16 @@ public class ModesTab : ITab
 
         CheatToggles.stealthMode = GUILayout.Toggle(CheatToggles.stealthMode, " Stealth Mode");
 
-        CheatToggles.streamerMode = GUILayout.Toggle(CheatToggles.streamerMode, " Streamer Mode");
+        if (MalumMenu.isDevRelease)
+        {
+            CheatToggles.streamerMode = GUILayout.Toggle(CheatToggles.streamerMode, " Streamer Mode");
+        }
+        else
+        {
+            GUILayout.Label("Coming Soon: Streamer Mode");
 
+        }
+        
         CheatToggles.panicMode = GUILayout.Toggle(CheatToggles.panicMode, " Panic Mode");
     }
 }

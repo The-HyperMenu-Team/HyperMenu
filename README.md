@@ -57,9 +57,11 @@ https://the-hypermenu-team.github.io/Wiki/
 
 # 🎁 Releases
 
-| Mod Version| Among Us - Version | Link |
-|----------|-------------|-----------------|
-| v4.2.0 **[LATEST]** |  2026.6.5   | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.2.0)      |
+| Mod Version         | Among Us - Version | Link                                                                                 |
+|---------------------|-------------|--------------------------------------------------------------------------------------|
+| v4.2.2 **[LATEST]** |  2026.6.5   | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.2.2)      |
+| v4.2.1              |  2026.6.5   | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.2.1)      |
+| v4.2.0              |  2026.6.5   | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.2.0)      |
 | v4.1.2              |  2026.3.31  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.1.2)      |
 | v4.1.1              |  2026.3.31  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.1.1)      |
 | v4.1.0              |  2026.3.31  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.1.0)      |
@@ -83,16 +85,16 @@ https://the-hypermenu-team.github.io/Wiki/
 
 1. Download the latest **HyperMenu zip pack** from [here](https://github.com/The-HyperMenu-Team/HyperMenu/releases/latest).
     - **For Steam or Itch.io:** Download `HyperMenu-VERSION-Steam-Itch.zip`.
-    - **For Microsoft Store, Epic Games Store, or Xbox App:** Not supported by HyperMenu. For these platforms, go to the original MalumMenu [here](https://github.com/scp222thj/MalumMenu/releases/latest).
+    - **For Microsoft Store, Epic Games Store, or Xbox App:** Download `HyperMenu-VERSION-MicrosoftStore-EpicGames-XboxApp.zip`.
 
 2. Open the zip file you have just downloaded and copy all its contents.
 
 3. Paste these files directly into your Among Us game folder:
-    - **Steam:** Right-click Among Us in your Library → Click `Manage` → Click `Browse local files`.
-    - **Itch.io:** Open the Itch.io app → Right-click Among Us in your Library → Click `Manage` → Click `Open folder in Explorer`.
-    - **Epic Launcher:** Not currently supported by HyperMenu.
-    - **Microsoft Store:** Not currently supported by HyperMenu.
-    - **Xbox App:** Not currently supported by HyperMenu.
+   - **Steam:** Right-click Among Us in your Library → Click `Manage` → Click `Browse local files`.
+   - **Itch.io:** Open the Itch.io app → Right-click Among Us in your Library → Click `Manage` → Click `Open folder in Explorer`.
+   - **Epic Launcher:** Right-click Among Us in your Library → Click `Manage` → Click the folder icon in the `Installation` box.
+   - **Microsoft Store:** Open the folder where Windows apps are installed (typically `C:\Program Files\WindowsApps\`) by following the tutorial [here](https://youtu.be/qCeoEIy_vrw) → In File Explorer, use the search bar to search for `Among Us.exe` → Right-click the `Among Us.exe` result → Select `Open file location`.
+   - **Xbox App:** Right-click Among Us in your Library → Click `Manage` → Open the `FILES` tab → Click `BROWSE...` → Open the `Among Us` folder → Open the `Content` folder.
 
 4. Launch Among Us as you normally would. You should see a console window appear, installing the mod's requirements.
 

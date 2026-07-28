@@ -7,7 +7,7 @@ namespace MalumMenu
 {
     internal class SelfTab : ITab
     {
-        public string name => "Roles";
+        public string name => "Self";
 
         private uint level = 0;
 
