@@ -65,6 +65,9 @@ public partial class MalumMenu : BasePlugin
     public static ConfigEntry<int> defaultStrength;
     public static ConfigEntry<float> defaultCooldown;
     public static ConfigEntry<int> killSwitchLvl;
+    public static ConfigEntry<float> menuScale;
+    public static ConfigEntry<float> menuWidthMult;
+    public static ConfigEntry<float> menuHeightMult;
 
     public static RoutineManager routines;
     public static NotificationManager notifications;
@@ -108,6 +111,30 @@ public partial class MalumMenu : BasePlugin
                                 "AutoLoadProfile",
                                 false,
                                 "When enabled, your saved keybind and toggle profile will be automatically loaded at game startup");
+
+        menuScale = Config.Bind("MalumMenu.GUI",
+                                "MenuScale",
+                                1.0f,
+                                new ConfigDescription(
+                                    "Scale factor for the menu UI. Affects both window size and font sizes.",
+                                    new AcceptableValueRange<float>(0.5f, 2.0f)
+                                ));
+
+        menuWidthMult = Config.Bind("MalumMenu.GUI",
+                                "MenuWidthMult",
+                                1.0f,
+                                new ConfigDescription(
+                                    "Width multiplier for the menu UI. Applied on top of menu scale.",
+                                    new AcceptableValueRange<float>(0.5f, 2.0f)
+                                ));
+
+        menuHeightMult = Config.Bind("MalumMenu.GUI",
+                                "MenuHeightMult",
+                                1.0f,
+                                new ConfigDescription(
+                                    "Height multiplier for the menu UI. Applied on top of menu scale.",
+                                    new AcceptableValueRange<float>(0.5f, 2.0f)
+                                ));
 
         configEditor = Config.Bind("MalumMenu.Config",
                                 "ConfigEditor",
