@@ -7,8 +7,8 @@ namespace MalumMenu;
 
 public class MenuUI : MonoBehaviour
 {
-    public static int windowHeight = 600;
-    public static int windowWidth = 800;
+    public static int windowHeight => (int)(600 * MalumMenu.menuScale.Value * MalumMenu.menuHeightMult.Value);
+    public static int windowWidth => (int)(800 * MalumMenu.menuScale.Value * MalumMenu.menuWidthMult.Value);
 
     public static bool isGUIActive = false;
     private Rect _windowRect;
@@ -17,6 +17,7 @@ public class MenuUI : MonoBehaviour
     private Vector2 _tabScrollPosition = Vector2.zero;
     public static float hue; // For RGB mode
     private bool _wasInGameplay = false;
+    private Vector2 _contentScrollPosition = Vector2.zero;
 
     private void Start()
     {
@@ -53,9 +54,12 @@ public class MenuUI : MonoBehaviour
 
     public void InitStyles()
     {
-        GUI.skin.toggle.fontSize = GUI.skin.button.fontSize = GUI.skin.label.fontSize = 14;
+        int fontSize = (int)(14 * MalumMenu.menuTextScale.Value);
+        GUI.skin.toggle.fontSize = GUI.skin.button.fontSize = GUI.skin.label.fontSize = fontSize;
         GUI.skin.window.padding = new RectOffset { left = 12, right = 12, top = 30, bottom = 12 };
         GUI.skin.window.margin = new RectOffset { left = 8, right = 8, top = 8, bottom = 8 };
+
+        GUIStylePreset.ApplyScale(MalumMenu.menuTextScale.Value);
     }
 
     private void Update()
@@ -207,6 +211,14 @@ public class MenuUI : MonoBehaviour
 
         InitStyles();
 
+        if (Mathf.Abs(_windowRect.width - windowWidth) > 1f || Mathf.Abs(_windowRect.height - windowHeight) > 1f)
+        {
+            _windowRect.width = windowWidth;
+            _windowRect.height = windowHeight;
+            _windowRect.x = Screen.width / 2f - _windowRect.width / 2f;
+            _windowRect.y = Screen.height / 2f - _windowRect.height / 2f;
+        }
+
         UIHelpers.ApplyUIColor();
 
         _windowRect = GUI.Window((int)WindowId.MenuUI, _windowRect, (GUI.WindowFunction)WindowFunction, "HyperMenu " + MalumMenu.hyperVersion + ", " + MalumMenu.hyperBuild + " build.");
@@ -270,7 +282,9 @@ public class MenuUI : MonoBehaviour
             GUILayout.Label(_tabs[_selectedTab].name, GUIStylePreset.TabTitle);
             GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Height(2f), GUILayout.ExpandWidth(true));
             GUILayout.Space(6);
+            _contentScrollPosition = GUILayout.BeginScrollView(_contentScrollPosition, false, false);
             _tabs[_selectedTab].Draw();
+            GUILayout.EndScrollView();
         }
 
         GUILayout.EndVertical();

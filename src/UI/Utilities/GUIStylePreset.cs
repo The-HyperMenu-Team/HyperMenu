@@ -14,6 +14,21 @@ public static class GUIStylePreset
     private static GUIStyle _modernBox;
     private static GUIStyle _sectionHeader;
     private static GUIStyle _modernLabel;
+    private static float _currentScale = 0f;
+
+    public static void ApplyScale(float scale)
+    {
+        if (System.Math.Abs(scale - _currentScale) < 0.001f) return;
+        _currentScale = scale;
+
+        _normalButton = null;
+        _normalToggle = null;
+        _tabButton = null;
+        _tabTitle = null;
+        _tabSubtitle = null;
+        _sectionHeader = null;
+        _modernLabel = null;
+    }
 
     public static GUIStyle Separator
     {
@@ -61,7 +76,7 @@ public static class GUIStylePreset
             {
                 _normalButton = new GUIStyle(GUI.skin.button)
                 {
-                    fontSize = 14,
+                    fontSize = (int)(14 * _currentScale),
                     alignment = TextAnchor.MiddleCenter,
                     padding = new RectOffset { left = 12, right = 12, top = 7, bottom = 7 },
                     margin = new RectOffset { left = 3, right = 3, top = 4, bottom = 4 },
@@ -86,7 +101,7 @@ public static class GUIStylePreset
             {
                 _normalToggle = new GUIStyle(GUI.skin.toggle)
                 {
-                    fontSize = 14,
+                    fontSize = (int)(14 * _currentScale),
                     padding = new RectOffset { left = 20, right = 5, top = 5, bottom = 5 },
                     margin = new RectOffset { left = 3, right = 3, top = 4, bottom = 4 },
                     alignment = TextAnchor.MiddleLeft,
@@ -108,7 +123,7 @@ public static class GUIStylePreset
             {
                 _tabButton = new GUIStyle(GUI.skin.button)
                 {
-                    fontSize = 15,
+                    fontSize = (int)(15 * _currentScale),
                     fontStyle = FontStyle.Bold,
                     padding = new RectOffset { left = 10, right = 10, top = 9, bottom = 9 },
                     margin = new RectOffset { left = 2, right = 2, top = 4, bottom = 4 },
@@ -133,7 +148,7 @@ public static class GUIStylePreset
             {
                 _tabTitle = new GUIStyle(GUI.skin.label)
                 {
-                    fontSize = 22,
+                    fontSize = (int)(22 * _currentScale),
                     fontStyle = FontStyle.Bold,
                     alignment = TextAnchor.MiddleLeft,
                     padding = new RectOffset { left = 8, right = 8, top = 6, bottom = 6 },
@@ -155,7 +170,7 @@ public static class GUIStylePreset
             {
                 _tabSubtitle = new GUIStyle(GUI.skin.label)
                 {
-                    fontSize = 14,
+                    fontSize = (int)(14 * _currentScale),
                     fontStyle = FontStyle.Bold,
                     alignment = TextAnchor.MiddleLeft,
                     padding = new RectOffset { left = 8, right = 8, top = 4, bottom = 4 },
@@ -195,7 +210,7 @@ public static class GUIStylePreset
             {
                 _sectionHeader = new GUIStyle(GUI.skin.label)
                 {
-                    fontSize = 15,
+                    fontSize = (int)(15 * _currentScale),
                     fontStyle = FontStyle.Bold,
                     alignment = TextAnchor.MiddleLeft,
                     padding = new RectOffset { left = 6, right = 6, top = 4, bottom = 4 },
@@ -217,7 +232,7 @@ public static class GUIStylePreset
             {
                 _modernLabel = new GUIStyle(GUI.skin.label)
                 {
-                    fontSize = 13,
+                    fontSize = (int)(13 * _currentScale),
                     alignment = TextAnchor.MiddleLeft,
                     padding = new RectOffset { left = 4, right = 4, top = 3, bottom = 3 },
                     margin = new RectOffset { left = 2, right = 2, top = 1, bottom = 1 },
