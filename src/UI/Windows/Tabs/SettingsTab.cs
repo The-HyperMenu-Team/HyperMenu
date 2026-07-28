@@ -15,6 +15,12 @@ public class SettingsTab : ITab
     private TextField _spoofLevelField;
     private TextField _spoofPlatformField;
 
+    // Pending scale values (applied on Apply button)
+    private float _pendingScale;
+    private float _pendingWidthMult;
+    private float _pendingHeightMult;
+    private float _pendingTextScale;
+
     public void Draw()
     {
         if (!_initialized)
@@ -44,6 +50,11 @@ public class SettingsTab : ITab
         _menuColorField = new TextField(MalumMenu.menuHtmlColor.Value);
         _spoofLevelField = new TextField(MalumMenu.spoofLevel.Value);
         _spoofPlatformField = new TextField(MalumMenu.spoofPlatform.Value);
+
+        _pendingScale = MalumMenu.menuScale.Value;
+        _pendingWidthMult = MalumMenu.menuWidthMult.Value;
+        _pendingHeightMult = MalumMenu.menuHeightMult.Value;
+        _pendingTextScale = MalumMenu.menuTextScale.Value;
     }
 
 
@@ -82,23 +93,40 @@ public class SettingsTab : ITab
         GUILayout.Space(5);
 
         GUILayout.BeginHorizontal();
-        GUILayout.Label($"Menu Scale: {MalumMenu.menuScale.Value:F2}", GUILayout.Width(150));
-        MalumMenu.menuScale.Value = GUILayout.HorizontalSlider(MalumMenu.menuScale.Value, 0.5f, 2.0f);
+        GUILayout.Label($"Menu Scale: {_pendingScale:F2}", GUILayout.Width(150));
+        _pendingScale = GUILayout.HorizontalSlider(_pendingScale, 0.5f, 2.0f);
         GUILayout.EndHorizontal();
 
         GUILayout.Space(5);
 
         GUILayout.BeginHorizontal();
-        GUILayout.Label($"Width: {MalumMenu.menuWidthMult.Value:F2}", GUILayout.Width(150));
-        MalumMenu.menuWidthMult.Value = GUILayout.HorizontalSlider(MalumMenu.menuWidthMult.Value, 0.5f, 2.0f);
+        GUILayout.Label($"Width: {_pendingWidthMult:F2}", GUILayout.Width(150));
+        _pendingWidthMult = GUILayout.HorizontalSlider(_pendingWidthMult, 0.5f, 2.0f);
         GUILayout.EndHorizontal();
 
         GUILayout.Space(5);
 
         GUILayout.BeginHorizontal();
-        GUILayout.Label($"Height: {MalumMenu.menuHeightMult.Value:F2}", GUILayout.Width(150));
-        MalumMenu.menuHeightMult.Value = GUILayout.HorizontalSlider(MalumMenu.menuHeightMult.Value, 0.5f, 2.0f);
+        GUILayout.Label($"Height: {_pendingHeightMult:F2}", GUILayout.Width(150));
+        _pendingHeightMult = GUILayout.HorizontalSlider(_pendingHeightMult, 0.5f, 2.0f);
         GUILayout.EndHorizontal();
+
+        GUILayout.Space(5);
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Label($"Text Scale: {_pendingTextScale:F2}", GUILayout.Width(150));
+        _pendingTextScale = GUILayout.HorizontalSlider(_pendingTextScale, 0.5f, 2.0f);
+        GUILayout.EndHorizontal();
+
+        GUILayout.Space(10);
+
+        if (GUILayout.Button("Apply", GUILayout.Width(200)))
+        {
+            MalumMenu.menuScale.Value = _pendingScale;
+            MalumMenu.menuWidthMult.Value = _pendingWidthMult;
+            MalumMenu.menuHeightMult.Value = _pendingHeightMult;
+            MalumMenu.menuTextScale.Value = _pendingTextScale;
+        }
     }
 
     private void DrawSpoofingSettings()
