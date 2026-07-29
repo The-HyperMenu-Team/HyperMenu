@@ -1,0 +1,102 @@
+stages:
+  - build
+  - prepare
+  - release
+
+variables:
+  # Path where the project outputs the compiled DLL
+  BUILT_DLL_PATH: "bin/Release/net6.0/MalumMenu.dll"
+  # Target name for release distribution
+  RELEASE_DLL_NAME: "HyperMenu.dll"
+
+# -------------------------------------------------------------------
+# STAGE 1: Build DLL, rename, and insert into base BepInEx ZIPs
+# -------------------------------------------------------------------
+build_mod:
+  stage: build
+  image: mcr.microsoft.com/dotnet/sdk:6.0
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - dotnet restore
+    - dotnet build -c Release
+
+    # Ensure utility tools are present
+    - apt-get update && apt-get install -y unzip zip
+
+    # 1. Process Steam / Itch.io package
+    - unzip bep-steam.zip -d build_steam
+    - mkdir -p build_steam/BepInEx/plugins
+    - cp $BUILT_DLL_PATH build_steam/BepInEx/plugins/$RELEASE_DLL_NAME
+    - cd build_steam && zip -r ../HyperMenu-Steam-Itch.zip . && cd ..
+
+    # 2. Process Epic Games / MS Store package
+    - unzip bep-epic.zip -d build_epic
+    - mkdir -p build_epic/BepInEx/plugins
+    - cp $BUILT_DLL_PATH build_epic/BepInEx/plugins/$RELEASE_DLL_NAME
+    - cd build_epic && zip -r ../HyperMenu-Epic-MSStore.zip . && cd ..
+
+    # 3. Create a standalone copy of the renamed DLL in the root for direct release attachment
+    - cp $BUILT_DLL_PATH $RELEASE_DLL_NAME
+
+  artifacts:
+    paths:
+      - HyperMenu.dll
+      - HyperMenu-Steam-Itch.zip
+      - HyperMenu-Epic-MSStore.zip
+    expire_in: 30 days
+
+# -------------------------------------------------------------------
+# STAGE 2: Generate Release Notes (Changelog) from commit history
+# -------------------------------------------------------------------
+generate_changelog:
+  stage: prepare
+  image: alpine:latest
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - apk add --no-cache git
+    - git fetch --tags
+    # Get previous tag if available
+    - PREV_TAG=$(git describe --tags --abbrev=0 ${CI_COMMIT_TAG}^ 2>/dev/null || echo "")
+    - |
+      if [ -z "$PREV_TAG" ]; then
+        echo "## Release $CI_COMMIT_TAG" > release_notes.md
+        echo "" >> release_notes.md
+        git log --pretty=format:"* %s" >> release_notes.md
+      else
+        echo "## Release $CI_COMMIT_TAG (Changes since $PREV_TAG)" > release_notes.md
+        echo "" >> release_notes.md
+        git log --pretty=format:"* %s" "${PREV_TAG}..${CI_COMMIT_TAG}" >> release_notes.md
+      fi
+  artifacts:
+    paths:
+      - release_notes.md
+
+# -------------------------------------------------------------------
+# STAGE 3: Publish GitLab Release with renamed assets
+# -------------------------------------------------------------------
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  rules:
+    - if: $CI_COMMIT_TAG
+  needs:
+    - job: build_mod
+      artifacts: true
+    - job: generate_changelog
+      artifacts: true
+  script:
+    - echo "Publishing release for $CI_COMMIT_TAG..."
+  release:
+    name: "Release $CI_COMMIT_TAG"
+    description: '$(cat release_notes.md)'
+    tag_name: '$CI_COMMIT_TAG'
+    assets:
+      links:
+        - name: "HyperMenu.dll (Standalone Plugin)"
+          url: "${CI_PROJECT_URL}/-/jobs/${GE_JOB_ID}/artifacts/file/HyperMenu.dll"
+        - name: "BepInEx Package (Steam & Itch.io)"
+          url: "${CI_PROJECT_URL}/-/jobs/${GE_JOB_ID}/artifacts/file/HyperMenu-Steam-Itch.zip"
+        - name: "BepInEx Package (Epic Games & MS Store)"
+          url: "${CI_PROJECT_URL}/-/jobs/${GE_JOB_ID}/artifacts/file/HyperMenu-Epic-MSStore.zip"
