@@ -91,13 +91,13 @@ release:
     - echo "Publishing release for $CI_COMMIT_TAG..."
   release:
     name: "Release $CI_COMMIT_TAG"
-    description: '$(cat release_notes.md)'
+    description: 'release_notes.md'
     tag_name: '$CI_COMMIT_TAG'
     assets:
       links:
         - name: "HyperMenu.dll (Standalone Plugin)"
-          url: "${CI_PROJECT_URL}/-/jobs/${GE_JOB_ID}/artifacts/file/HyperMenu.dll"
+          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/HyperMenu.dll?job=build_mod"
         - name: "BepInEx Package (Steam & Itch.io)"
-          url: "${CI_PROJECT_URL}/-/jobs/${GE_JOB_ID}/artifacts/file/HyperMenu-Steam-Itch.zip"
+          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/HyperMenu-Steam-Itch.zip?job=build_mod"
         - name: "BepInEx Package (Epic Games & MS Store)"
-          url: "${CI_PROJECT_URL}/-/jobs/${GE_JOB_ID}/artifacts/file/HyperMenu-Epic-MSStore.zip"
+          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/HyperMenu-Epic-MSStore.zip?job=build_mod"
