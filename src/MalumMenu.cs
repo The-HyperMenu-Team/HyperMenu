@@ -35,11 +35,11 @@ public partial class MalumMenu : BasePlugin
     public static StreamerUI streamerUI;
     public static KeybindListener keybindListener;
 
-    public static string malumVersion = "3.2.0";
-    public static string hyperVersion = "4.2.3";
+    public static string malumVersion = "3.3.0";
+    public static string hyperVersion = "4.4.0";
     public static string hyperBuild = "Stable";
-    public static List<string> supportedAU = new List<string> { "2026.3.31", "2026.6.5" };
-    public static List<string> toleratedAU = new List<string> { "2026.2.24", "2026.3.17" };
+    public static List<string> supportedAU = new List<string> { "2026.8.18" };
+    public static List<string> toleratedAU = new List<string> { "2026.8.18" };
     public static bool isPanicked = false;
     public static bool inStealthMode = false;
     public static bool overloadFixed = true;
@@ -51,6 +51,7 @@ public partial class MalumMenu : BasePlugin
     public static ConfigEntry<string> menuChatColor;
     public static ConfigEntry<bool> menuOpenOnMouse;
     public static ConfigEntry<bool> menuKeepSubwindowsOpen;
+    public static ConfigEntry<bool> menuAllowClickThrough;
     public static ConfigEntry<string> spoofLevel;
     public static ConfigEntry<string> spoofPlatform;
     public static ConfigEntry<bool> spoofDeviceId;
@@ -107,6 +108,11 @@ public partial class MalumMenu : BasePlugin
                                 "KeepSubwindowsOpen",
                                 false,
                                 "When enabled, closing the MalumMenu GUI will not automatically close its subwindows");
+
+        menuAllowClickThrough = Config.Bind("MalumMenu.GUI",
+                                "AllowClicksThrough",
+                                true,
+                                "When enabled, clicks pass through the MalumMenu GUI, letting you interact with Among Us GUI elements behind it");
 
         autoLoadProfile = Config.Bind("MalumMenu.Profile",
                                 "AutoLoadProfile",

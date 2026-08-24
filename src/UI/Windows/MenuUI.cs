@@ -43,7 +43,7 @@ public class MenuUI : MonoBehaviour
         // _tabs.Add(new OverloadTab());
 
         // Instantiate 2D area of MenuUI
-        _windowRect = new(
+        windowRect = new(
             Screen.width / 2f - windowWidth / 2f,
             Screen.height / 2f - windowHeight / 2f,
             windowWidth,
@@ -74,7 +74,7 @@ public class MenuUI : MonoBehaviour
             {
                 // Teleport the window to the mouse for immediate use
                 Vector2 mousePosition = Input.mousePosition;
-                _windowRect.position = new Vector2(mousePosition.x, Screen.height - mousePosition.y);
+                windowRect.position = new Vector2(mousePosition.x, Screen.height - mousePosition.y);
             }
         }
 
