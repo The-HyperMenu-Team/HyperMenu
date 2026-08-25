@@ -174,7 +174,8 @@ namespace MalumMenu
                 return;
             }
 
-            if(AmongUsClient.Instance.AmHost)
+            bool hasAnticheat = Utilities.IsAnticheatPresent();
+            if(!hasAnticheat || AmongUsClient.Instance.AmHost)
             {
                 player.MyPhysics.RpcBootFromVent(ventId);
                 return;

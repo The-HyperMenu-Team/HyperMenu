@@ -50,6 +50,13 @@ public class ConfigTab : ITab
 
         Spoofer.useModdedProtocol = GUILayout.Toggle(Spoofer.useModdedProtocol, "Use Modded Protocol");
 
+        Spoofer.SpoofLevel.Enabled = GUILayout.Toggle(Spoofer.SpoofLevel.Enabled, "Spoof Level");
+        if(Spoofer.SpoofLevel.Enabled)
+        {
+            GUILayout.Label($"Spoofed Level: {Spoofer.SpoofLevel.newLevel}");
+            Spoofer.SpoofLevel.newLevel = (uint)(int)GUILayout.HorizontalSlider((float)Spoofer.SpoofLevel.newLevel, 1, 999);
+        }
+
         GUILayout.Label($"Spoofed Platform: {Spoofer.spoofedPlatform}");
         Spoofer.spoofedPlatform = (Platforms)GUILayout.HorizontalSlider((float)Spoofer.spoofedPlatform, 0, 10);
 

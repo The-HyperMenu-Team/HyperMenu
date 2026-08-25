@@ -42,12 +42,15 @@ public struct CheatToggles
     // ESP
     public static bool noShadows;
     public static bool seeGhosts;
+    public static bool showGhosts;
     public static bool seeRoles;
     public static bool seePlayerInfo;
     public static bool seeDisguises;
     public static bool taskArrows;
     public static bool revealVotes;
     public static bool seeLobbyInfo;
+    public static bool fullbright;
+    public static bool noSeekerAnimation;
 
     // Camera
     public static bool spectate;
@@ -77,6 +80,8 @@ public struct CheatToggles
     public static bool longerMessages;
     public static bool unlockClipboard;
     public static bool lowerRateLimits;
+    public static bool showGhostsChat;
+    public static bool alwaysVisibleChat;
 
     // Ship
     public static bool closeMeeting;
@@ -186,6 +191,7 @@ public struct CheatToggles
     public static bool openConfig;
     public static bool loadProfile;
     public static bool saveProfile;
+    public static bool spoofLevel;
 
     // Keybind Map: Toggle Name -> KeyCode (KeyCode.None == No Key)
     public static readonly Dictionary<string, KeyCode> Keybinds = new();

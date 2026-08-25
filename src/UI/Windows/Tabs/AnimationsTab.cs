@@ -31,7 +31,20 @@ public class AnimationsTab : ITab
 
         CheatToggles.animCamsInUse = GUILayout.Toggle(CheatToggles.animCamsInUse, " Cams In Use");
 
-        // CheatToggles.animPet = GUILayout.Toggle(CheatToggles.animPet, " Pet");
+        CheatToggles.animPet = GUILayout.Toggle(CheatToggles.animPet, " Pet");
+        MalumMenu.routines.petPlayer.Enabled = CheatToggles.animPet;
+        if(CheatToggles.animPet && MalumMenu.routines.petPlayer.target == null)
+        {
+            if(PlayersSection.selectedPlayer != null)
+            {
+                MalumMenu.routines.petPlayer.target = PlayersSection.selectedPlayer;
+            }
+            else
+            {
+                MalumMenu.notifications.Send("Pet Player", "Select a player in the Players tab first.", 10);
+                CheatToggles.animPet = false;
+            }
+        }
     }
 
     private void DrawClientSided()

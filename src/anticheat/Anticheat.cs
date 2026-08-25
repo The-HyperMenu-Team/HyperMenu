@@ -14,7 +14,8 @@ namespace MalumMenu.anticheat
 
 		public static Dictionary<GameDataTypes, GameDataCheck> GameDataHandlers = new Dictionary<GameDataTypes, GameDataCheck>()
 		{
-			{ GameDataTypes.ReadyFlag, new ClientReady() }
+			{ GameDataTypes.ReadyFlag, new ClientReady() },
+			{ GameDataTypes.SceneChangeFlag, new SceneChange() }
 		};
 
 		public static Dictionary<RpcCalls, RpcCheck> RpcHandlers = new Dictionary<RpcCalls, RpcCheck>()
