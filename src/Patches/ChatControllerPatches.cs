@@ -19,8 +19,6 @@ public static class QuickChatMenuOpenPatch
 
         // In recent versions, QuickChatMenu populates a list of controller elements dynamically.
         // We use reflection or explicit properties to access the text container if direct references break.
-        string customText = "There are <color=#FF1919> cheating/hacking </color><color=#FFFFFF> Impostors among us.";
-
         // Let's look for the active category controller items that the game renders on screen
         // If direct class types are missing, they are typically bound within an internal array or list.
         try
