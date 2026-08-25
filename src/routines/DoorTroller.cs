@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace MalumMenu.routines
 {
@@ -7,46 +6,49 @@ namespace MalumMenu.routines
     {
         public DoorTrollerRoutine() : base("DoorTroller") { }
 
-        public Dictionary<string, SystemTypes> openDoors = new Dictionary<string, SystemTypes>();
-        public Dictionary<string, SystemTypes> closedDoors = new Dictionary<string, SystemTypes>();
-
-        public float doorDelay = 5f;
+        public float lockAndUnlockDelay = 0.5f;
         private float timeElapsed = 0f;
-        private bool open = false;
+        private bool doorsLocked = false;
 
         public override void Run()
         {
             if(ShipStatus.Instance == null) return;
 
             timeElapsed += Time.deltaTime;
-            if(timeElapsed < doorDelay) return;
-            timeElapsed = 0f;
+            if(timeElapsed < lockAndUnlockDelay) return;
 
-            switch(open)
+            if(doorsLocked)
             {
-                case false:
-                    foreach(string door in Sabotage.GetDoors().Keys)
-                    {
-                        ShipStatus.Instance.RpcCloseDoorsOfType(Sabotage.GetDoors()[door]);
-                    }
-                    open = true;
-                    break;
-
-                case true:
-                    foreach(string door in Sabotage.GetDoors().Keys)
-                    {
-                        ShipStatus.Instance.RpcUpdateSystem(Sabotage.GetDoors()[door], 0);
-                    }
-                    open = false;
-                    break;
+                Sabotage.UnlockAll();
             }
+            else
+            {
+                Sabotage.LockAll();
+            }
+
+            doorsLocked = !doorsLocked;
+            timeElapsed = 0;
         }
 
         protected override void OnEnable()
         {
-            if(ShipStatus.Instance == null)
+            if(PlayerControl.LocalPlayer == null || ShipStatus.Instance == null)
             {
                 MalumMenu.notifications.Send("Door Troller", "Door Troller can only be used once the game has started.", 10);
+                Enabled = false;
+                return;
+            }
+
+            if(ShipStatus.Instance.AllDoors.Count == 0)
+            {
+                MalumMenu.notifications.Send("Door Troller", "Door Troller can not be used as this map does not have any doors.", 10);
+                Enabled = false;
+                return;
+            }
+
+            if(!Sabotage.CanUnlockDoors())
+            {
+                MalumMenu.notifications.Send("Door Troller", "Door Troller can only be used if you are the host, or if the current map supports unlocking doors.", 10);
                 Enabled = false;
                 return;
             }

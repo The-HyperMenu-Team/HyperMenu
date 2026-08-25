@@ -18,6 +18,12 @@ namespace MalumMenu.features
 
 			if(SkipSabotageChecks.SabotageAsCrewmate) HudManager.Instance.SabotageButton.gameObject.SetActive(true);
 			if(AllowVentingForCrewmates) HudManager.Instance.ImpostorVentButton.gameObject.SetActive(true);
+
+			// The Chat button and Match Info buttons will overlap if both are active in-game (but not in meetings)
+			if(Chat.AlwaysVisibleChat.Enabled)
+			{
+				HudManager.Instance.MatchInfoButton.gameObject.SetActive(MeetingHud.Instance != null);
+			}
 		}
 
 		[HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.CmdCheckShapeshift))]

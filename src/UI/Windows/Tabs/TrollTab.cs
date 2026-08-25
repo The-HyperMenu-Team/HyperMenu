@@ -17,7 +17,8 @@ public class TrollTab : ITab
         GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
 
         Troll.AutoReportBodies.Enabled = GUILayout.Toggle(Troll.AutoReportBodies.Enabled, "Automatically Report Bodies");
-         MalumMenu.routines.autoTriggerSpores.Enabled = GUILayout.Toggle(MalumMenu.routines.autoTriggerSpores.Enabled, "Auto Trigger Spores");
+        MalumMenu.routines.autoTriggerSpores.Enabled = GUILayout.Toggle(MalumMenu.routines.autoTriggerSpores.Enabled, "Auto Medbay Scan");
+        MalumMenu.routines.fungleSporeTrigger.Enabled = GUILayout.Toggle(MalumMenu.routines.fungleSporeTrigger.Enabled, "Auto Trigger Spores (Fungle)");
         Troll.BlockSabotages.Enabled = GUILayout.Toggle(Troll.BlockSabotages.Enabled, "Block Sabotages");
         Troll.BlockVenting.Enabled = GUILayout.Toggle(Troll.BlockVenting.Enabled, "Disable Vents");
 
@@ -51,8 +52,8 @@ public class TrollTab : ITab
         GUILayout.Label("Door Troller:");
         MalumMenu.routines.doorTroller.Enabled = GUILayout.Toggle(MalumMenu.routines.doorTroller.Enabled, "Enabled");
 
-        GUILayout.Label($"Lock and Unlock Delay: {MalumMenu.routines.doorTroller.doorDelay:F2}s");
-        MalumMenu.routines.doorTroller.doorDelay = GUILayout.HorizontalSlider(MalumMenu.routines.doorTroller.doorDelay, 0.1f, 2.0f);
+        GUILayout.Label($"Lock and Unlock Delay: {MalumMenu.routines.doorTroller.lockAndUnlockDelay:F2}s");
+        MalumMenu.routines.doorTroller.lockAndUnlockDelay = GUILayout.HorizontalSlider(MalumMenu.routines.doorTroller.lockAndUnlockDelay, 0.1f, 2.0f);
 
         GUILayout.EndVertical();
     }

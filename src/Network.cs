@@ -490,6 +490,20 @@ namespace MalumMenu
                 writer.EndMessage();
             }
 
+            public void QueueTriggerSpore(PlayerControl source, Mushroom mushroom)
+            {
+                if(AmTarget)
+                {
+                    mushroom.TriggerSpores();
+                }
+
+                writer.StartMessage((byte)GameDataTypes.RpcFlag);
+                writer.WritePacked(source.NetId);
+                writer.Write((byte)RpcCalls.TriggerSpores);
+                writer.Write(mushroom.Id);
+                writer.EndMessage();
+            }
+
             public void FinishBatch()
             {
                 writer.EndMessage();

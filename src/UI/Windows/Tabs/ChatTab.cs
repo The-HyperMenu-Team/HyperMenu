@@ -44,6 +44,12 @@ public class ChatTab : ITab
         CheatToggles.bypassUrlBlock = GUILayout.Toggle(CheatToggles.bypassUrlBlock, " Bypass URL Block");
 
         CheatToggles.lowerRateLimits = GUILayout.Toggle(CheatToggles.lowerRateLimits, " Lower Rate Limits");
+
+        CheatToggles.showGhostsChat = GUILayout.Toggle(CheatToggles.showGhostsChat, " Show Ghost Messages");
+        features.Chat.OnChat.ShowMessagesByGhosts = CheatToggles.showGhostsChat;
+
+        CheatToggles.alwaysVisibleChat = GUILayout.Toggle(CheatToggles.alwaysVisibleChat, " Always Visible Chat");
+        features.Chat.AlwaysVisibleChat.Enabled = CheatToggles.alwaysVisibleChat;
     }
 
     private void DrawTextbox()

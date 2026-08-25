@@ -1,4 +1,6 @@
-﻿using HarmonyLib;
+﻿using AmongUs.InnerNet.GameDataMessages;
+using HarmonyLib;
+using Hazel;
 
 namespace MalumMenu.features
 {
@@ -40,6 +42,22 @@ namespace MalumMenu.features
 			}
 		}
 
+		// PlayerControl::RpcSetLevel is inlined in PlayerControl::Start so we cannot patch that function directly
+		[HarmonyPatch(typeof(RpcSetLevelMessage), nameof(RpcSetLevelMessage.SerializeRpcValues))]
+		public static class SpoofLevel
+		{
+			public static bool Enabled { get; set; } = false;
+			public static uint newLevel = 200;
+
+			static bool Prefix(MessageWriter msg)
+			{
+				if(!Enabled) return true;
+
+				msg.WritePacked(newLevel - 1);
+				PlayerControl.LocalPlayer.SetLevel(newLevel - 1);
+				return false;
+			}
+		}
 
 		[HarmonyPatch(typeof(PlatformSpecificData), nameof(PlatformSpecificData.Serialize))]
 		class SpoofPlatform

@@ -83,6 +83,17 @@ namespace MalumMenu
             { "Mushroom Mixup", SystemTypes.MushroomMixupSabotage }
         };
 
+        public static Dictionary<string, SystemTypes> fungleDoors = new Dictionary<string, SystemTypes>()
+        {
+            { "Storage", SystemTypes.Storage },
+            { "Kitchen", SystemTypes.Kitchen },
+            { "Laboratory", SystemTypes.Laboratory },
+            { "Lookout", SystemTypes.Lookout },
+            { "Mining Pit", SystemTypes.MiningPit },
+            { "Communications", SystemTypes.Comms },
+            { "Reactor", SystemTypes.Reactor }
+        };
+
         public static Dictionary<string, SystemTypes> GetSabotages()
         {
             MapNames map = Utilities.GetCurrentMap();
@@ -106,6 +117,7 @@ namespace MalumMenu
                 MapNames.MiraHQ => [],
                 MapNames.Polus => polusDoors,
                 MapNames.Airship => airshipDoors,
+                MapNames.Fungle => fungleDoors,
                 _ => skeldDoors,
             };
         }
