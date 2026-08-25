@@ -502,7 +502,7 @@ public static class PassiveUiElement_Patches
         Vector2 mousePosition = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
 
         // Rect.Contains() uses GUI coordinates (top-left origin)
-        return !((MenuUI.isGUIActive && MenuUI.windowRect.Contains(mousePosition)) ||
+        return !((MenuUI.isGUIActive && MalumMenu.menuUI.WindowRect.Contains(mousePosition)) ||
                  (CheatToggles.showConsole && ConsoleUI.windowRect.Contains(mousePosition)) ||
                  (CheatToggles.showDoorsMenu && DoorsUI.windowRect.Contains(mousePosition)) ||
                  (CheatToggles.showOverload && OverloadUI.windowRect.Contains(mousePosition)) ||

@@ -285,11 +285,11 @@ namespace MalumMenu
                 writer.EndMessage();
             }
 
-            public void QueueVotingComplete(MeetingHud.VoterState[] voteStates, NetworkedPlayerInfo ejectedPlayer, bool isTie)
+            public void QueueVotingComplete(MeetingHud.VoterState[] voteStates, NetworkedPlayerInfo ejectedPlayer, bool isTie, bool wasOverruled, ushort exileId)
             {
                 if(AmTarget)
                 {
-                    MeetingHud.Instance.VotingComplete(voteStates, ejectedPlayer, isTie);
+                    MeetingHud.Instance.VotingComplete(voteStates, ejectedPlayer, isTie, wasOverruled, exileId);
                 }
 
                 writer.StartMessage((byte)GameDataTypes.RpcFlag);
@@ -305,6 +305,8 @@ namespace MalumMenu
 
                 writer.Write(ejectedPlayer.PlayerId);
                 writer.Write(isTie);
+                writer.Write(wasOverruled);
+                writer.Write(exileId);
 
                 writer.EndMessage();
             }
