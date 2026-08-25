@@ -11,7 +11,8 @@ public class MenuUI : MonoBehaviour
     public static int windowWidth => (int)(800 * MalumMenu.menuScale.Value * MalumMenu.menuWidthMult.Value);
 
     public static bool isGUIActive = false;
-    private Rect _windowRect;
+    private Rect windowRect;
+    public Rect WindowRect => windowRect;
     private List<ITab> _tabs = new();
     private int _selectedTab;
     private Vector2 _tabScrollPosition = Vector2.zero;
@@ -211,17 +212,17 @@ public class MenuUI : MonoBehaviour
 
         InitStyles();
 
-        if (Mathf.Abs(_windowRect.width - windowWidth) > 1f || Mathf.Abs(_windowRect.height - windowHeight) > 1f)
+        if (Mathf.Abs(windowRect.width - windowWidth) > 1f || Mathf.Abs(windowRect.height - windowHeight) > 1f)
         {
-            _windowRect.width = windowWidth;
-            _windowRect.height = windowHeight;
-            _windowRect.x = Screen.width / 2f - _windowRect.width / 2f;
-            _windowRect.y = Screen.height / 2f - _windowRect.height / 2f;
+            windowRect.width = windowWidth;
+            windowRect.height = windowHeight;
+            windowRect.x = Screen.width / 2f - windowRect.width / 2f;
+            windowRect.y = Screen.height / 2f - windowRect.height / 2f;
         }
 
         UIHelpers.ApplyUIColor();
 
-        _windowRect = GUI.Window((int)WindowId.MenuUI, _windowRect, (GUI.WindowFunction)WindowFunction, "HyperMenu " + MalumMenu.hyperVersion + ", " + MalumMenu.hyperBuild + " build.");
+        windowRect = GUI.Window((int)WindowId.MenuUI, windowRect, (GUI.WindowFunction)WindowFunction, "HyperMenu " + MalumMenu.hyperVersion + ", " + MalumMenu.hyperBuild + " build.");
     }
 
     private void DisableSabotageCheats()

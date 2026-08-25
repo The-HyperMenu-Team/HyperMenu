@@ -197,7 +197,7 @@ public class PlayersTab : ITab
                 }
 
                 MeetingHud.VoterState[] votes = Array.Empty<MeetingHud.VoterState>();
-                MeetingHud.Instance.RpcVotingComplete(votes, target.Data, false);
+                MeetingHud.Instance.RpcVotingComplete(votes, target.Data, false, false, ushort.MinValue);
                 MeetingHud.Instance.RpcClose();
             }
         }
