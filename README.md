@@ -304,7 +304,3 @@ This is an unofficial community modification and is not affiliated with **Inners
 Among Us and related trademarks belong to their respective owners.
 
 Use modifications responsibly and preferably in private or controlled sessions where everyone involved understands that mods are being used.
-
-Among Us and related trademarks belong to their respective owners.
-
-Use modifications responsibly and preferably in private or controlled sessions where everyone involved understands that mods are being used.
