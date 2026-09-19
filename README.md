@@ -2,209 +2,305 @@
   <img src="HyperMenu.jpeg">
 </p>
 
----
-# NOTICE:
-* This menu is forked from the original MalumMenu. All credit goes to scp222thj.
-  * To access the original, click [here](https://github.com/scp222thj/MalumMenu) or go to https://github.com/scp222thj/MalumMenu
----
-## Our Discord:
-https://discord.gg/gkpdeAX5u9
-## OG MalumMenu Discord:
-https://discord.gg/GZKcdkFD5
+# ⚡ HyperMenu 4.2.3 — Fixed by boranseason
 
-<p align="center">
-  <a href="https://discord.gg/gkpdeAX5u9">
-    <img hspace="6" src="https://img.shields.io/badge/Join%20Us%20on-Discord-blue?style=flat&logo=discord" alt="Discord">
-  </a>
-
-  <a href="https://ko-fi.com/scp222thj">
-    <img hspace="6" src="https://img.shields.io/badge/Support%20scp222thj-Ko--fi-ff5f5f?style=flat&logo=ko-fi" alt="Ko-fi">
-  </a>
-
-  <a href="https://github.com/astra1dev#%EF%B8%8F-support-me">
-    <img hspace="6" src="https://img.shields.io/badge/Support%20astra1dev-Monero-FF6600?style=flat&logo=monero" alt="Monero">
-  </a>
-
-  <a href="https://github.com/The-HyperMenu-Team/HyperMenu/releases">
-    <img hspace="6" src="https://img.shields.io/github/downloads/The-HyperMenu-Team/HyperMenu/total?style=flat&logo=github&label=Total%20Downloads&color=2ECC71" alt="Downloads">
-  </a>
-
-  `I don't want money from this fork as I have other sources of income. Therefore, I'm not including a button to support me. If you would like to support this project, please either support the developers of the original MalumMenu instead, as this project would not be possible without their work, or boost our discord server.`
-  
-  `-ADHyperActive`
-</p>
-
-<p align="center">
-  <b>An easy-to-use Among Us cheat menu with a simple GUI and lots of useful modules.</b>
-</p>
-
-<!-- omit in toc -->
+> 🛠️ An unofficial community-maintained HyperMenu build with updated Among Us compatibility, Judge / voting fixes, UI improvements, profiles, hotkeys, favorites and quality-of-life features.
 
 ---
-# NOTE: See our wiki for more information
-https://the-hypermenu-team.github.io/Wiki/
+
+## 📌 Current Version
+
+**HyperMenu 4.2.3**
+
+In-game title:
+
+```text
+HyperMenu 4.2.3 - Fixed by boranseason
+```
+
+🎮 Target Among Us version:
+
+```text
+2026.8.18
+```
 
 ---
-# 😎 Table Of Contents
 
-- [🎁 Releases](#-releases)
-- [⬇️ Installation](#️-installation)
-  - [🪟 Windows](#-windows)
-  - [🐧 Linux](#-linux)
-- [📋 Features](#-features)
-- [❓ FAQ](#-faq)
-- [⚠️ Disclaimer](#️-disclaimer)
+## ⚖️ Judge / Meeting Voting Fix
 
-# 🎁 Releases
+HyperMenu 4.2.2 used older meeting APIs that became incompatible after the newer **Judge update**.
 
-| Mod Version         | Among Us - Version | Link                                                                                 |
-|---------------------|-------------|--------------------------------------------------------------------------------------|
-| v4.2.2 **[LATEST]** |  2026.6.5   | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.2.2)      |
-| v4.2.1              |  2026.6.5   | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.2.1)      |
-| v4.2.0              |  2026.6.5   | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.2.0)      |
-| v4.1.2              |  2026.3.31  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.1.2)      |
-| v4.1.1              |  2026.3.31  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.1.1)      |
-| v4.1.0              |  2026.3.31  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.1.0)      |
-| v4.0.4              |  2026.3.31  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.0.4)      |
-| v4.0.0              |  2026.3.31  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/HYPER-4.0.0) |
-| v3.0.4              |  2026.3.31  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/H3.0.4-02)   |
-| v3.0.3              |  2026.3.17  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV3.0.3)    |
-| v3.0.2              |  2026.3.17  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV3.0.2)    |
-| v3.0.1              |  2026.3.17  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV3.0.1)    |
-| v2.1.1              |  2026.3.17  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV2.1.1)    |
-| v2.1.0              |  2026.3.17  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV2.1.0)    |
-| v2.0.1              |  2026.2.24  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV2.0.1)    |
-| v2.0.0              |  2026.2.24  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV2.0.0)    |
-| v1.0.1              |  2026.2.24  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV1.0.1)    |
-| v1.0.0              |  2026.2.24  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/ADV1.0.0)    |
+This build updates HyperMenu to the newer Among Us meeting implementation.
 
+### 🔧 Updated APIs
 
-# ⬇️ Installation
+- `MeetingHud.VoteStates` → `MeetingHud.MeetingStates`
+- `TargetPlayerId` → `PlayerId`
+- `VotedFor` → `VotedForId`
+- Updated `RpcVotingComplete`
+- Added Judge overrule support
+- Added `overruleNonce` handling
+- Updated meeting result processing
+- Updated HyperMenu-specific eject logic
 
-## 🪟 Windows
+✅ Normal voting works again.
 
-1. Download the latest **HyperMenu zip pack** from [here](https://github.com/The-HyperMenu-Team/HyperMenu/releases/latest).
-    - **For Steam or Itch.io:** Download `HyperMenu-VERSION-Steam-Itch.zip`.
-    - **For Microsoft Store, Epic Games Store, or Xbox App:** Download `HyperMenu-VERSION-MicrosoftStore-EpicGames-XboxApp.zip`.
+✅ Skip voting works again.
 
-2. Open the zip file you have just downloaded and copy all its contents.
+✅ Meeting completion has been updated.
 
-3. Paste these files directly into your Among Us game folder:
-   - **Steam:** Right-click Among Us in your Library → Click `Manage` → Click `Browse local files`.
-   - **Itch.io:** Open the Itch.io app → Right-click Among Us in your Library → Click `Manage` → Click `Open folder in Explorer`.
-   - **Epic Launcher:** Right-click Among Us in your Library → Click `Manage` → Click the folder icon in the `Installation` box.
-   - **Microsoft Store:** Open the folder where Windows apps are installed (typically `C:\Program Files\WindowsApps\`) by following the tutorial [here](https://youtu.be/qCeoEIy_vrw) → In File Explorer, use the search bar to search for `Among Us.exe` → Right-click the `Among Us.exe` result → Select `Open file location`.
-   - **Xbox App:** Right-click Among Us in your Library → Click `Manage` → Open the `FILES` tab → Click `BROWSE...` → Open the `Among Us` folder → Open the `Content` folder.
+✅ Judge-related voting logic is compatible with the newer API.
 
-4. Launch Among Us as you normally would. You should see a console window appear, installing the mod's requirements.
+---
 
-5. Wait for the console window to finish the installation.
+## 🎨 UI Improvements
 
-6. After installation, Among Us will automatically open with HyperMenu successfully installed.
-    - By default, you can toggle the cheat GUI on by pressing **DELETE** on your keyboard.
+The classic HyperMenu layout is still here, but several usability improvements have been added.
 
-7. If the installation doesn't work, check out our [FAQ](#-faq).
+### ✨ Improvements
 
-## 🐧 Linux
+- 🔎 Tab search
+- ⭐ Favorites
+- ⚡ Quick access page
+- ↔️ Resizable menu
+- 💾 Saved menu position
+- 💾 Saved menu size
+- 📜 Scrollable long tabs
+- 🔢 Active feature counter
+- ♻️ Reset Active Features button
+- 🖱️ Better buttons for one-time actions
+- 📋 Classic flat tab list
 
-1. Run Among Us under **Proton (or Wine)**.
-   - **In Steam:** Right-click Among Us in your Library → Click `Properties` → Click `Compatibility` → Enable `Force the use of a specific Steam Play compatibility tool`.
+Host-related pages can also be opened while playing as a client.
 
-   - Test different Proton versions if you're having issues launching the game.
+> ⚠️ Opening a host page does **not** magically grant host authority. Actions that require actual host permissions still depend on Among Us networking.
 
-2. Set up **BepInEx** (the framework HyperMenu is built upon).
-   - Follow the official Proton / Wine setup guide found [here](https://docs.bepinex.dev/articles/advanced/proton_wine.html).
-   - If you are using Proton with Steam, specify the DLL override:
-     - **In Steam:** Right-click Among Us in your Library → Click `Properties` → Click `General` → Click `Launch Options`.
-     - Add this to your launch options:
+---
 
-       ```
-       WINEDLLOVERRIDES="winhttp.dll=n,b" %command%
-       ```
+## ⭐ Favorites / Quick Menu
 
-   - After that, continue with the Windows installation steps found [here](#-windows).
+Frequently used features can now be marked as favorites.
 
-3. Fix crashes or errors (like `Unable to execute IL2CPP chainloader`).
-   - **In Steam:** Right-click Among Us in your Library → Click `Properties` → Click `General` → Click `Launch Options`.
-   - Set your launch options to:
+Favorite options automatically appear inside the **Quick** page for faster access.
 
-     ```
-     PROTON_NO_ESYNC=1 PROTON_USE_WINED3D=1 WINEDLLOVERRIDES="winhttp.dll=n,b" %command%
-     ```
+No more digging through half the menu every time you want the same feature. 😭
 
-# 📋 Features
+---
 
-<img alt="image" src="HyperInGame.jpeg">
+## ⌨️ Improved Hotkey System
 
-## Changes from OG Malum Menu
-* Modernized GUI
-* Ability to change options from the config file within the menu
+The hotkey system has been heavily improved.
 
-## OG Menu Features
-- An intuitive GUI with our latest, greatest Among Us cheats
-- See ghosts & reveal the impostors
-- Track every player's position using the minimap
-- Teleport anywhere you want
-- Change your role whenever you please
-- Remove kill cooldown & spam-kill everyone
-- Murder any distant player from across the map
-- Unlock all of the game's cosmetics for FREE
-- No more annoying disconnect penalties
+### 🎛️ Features
 
-For a complete list of all of MalumMenu's features, click [here](https://github.com/scp222thj/MalumMenu/blob/main/FEATURES.md)
-For a complete list of all of HyperMenu's features, click [here](https://github.com/The-HyperMenu-Team/HyperMenu/blob/main/FEATURES.md)
+- 🔎 Search for features
+- ⌨️ Click a key button and press a key to bind it
+- `Escape` → cancel key capture
+- `Backspace` / `Delete` → remove binding
+- ⚠️ Duplicate key warnings
+- 🌐 Network-action labels
+- ⭐ Favorite support
+- 💬 Hotkeys disabled while typing
 
-# ❓ FAQ
+This prevents accidentally triggering features while typing in chat, search boxes or profile fields.
 
-Click to expand each topic
+---
 
-<details>
+## 🛡️ Private Lobby Safety
 
-<summary><h2>❗ I'm having issues installing HyperMenu</h2></summary>
+Private Lobby Safety is enabled by default.
 
-First of all, make sure you are running the most recent version of Among Us (`17.4` / `2026.6.5` OR `17.3` / `2026.3.31`) with the most recent version of HyperMenu (`v3.2.0`).
+Network-sensitive actions are restricted unless one of these conditions is met:
 
-Also, check if your platform is officially supported:
+- 🧪 Freeplay is active
+- 👑 You are the actual host
+- 🔒 Private host-session confirmation has been enabled
 
-- ✅ Steam
-- ✅ Itch.io
-- ❌ Epic Games Launcher
-- ❌ Microsoft Store
-- ❌ Xbox App
-- ❌ Cracked
-- ❌ iOS App Store & Google Play
-- ❌ PS & Switch & Xbox Console
+The confirmation automatically resets after leaving the lobby.
 
-Now ensure that you have downloaded the correct zip file for your platform:
-- **For Steam or Itch.io:** Download `HyperMenu-VERSION-Steam-Itch.zip`
-- **For Microsoft Store, Epic Games Store, or Xbox App:** This is not officially supported by HyperMenu. For these features, download the original MalumMenu.
+### Protected actions include
 
-Make sure you followed the installation guide precisely. This is what your `Among Us` folder should look like after a successful installation:
+- ☠️ Kill actions
+- ⚡ Telekill
+- 💀 Kill All
+- 🎭 Force Role
+- 🚀 Eject
+- 📢 Meeting actions
+- 💥 Sabotages
+- 🚪 Door controls
+- ▶️ Force Start
+- 👑 Host-related operations
+- ♾️ No Game End
+- 🌐 Other network-sensitive actions
 
-<img src="https://scp222thj.dev/static/images/amongUsFolder.png" alt="drawing" width="550"/>
+Safety checks also apply when actions are triggered using hotkeys.
 
-<br>Some antiviruses might cause issues when installing the mod, so consider temporarily deactivating your antivirus if the game isn't booting after installation.
+---
 
-When installing MalumMenu for the first time, it will take **MUCH** longer than usual for the game to load. This is completely normal and expected behavior, so don't be alarmed if you have to wait a while. You can keep track of the installation progress through this useful BepInEx console window that pops up when you start the game:
+## 🔍 Meeting Inspector
 
-<img src="https://scp222thj.dev/static/images/bepinexConsole.png" alt="drawing" width="550"/>
+A read-only **Meeting Inspector** has been added.
 
-<br>If you are still having issues, feel free to open a new Github issue [on the original menu](https://github.com/scp222thj/MalumMenu/issues/new), or you can ask for help in the MalumMenu Discord server: [discord.gg/YYcYf88jAb](https://discord.gg/YYcYf88jAb)
+It can display:
 
-</details>
+- 📊 Current meeting state
+- 🗳️ Local player's vote
+- 👥 Player voting states
+- 🎯 Vote targets
+- ⏭️ Skip vote count
+- ⏳ Players still waiting to vote
+- ⚖️ Judge overrule status
+- 👨‍⚖️ Winning Judge
+- 🎯 Overruled player
+- 🔢 `overruleNonce`
 
-<details>
+> ℹ️ Meeting Inspector does not send voting RPCs and does not modify meeting results.
 
-<summary><h2>👾 I found a bug OR I would like to suggest a new feature</h2></summary>
+It only reads the current state for debugging and inspection.
 
-To report a bug or request a feature, you can open a new Github issue [on the original MalumMenu](https://github.com/scp222thj/MalumMenu/issues/new), or [on my fork](https://github.com/The-HyperMenu-Team/HyperMenu/issues/new) (I recommend the original since I'm unlikely to implement changes on my fork due to being busy high school student), or you can discuss it on the MalumMenu Discord server: [discord.gg/YYcYf88jAb](https://discord.gg/YYcYf88jAb)
+---
 
-</details>
+## 💾 Improved Profile System
 
-# ⚠️ Disclaimer
+HyperMenu is no longer limited to a single `MalumProfile.txt`.
 
-This mod is not affiliated with Among Us or Innersloth LLC, and the content contained therein is not endorsed or otherwise sponsored by Innersloth LLC. Portions of the materials contained herein are property of Innersloth LLC. © Innersloth LLC.
+New profiles are stored inside:
 
-This mod is not intended to be used in any manner that interferes with Innersloth's services, Innersloth's operation of Among Us, the integrity or availability of the game, or the normal gameplay experience of other players. The creator does not endorse, encourage, or condone using this mod to disrupt games, negatively affect other users, bypass rules or protections, or gain an unfair advantage in any setting where such use is prohibited. Any misuse is solely the responsibility of the user.
+```text
+BepInEx/config/HyperMenuProfiles
+```
 
-Usage of this mod can violate the terms of service of Among Us, which may lead to punitive action including temporary or permanent bans from the game. The creator is not responsible for any consequences you may face due to usage. Use at your own risk.
+### 📂 Profile features
+
+- ✏️ Custom profile names
+- 💾 Save profiles
+- 📥 Load profiles
+- 📃 List saved profiles
+- ✅ Display active profile
+- 🗑️ Two-step deletion
+- 🚀 Automatically load active profile on startup
+- 🔄 Legacy `MalumProfile.txt` compatibility
+
+---
+
+## 📈 Automatic Level Update
+
+The old manual level update workflow has been improved.
+
+HyperMenu can now automatically send the configured player level while inside a lobby.
+
+### How it works
+
+- ✅ Sends the selected level automatically
+- 🔁 Sends again if the configured level changes
+- 🚫 Does not continuously spam the RPC
+- 🎮 Works during the current session
+
+> ⚠️ This does not grant XP and does not permanently modify account progression.
+
+It only changes the level value advertised during the active session.
+
+---
+
+## 🎮 Compatibility
+
+Current target:
+
+```text
+Among Us 2026.8.18
+HyperMenu 4.2.3
+```
+
+Game libraries were updated from:
+
+```text
+2026.6.5
+```
+
+to:
+
+```text
+2026.8.18
+```
+
+---
+
+## 📥 Installation
+
+### Steam / Itch
+
+1. Install the required BepInEx / IL2CPP setup.
+2. Copy `HyperMenu.dll` into:
+
+```text
+Among Us/BepInEx/plugins/
+```
+
+3. Remove older HyperMenu DLLs.
+4. Start Among Us.
+5. Press `Delete` to open the menu.
+
+> ⚠️ Do not keep multiple HyperMenu versions inside the plugins folder at the same time.
+
+---
+
+## 🧱 Building From Source
+
+### Requirements
+
+- .NET SDK
+- HyperMenu source code
+- Required Among Us libraries
+
+Restore dependencies:
+
+```bash
+dotnet restore MalumMenu.sln
+```
+
+Build Release:
+
+```bash
+dotnet build MalumMenu.sln -c Release --no-restore
+```
+
+The compiled plugin should appear inside the project's Release output directory.
+
+---
+
+## ✅ Tested
+
+- ✅ Release build
+- ✅ 0 build errors
+- ✅ BepInEx startup
+- ✅ HyperMenu 4.2.3 loaded
+- ✅ UI startup
+- ✅ Judge / voting compatibility update
+- ✅ Single HyperMenu DLL package
+- ✅ Runtime GUI test
+
+---
+
+## 🧑‍💻 Maintained / Fixed By
+
+### **boranseason**
+
+Compatibility fixes, HyperMenu-specific updates, UI improvements and additional quality-of-life work.
+
+---
+
+## ❤️ Credits
+
+Huge respect to the original **HyperMenu**, **MalumMenu** and related contributors whose work made this project possible.
+
+All original projects and code belong to their respective authors and contributors.
+
+---
+
+## ⚠️ Disclaimer
+
+This is an unofficial community modification and is not affiliated with **Innersloth**.
+
+Among Us and related trademarks belong to their respective owners.
+
+Use modifications responsibly and preferably in private or controlled sessions where everyone involved understands that mods are being used.
