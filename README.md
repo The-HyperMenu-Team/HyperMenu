@@ -1,306 +1,87 @@
 <p align="center">
-  <img src="HyperMenu.jpeg">
+  <img src="HyperMenu.jpeg" alt="HyperMenu" width="720">
 </p>
 
-# ⚡ HyperMenu 4.2.3 — Fixed by boranseason
+# HyperMenu 4.2.3
 
-> 🛠️ An unofficial community-maintained HyperMenu build with updated Among Us compatibility, Judge / voting fixes, UI improvements, profiles, hotkeys, favorites and quality-of-life features.
+> **Fixed and maintained by boranseason** 🛠️
 
----
+An unofficial community-maintained HyperMenu build for **Among Us 2026.8.18**. This release focuses on current-game compatibility, a cleaner workflow, and practical quality-of-life improvements.
 
-## 📌 Current Version
+## Highlights
 
-**HyperMenu 4.2.3**
+- 🎚️ **Visible lobby level up to 700**
+- ⚖️ Updated compatibility work for the newer Judge and meeting APIs
+- 🧭 Flat tab navigation, search, favorites, and a Quick page
+- ⌨️ Improved hotkey capture with duplicate-key warnings
+- 💾 Named profiles, saved window layout, and configurable startup behavior
+- 🛡️ Private Lobby Safety is enabled by default for network-sensitive actions
 
-In-game title:
+## Level 700 Update
 
-```text
-HyperMenu 4.2.3 - Fixed by boranseason
-```
+The visible lobby-level control now supports values from **1 to 700**.
 
-🎮 Target Among Us version:
+- Manual **Send Level Update** supports level 700
+- Optional automatic sending after joining a lobby supports level 700
+- ✅ **Tested in-game: level 700 displays correctly**
 
-```text
-2026.8.18
-```
+> This changes the level advertised during the current lobby/session. It does **not** grant permanent XP or modify account progression.
 
----
+## Compatibility
 
-## ⚖️ Judge / Meeting Voting Fix
+| Component | Supported version |
+| --- | --- |
+| Among Us | `2026.8.18` |
+| HyperMenu | `4.2.3` |
+| Runtime | BepInEx IL2CPP |
 
-HyperMenu 4.2.2 used older meeting APIs that became incompatible after the newer **Judge update**.
-
-This build updates HyperMenu to the newer Among Us meeting implementation.
-
-### 🔧 Updated APIs
-
-- `MeetingHud.VoteStates` → `MeetingHud.MeetingStates`
-- `TargetPlayerId` → `PlayerId`
-- `VotedFor` → `VotedForId`
-- Updated `RpcVotingComplete`
-- Added Judge overrule support
-- Added `overruleNonce` handling
-- Updated meeting result processing
-- Updated HyperMenu-specific eject logic
-
-✅ Normal voting works again.
-
-✅ Skip voting works again.
-
-✅ Meeting completion has been updated.
-
-✅ Judge-related voting logic is compatible with the newer API.
-
----
-
-## 🎨 UI Improvements
-
-The classic HyperMenu layout is still here, but several usability improvements have been added.
-
-### ✨ Improvements
-
-- 🔎 Tab search
-- ⭐ Favorites
-- ⚡ Quick access page
-- ↔️ Resizable menu
-- 💾 Saved menu position
-- 💾 Saved menu size
-- 📜 Scrollable long tabs
-- 🔢 Active feature counter
-- ♻️ Reset Active Features button
-- 🖱️ Better buttons for one-time actions
-- 📋 Classic flat tab list
-
-Host-related pages can also be opened while playing as a client.
-
-> ⚠️ Opening a host page does **not** magically grant host authority. Actions that require actual host permissions still depend on Among Us networking.
-
----
-
-## ⭐ Favorites / Quick Menu
-
-Frequently used features can now be marked as favorites.
-
-Favorite options automatically appear inside the **Quick** page for faster access.
-
-No more digging through half the menu every time you want the same feature. 😭
-
----
-
-## ⌨️ Improved Hotkey System
-
-The hotkey system has been heavily improved.
-
-### 🎛️ Features
-
-- 🔎 Search for features
-- ⌨️ Click a key button and press a key to bind it
-- `Escape` → cancel key capture
-- `Backspace` / `Delete` → remove binding
-- ⚠️ Duplicate key warnings
-- 🌐 Network-action labels
-- ⭐ Favorite support
-- 💬 Hotkeys disabled while typing
-
-This prevents accidentally triggering features while typing in chat, search boxes or profile fields.
-
----
-
-## 🛡️ Private Lobby Safety
-
-Private Lobby Safety is enabled by default.
-
-Network-sensitive actions are restricted unless one of these conditions is met:
-
-- 🧪 Freeplay is active
-- 👑 You are the actual host
-- 🔒 Private host-session confirmation has been enabled
-
-The confirmation automatically resets after leaving the lobby.
-
-### Protected actions include
-
-- ☠️ Kill actions
-- ⚡ Telekill
-- 💀 Kill All
-- 🎭 Force Role
-- 🚀 Eject
-- 📢 Meeting actions
-- 💥 Sabotages
-- 🚪 Door controls
-- ▶️ Force Start
-- 👑 Host-related operations
-- ♾️ No Game End
-- 🌐 Other network-sensitive actions
-
-Safety checks also apply when actions are triggered using hotkeys.
-
----
-
-## 🔍 Meeting Inspector
-
-A read-only **Meeting Inspector** has been added.
-
-It can display:
-
-- 📊 Current meeting state
-- 🗳️ Local player's vote
-- 👥 Player voting states
-- 🎯 Vote targets
-- ⏭️ Skip vote count
-- ⏳ Players still waiting to vote
-- ⚖️ Judge overrule status
-- 👨‍⚖️ Winning Judge
-- 🎯 Overruled player
-- 🔢 `overruleNonce`
-
-> ℹ️ Meeting Inspector does not send voting RPCs and does not modify meeting results.
-
-It only reads the current state for debugging and inspection.
-
----
-
-## 💾 Improved Profile System
-
-HyperMenu is no longer limited to a single `MalumProfile.txt`.
-
-New profiles are stored inside:
-
-```text
-BepInEx/config/HyperMenuProfiles
-```
-
-### 📂 Profile features
-
-- ✏️ Custom profile names
-- 💾 Save profiles
-- 📥 Load profiles
-- 📃 List saved profiles
-- ✅ Display active profile
-- 🗑️ Two-step deletion
-- 🚀 Automatically load active profile on startup
-- 🔄 Legacy `MalumProfile.txt` compatibility
-
----
-
-## 📈 Automatic Level Update
-
-The old manual level update workflow has been improved.
-
-HyperMenu can now automatically send the configured player level while inside a lobby.
-
-### How it works
-
-- ✅ Sends the selected level automatically
-- 🔁 Sends again if the configured level changes
-- 🚫 Does not continuously spam the RPC
-- 🎮 Works during the current session
-
-> ⚠️ This does not grant XP and does not permanently modify account progression.
-
-It only changes the level value advertised during the active session.
-
----
-
-## 🎮 Compatibility
-
-Current target:
-
-```text
-Among Us 2026.8.18
-HyperMenu 4.2.3
-```
-
-Game libraries were updated from:
-
-```text
-2026.6.5
-```
-
-to:
-
-```text
-2026.8.18
-```
-
----
-
-## 📥 Installation
+## Installation
 
 ### Steam / Itch
 
-1. Install the required BepInEx / IL2CPP setup.
-2. Copy `HyperMenu.dll` into:
+1. Install the required **BepInEx IL2CPP** setup for Among Us.
+2. Close Among Us completely.
+3. Extract the Steam / Itch release ZIP.
+4. Copy `HyperMenu.dll` to `Among Us/BepInEx/plugins/`.
+5. Start the game and press `Delete` to open HyperMenu.
 
-```text
-Among Us/BepInEx/plugins/
-```
+### Epic Games
 
-3. Remove older HyperMenu DLLs.
-4. Start Among Us.
-5. Press `Delete` to open the menu.
+1. Install the required **BepInEx IL2CPP** setup for your Epic Games installation.
+2. Close Among Us completely.
+3. Extract the Epic release ZIP.
+4. Copy `HyperMenu.dll` to `Among Us/BepInEx/plugins/`.
+5. Start the game and press `Delete` to open HyperMenu.
 
-> ⚠️ Do not keep multiple HyperMenu versions inside the plugins folder at the same time.
+> Do not keep multiple HyperMenu DLL versions in the `plugins` folder. Replace the existing `HyperMenu.dll` rather than installing a second copy beside it.
 
----
+## Notable Improvements
 
-## 🧱 Building From Source
+- **Navigation:** tab search, favorites, Quick access, a classic flat tab list, and scrollable long pages.
+- **Hotkeys:** searchable actions, direct key capture, safe cancel/remove controls, duplicate-binding warnings, and hotkeys disabled while typing.
+- **Profiles:** save and load named profiles from `BepInEx/config/HyperMenuProfiles`, with legacy profile compatibility.
+- **Meeting tools:** an informational Meeting Inspector for reading the current meeting state without changing results.
 
-### Requirements
+## Verification
 
-- .NET SDK
-- HyperMenu source code
-- Required Among Us libraries
+- ✅ Release build completed successfully
+- ✅ BepInEx loaded HyperMenu 4.2.3 successfully
+- ✅ Menu/UI startup verified
+- ✅ Level 700 tested and displayed correctly in-game
 
-Restore dependencies:
+## Build From Source
 
 ```bash
 dotnet restore MalumMenu.sln
-```
-
-Build Release:
-
-```bash
 dotnet build MalumMenu.sln -c Release --no-restore
 ```
 
-The compiled plugin should appear inside the project's Release output directory.
+## Credits
 
----
+HyperMenu and MalumMenu are the work of their respective original authors and contributors.
 
-## ✅ Tested
+**Compatibility fixes, updates, and quality-of-life work by boranseason.**
 
-- ✅ Release build
-- ✅ 0 build errors
-- ✅ BepInEx startup
-- ✅ HyperMenu 4.2.3 loaded
-- ✅ UI startup
-- ✅ Judge / voting compatibility update
-- ✅ Single HyperMenu DLL package
-- ✅ Runtime GUI test
+## Disclaimer
 
----
-
-## 🧑‍💻 Maintained / Fixed By
-
-### **boranseason**
-
-Compatibility fixes, HyperMenu-specific updates, UI improvements and additional quality-of-life work.
-
----
-
-## ❤️ Credits
-
-Huge respect to the original **HyperMenu**, **MalumMenu** and related contributors whose work made this project possible.
-
-All original projects and code belong to their respective authors and contributors.
-
----
-
-## ⚠️ Disclaimer
-
-This is an unofficial community modification and is not affiliated with **Innersloth**.
-
-Among Us and related trademarks belong to their respective owners.
-
-Use modifications responsibly and preferably in private or controlled sessions where everyone involved understands that mods are being used.
+HyperMenu is an unofficial community modification and is not affiliated with Innersloth. Among Us and related trademarks belong to their respective owners. Use modifications responsibly and only in sessions where their use is understood by everyone involved.
