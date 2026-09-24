@@ -57,9 +57,9 @@ https://the-hypermenu-team.github.io/Wiki/
 
 # 🎁 Releases
 
-| Mod Version         | Among Us - Version | Link                                                                                 |
+| Mod Version         | Among Us - Version | Link                                                                              |
 |---------------------|-------------|--------------------------------------------------------------------------------------|
-| v4.4.0 **[LATEST]** |  2026.8.18  | [Download](https://gitlab.com/the-hypermenu-team1/hypermenu/-/releases/v4.4.0-beta)      |
+| v4.4.0 **[LATEST]** |  2026.8.18  | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.4.0-beta)     |
 | v4.2.2              |  2026.6.5   | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.2.2)          |
 | v4.2.1              |  2026.6.5   | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.2.1)          |
 | v4.2.0              |  2026.6.5   | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.2.0)          |
