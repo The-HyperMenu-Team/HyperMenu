@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Target tag to publish release for'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  BUILT_DLL_PATH: 'src/bin/Release/net6.0/MalumMenu.dll'
+  RELEASE_DLL_NAME: 'HyperMenu.dll'
+
+jobs:
+  release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build Project
+        run: |
+          dotnet restore
+          dotnet build -c Release
+
+      - name: Package Distributions
+        run: |
+          # Process Steam / Itch.io package
+          unzip bep-steam.zip -d build_steam
+          mkdir -p build_steam/BepInEx/plugins
+          cp "$BUILT_DLL_PATH" "build_steam/BepInEx/plugins/$RELEASE_DLL_NAME"
+          cd build_steam && zip -r ../HyperMenu-Steam-Itch.zip . && cd ..
+
+          # Process Epic Games / MS Store package
+          unzip bep-epic.zip -d build_epic
+          mkdir -p build_epic/BepInEx/plugins
+          cp "$BUILT_DLL_PATH" "build_epic/BepInEx/plugins/$RELEASE_DLL_NAME"
+          cd build_epic && zip -r ../HyperMenu-Epic-MSStore.zip . && cd ..
+
+          # Standalone plugin copy
+          cp "$BUILT_DLL_PATH" "$RELEASE_DLL_NAME"
+
+      - name: Publish Release to GitHub
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag_name }}"
+          fi
+
+          gh release create "$TAG" \
+            --title "Release $TAG" \
+            --generate-notes \
+            "$RELEASE_DLL_NAME" \
+            "HyperMenu-Steam-Itch.zip" \
+            "HyperMenu-Epic-MSStore.zip"
