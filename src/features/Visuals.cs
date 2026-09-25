@@ -1,10 +1,13 @@
-﻿using HarmonyLib;
+﻿using System;
+using HarmonyLib;
 using UnityEngine;
 
 namespace MalumMenu.features
 {
     internal class Visuals
     {
+        private const int HandlingId = 40010;
+
         [HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.CalculateLightRadius))]
         public static class Fullbright
         {
@@ -12,10 +15,18 @@ namespace MalumMenu.features
 
             static bool Prefix(ref float __result)
             {
-                if(!Enabled) return true;
+                try
+                {
+                    if(!Enabled) return true;
 
-                __result = 1000f;
-                return false;
+                    __result = 1000f;
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    ErrorReporter.Report(ex, HandlingId, "Fullbright.Prefix: overriding light radius");
+                    return true;
+                }
             }
         }
 
@@ -26,7 +37,14 @@ namespace MalumMenu.features
 
             static void Prefix(ref bool visible)
             {
-                if(Enabled) visible = true;
+                try
+                {
+                    if(Enabled) visible = true;
+                }
+                catch (Exception ex)
+                {
+                    ErrorReporter.Report(ex, HandlingId, "ShowProtections.Prefix: forcing protection visible");
+                }
             }
         }
 
@@ -39,34 +57,42 @@ namespace MalumMenu.features
 
 			static bool Prefix(string playerName, DisconnectReasons reason)
 			{
-                if(!Enabled) return true;
+                try
+                {
+                    if(!Enabled) return true;
 
-				MalumMenu.Log.LogInfo($"[Disconnect Logger] {playerName} was disconnected with reason {reason}");
+                    MalumMenu.Log.LogInfo($"[Disconnect Logger] {playerName} was disconnected with reason {reason}");
 
-				switch(reason) {
-                    // GameData::ShowNotification already handles these disconnect messages
-                    case DisconnectReasons.ExitGame:
-                    case DisconnectReasons.Kicked:
-                    case DisconnectReasons.Banned:
-                    case DisconnectReasons.Error:
-                        return true;
+                    switch(reason) {
+                        // GameData::ShowNotification already handles these disconnect messages
+                        case DisconnectReasons.ExitGame:
+                        case DisconnectReasons.Kicked:
+                        case DisconnectReasons.Banned:
+                        case DisconnectReasons.Error:
+                            return true;
 
-                    case DisconnectReasons.Hacking:
-						HudManager.Instance.Notifier.AddDisconnectMessage($"{playerName} was banned by the Among Us anticheat for hacking.");
-						return false;
+                        case DisconnectReasons.Hacking:
+                            HudManager.Instance.Notifier.AddDisconnectMessage($"{playerName} was banned by the Among Us anticheat for hacking.");
+                            return false;
 
-                    case DisconnectReasons.DuplicateConnectionDetected:
-						HudManager.Instance.Notifier.AddDisconnectMessage($"{playerName} was kicked due to duplicate login.");
-						return false;
+                        case DisconnectReasons.DuplicateConnectionDetected:
+                            HudManager.Instance.Notifier.AddDisconnectMessage($"{playerName} was kicked due to duplicate login.");
+                            return false;
 
-                    // This disconnect reason happens when a player does not send the ClientReady message after the game starts in time
-                    case DisconnectReasons.ClientTimeout:
-						HudManager.Instance.Notifier.AddDisconnectMessage($"{playerName} was kicked due to timeout.");
-                        return false;
+                        // This disconnect reason happens when a player does not send the ClientReady message after the game starts in time
+                        case DisconnectReasons.ClientTimeout:
+                            HudManager.Instance.Notifier.AddDisconnectMessage($"{playerName} was kicked due to timeout.");
+                            return false;
 
-					default:
-						HudManager.Instance.Notifier.AddDisconnectMessage($"{playerName} was disconnected due to {reason}.");
-						return false;
+                        default:
+                            HudManager.Instance.Notifier.AddDisconnectMessage($"{playerName} was disconnected due to {reason}.");
+                            return false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ErrorReporter.Report(ex, HandlingId, "AccurateDisconnectReasons.Prefix: showing accurate disconnect reason");
+                    return true;
                 }
 			}
 		}
@@ -78,13 +104,21 @@ namespace MalumMenu.features
 
 			static bool Prefix()
 			{
-				if(Enabled)
+				try
 				{
-					HudManager.Instance.shhhEmblem.gameObject.SetActive(false);
-					return false;
+					if(Enabled)
+					{
+						HudManager.Instance.shhhEmblem.gameObject.SetActive(false);
+						return false;
+					}
+					else
+					{
+						return true;
+					}
 				}
-				else
+				catch (Exception ex)
 				{
+					ErrorReporter.Report(ex, HandlingId, "SkipShhhAnimation.Prefix: hiding shhh emblem");
 					return true;
 				}
 			}
@@ -97,13 +131,21 @@ namespace MalumMenu.features
 
 			 public static bool Prefix(ref int __result)
 			 {
-				 if(Enabled)
+				 try
 				 {
-					 __result = 0;
-					 return false;
+					 if(Enabled)
+					 {
+						 __result = 0;
+						 return false;
+					 }
+					 else
+					 {
+						 return true;
+					 }
 				 }
-				 else
+				 catch (Exception ex)
 				 {
+					 ErrorReporter.Report(ex, HandlingId, "NoSeekerAnimationPatch.Prefix: zeroing seeker lead time");
 					 return true;
 				 }
 			 }
@@ -119,13 +161,21 @@ namespace MalumMenu.features
 
 			static bool Prefix(PlayerControl __instance)
 			{
-				if(Enabled && __instance.Data.IsDead)
+				try
 				{
-					__instance.cosmetics.Visible = true;
-					return false;
+					if(Enabled && __instance.Data.IsDead)
+					{
+						__instance.cosmetics.Visible = true;
+						return false;
+					}
+					else
+					{
+						return true;
+					}
 				}
-				else
+				catch (Exception ex)
 				{
+					ErrorReporter.Report(ex, HandlingId, "ShowGhosts.Prefix: forcing ghost cosmetics visible");
 					return true;
 				}
 			}

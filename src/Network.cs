@@ -1,4 +1,5 @@
-﻿using AmongUs.GameOptions;
+﻿using System;
+using AmongUs.GameOptions;
 using AmongUs.InnerNet.GameDataMessages;
 using HarmonyLib;
 using Hazel;
@@ -519,25 +520,38 @@ namespace MalumMenu
             [HarmonyPatch(typeof(InnerNetClient), nameof(InnerNetClient.HandleGameData))]
             class HandleGameData
             {
+                private const int HandlingId = 30050;
                 static bool Prefix(InnerNetClient __instance, MessageReader parentReader)
                 {
-                    if(features.Protections.BlockLargeGameMessages && parentReader.Length > MAX_MESSAGE_LENGTH)
-                    {
-                        parentReader.Recycle();
-                        return false;
-                    }
-
                     try
                     {
-                        while(parentReader.BytesRemaining > 0)
+                        if(features.Protections.BlockLargeGameMessages && parentReader.Length > MAX_MESSAGE_LENGTH)
                         {
-                            MessageReader reader = parentReader.ReadMessageAsNewBuffer();
-                            HandleGameDataInner(__instance, reader, ++__instance.msgNum);
+                            parentReader.Recycle();
+                            return false;
+                        }
+
+                        try
+                        {
+                            while(parentReader.BytesRemaining > 0)
+                            {
+                                MessageReader reader = parentReader.ReadMessageAsNewBuffer();
+                                HandleGameDataInner(__instance, reader, ++__instance.msgNum);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            ErrorReporter.Report(ex, HandlingId, "HandleGameData.Prefix: handle batched game data");
+                        }
+                        finally
+                        {
+                            parentReader.Recycle();
                         }
                     }
-                    finally
+                    catch (Exception ex)
                     {
-                        parentReader.Recycle();
+                        ErrorReporter.Report(ex, HandlingId, "HandleGameData.Prefix: guard game data handler");
+                        try { parentReader.Recycle(); } catch { }
                     }
 
                     return false;

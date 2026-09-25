@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using UnityEngine;
 
@@ -5,6 +6,7 @@ namespace MalumMenu;
 
 public class TasksUI : MonoBehaviour
 {
+    private const int HandlingId = 10010;
     public static int windowHeight = 300;
     public static int windowWidth = 500;
     public static Rect windowRect;
@@ -16,30 +18,38 @@ public class TasksUI : MonoBehaviour
 
     private void Start()
     {
-        // Instantiate 2D area of TasksUI
-        windowRect = new(
-            Screen.width / 2f - windowWidth / 2f,
-            Screen.height / 2f - windowHeight / 2f,
-            windowWidth,
-            windowHeight
-        );
+        try
+        {
+            // Instantiate 2D area of TasksUI
+            windowRect = new(
+                Screen.width / 2f - windowWidth / 2f,
+                Screen.height / 2f - windowHeight / 2f,
+                windowWidth,
+                windowHeight
+            );
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "TasksUI.Start: init window rect"); }
     }
 
     private void OnGUI()
     {
-        if (!CheatToggles.showTasksMenu || !(MenuUI.isGUIActive || MalumMenu.menuKeepSubwindowsOpen.Value) || MalumMenu.isPanicked) return;
-
-        _playerHeaderStyle ??= new GUIStyle(GUI.skin.button)
+        try
         {
-            fontSize = 16,
-            fontStyle = FontStyle.Bold,
-            alignment = TextAnchor.MiddleLeft,
-            padding = new RectOffset { left = 8, right = 8, top = 8, bottom = 8 }
-        };
+            if (!CheatToggles.showTasksMenu || !(MenuUI.isGUIActive || MalumMenu.menuKeepSubwindowsOpen.Value) || MalumMenu.isPanicked) return;
 
-        UIHelpers.ApplyUIColor();
+            _playerHeaderStyle ??= new GUIStyle(GUI.skin.button)
+            {
+                fontSize = 16,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleLeft,
+                padding = new RectOffset { left = 8, right = 8, top = 8, bottom = 8 }
+            };
 
-        windowRect = GUI.Window((int)WindowId.TasksUI, windowRect, (GUI.WindowFunction)TasksWindow, "Tasks");
+            UIHelpers.ApplyUIColor();
+
+            windowRect = GUI.Window((int)WindowId.TasksUI, windowRect, (GUI.WindowFunction)TasksWindow, "Tasks");
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "TasksUI.OnGUI: draw tasks window"); }
     }
 
     private void TasksWindow(int windowID)

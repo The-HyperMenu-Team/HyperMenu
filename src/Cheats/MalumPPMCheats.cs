@@ -8,6 +8,7 @@ using UnityEngine;
 namespace MalumMenu;
 public static class MalumPPMCheats
 {
+    private const int HandlingId = 20009;
     private static bool _telekillPlayerActive;
     private static bool _killPlayerActive;
     private static bool _spectateActive;
@@ -21,7 +22,9 @@ public static class MalumPPMCheats
 
     public static void ReportBodyPPM()
     {
-        if (CheatToggles.reportBody)
+        try
+        {
+            if (CheatToggles.reportBody)
         {
 
             if (!_reportBodyActive)
@@ -36,7 +39,11 @@ public static class MalumPPMCheats
                 // Player pick menu to choose any body (alive or dead) and report it
                 PlayerPickMenu.OpenPlayerPickMenu(Utils.GetAllPlayerData(), (Action) (() =>
                 {
-                    PlayerControl.LocalPlayer.CmdReportDeadBody(PlayerPickMenu.targetPlayerData);
+                    try
+                    {
+                        PlayerControl.LocalPlayer.CmdReportDeadBody(PlayerPickMenu.targetPlayerData);
+                    }
+                    catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.ReportBodyPPM callback: reporting body"); }
                 }));
 
                 _reportBodyActive = true;
@@ -56,11 +63,15 @@ public static class MalumPPMCheats
                 _reportBodyActive = false;
             }
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.ReportBodyPPM: opening report menu"); }
     }
 
     public static void EjectPlayerPPM()
     {
-        if (CheatToggles.ejectPlayer)
+        try
+        {
+            if (CheatToggles.ejectPlayer)
         {
             if (!_ejectPlayerActive)
             {
@@ -89,8 +100,12 @@ public static class MalumPPMCheats
                 // Player pick menu to choose any living player and eject them during meeting
                 PlayerPickMenu.OpenPlayerPickMenu(playerInfo, (Action)(() =>
                 {
-                    NetworkedPlayerInfo playerToEject = PlayerPickMenu.targetPlayerData;
-                    MeetingHud.Instance.RpcVotingComplete(new Il2CppStructArray<MeetingHud.VoterState>(0L), playerToEject, false, false, ushort.MinValue);
+                    try
+                    {
+                        NetworkedPlayerInfo playerToEject = PlayerPickMenu.targetPlayerData;
+                        MeetingHud.Instance.RpcVotingComplete(new Il2CppStructArray<MeetingHud.VoterState>(0L), playerToEject, false, false, ushort.MinValue);
+                    }
+                    catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.EjectPlayerPPM callback: ejecting player"); }
                 }));
 
                 _ejectPlayerActive = true;
@@ -106,11 +121,15 @@ public static class MalumPPMCheats
         {
             _ejectPlayerActive = false;
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.EjectPlayerPPM: opening eject menu"); }
     }
 
     public static void KillPlayerPPM()
     {
-        if (CheatToggles.killPlayer)
+        try
+        {
+            if (CheatToggles.killPlayer)
         {
             if (!_killPlayerActive)
             {
@@ -131,7 +150,11 @@ public static class MalumPPMCheats
                 // Player pick menu made for killing any player by sending a successful MurderPlayer RPC call
                 PlayerPickMenu.OpenPlayerPickMenu(Utils.GetAllPlayerData(), (Action)(() =>
                 {
-                    Utils.MurderPlayer(PlayerPickMenu.targetPlayerData.Object, MurderResultFlags.Succeeded);
+                    try
+                    {
+                        Utils.MurderPlayer(PlayerPickMenu.targetPlayerData.Object, MurderResultFlags.Succeeded);
+                    }
+                    catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.KillPlayerPPM callback: killing player"); }
                 }));
 
                 _killPlayerActive = true;
@@ -147,11 +170,15 @@ public static class MalumPPMCheats
         {
             _killPlayerActive = false;
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.KillPlayerPPM: opening kill menu"); }
     }
 
     public static void TelekillPlayerPPM()
     {
-        if (CheatToggles.telekillPlayer)
+        try
+        {
+            if (CheatToggles.telekillPlayer)
         {
             if (!_telekillPlayerActive)
             {
@@ -173,9 +200,13 @@ public static class MalumPPMCheats
                 // and immediatly teleporting back to original position
                 PlayerPickMenu.OpenPlayerPickMenu(Utils.GetAllPlayerData(), (Action)(() =>
                 {
-                    var oldPos = PlayerControl.LocalPlayer.GetTruePosition();
-                    Utils.MurderPlayer(PlayerPickMenu.targetPlayerData.Object, MurderResultFlags.Succeeded);
-                    AmongUsClient.Instance.StartCoroutine(Utils.DelayedSnapTo(oldPos));
+                    try
+                    {
+                        var oldPos = PlayerControl.LocalPlayer.GetTruePosition();
+                        Utils.MurderPlayer(PlayerPickMenu.targetPlayerData.Object, MurderResultFlags.Succeeded);
+                        AmongUsClient.Instance.StartCoroutine(ErrorReporter.GuardCoroutine(Utils.DelayedSnapTo(oldPos), HandlingId, "DelayedSnapTo"));
+                    }
+                    catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.TelekillPlayerPPM callback: telekilling player"); }
                 }));
 
                 _telekillPlayerActive = true;
@@ -191,11 +222,15 @@ public static class MalumPPMCheats
         {
             _telekillPlayerActive = false;
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.TelekillPlayerPPM: opening telekill menu"); }
     }
 
     public static void TeleportPlayerPPM()
     {
-        if (CheatToggles.teleportPlayer)
+        try
+        {
+            if (CheatToggles.teleportPlayer)
         {
             if (!_teleportPlayerActive)
             {
@@ -220,7 +255,11 @@ public static class MalumPPMCheats
                 // Player pick menu made for teleporting LocalPlayer to any player's position
                 PlayerPickMenu.OpenPlayerPickMenu(playerDataList, (Action)(() =>
                 {
-                    PlayerControl.LocalPlayer.NetTransform.RpcSnapTo(PlayerPickMenu.targetPlayerData.Object.transform.position);
+                    try
+                    {
+                        PlayerControl.LocalPlayer.NetTransform.RpcSnapTo(PlayerPickMenu.targetPlayerData.Object.transform.position);
+                    }
+                    catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.TeleportPlayerPPM callback: teleporting to player"); }
                 }));
 
                 _teleportPlayerActive = true;
@@ -236,11 +275,15 @@ public static class MalumPPMCheats
         {
             _teleportPlayerActive = false;
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.TeleportPlayerPPM: opening teleport menu"); }
     }
 
     public static void SetFakeRolePPM()
     {
-        if (CheatToggles.setFakeRole)
+        try
+        {
+            if (CheatToggles.setFakeRole)
         {
 
             if (!_setFakeRoleActive)
@@ -300,6 +343,8 @@ public static class MalumPPMCheats
                 // Player pick menu made for changing your roles with a custom choice list
                 PlayerPickMenu.OpenPlayerPickMenu(playerDataList, (Action) (() =>
                 {
+                    try
+                    {
                     // Log the originally assigned role before it gets changed by setFakeRole cheat
                     if (!Utils.isLobby && !Utils.isFreePlay && _oldRole == null)
                     {
@@ -335,6 +380,8 @@ public static class MalumPPMCheats
 
                         RoleManager.Instance.SetRole(PlayerControl.LocalPlayer, PlayerPickMenu.targetPlayerData.Role.Role);
                     }
+                    }
+                    catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.SetFakeRolePPM callback: setting fake role"); }
                 }));
 
                 _setFakeRoleActive = true;
@@ -354,11 +401,15 @@ public static class MalumPPMCheats
                 _setFakeRoleActive = false;
             }
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.SetFakeRolePPM: opening role menu"); }
     }
 
     public static void SetFakeAlivePPM()
     {
-        if (CheatToggles.setFakeAlive)
+        try
+        {
+            if (CheatToggles.setFakeAlive)
         {
 
             if (!_setFakeAliveActive)
@@ -379,14 +430,18 @@ public static class MalumPPMCheats
                 // Player pick menu made for changing your alive state with a custom choice list
                 PlayerPickMenu.OpenPlayerPickMenu(playerDataList, (Action) (() =>
                 {
-                    if (PlayerPickMenu.targetPlayerData.Role.IsDead)
+                    try
                     {
-                        PlayerControl.LocalPlayer.Die(DeathReason.Exile, true);
+                        if (PlayerPickMenu.targetPlayerData.Role.IsDead)
+                        {
+                            PlayerControl.LocalPlayer.Die(DeathReason.Exile, true);
+                        }
+                        else
+                        {
+                            PlayerControl.LocalPlayer.Revive();
+                        }
                     }
-                    else
-                    {
-                        PlayerControl.LocalPlayer.Revive();
-                    }
+                    catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.SetFakeAlivePPM callback: setting alive state"); }
                 }));
 
                 _setFakeAliveActive = true;
@@ -406,11 +461,15 @@ public static class MalumPPMCheats
                 _setFakeAliveActive = false;
             }
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.SetFakeAlivePPM: opening alive menu"); }
     }
 
     public static void ForceRolePPM()
     {
-        if (CheatToggles.forceRole)
+        try
+        {
+            if (CheatToggles.forceRole)
         {
             if (!_forceRoleActive)
             {
@@ -436,7 +495,11 @@ public static class MalumPPMCheats
                 // Player pick menu made for forcing a role onto another player
                 PlayerPickMenu.OpenPlayerPickMenu(playerDataList, (Action)(() =>
                 {
-                    CheatToggles.forcedRole = PlayerPickMenu.targetPlayerData.Role.Role;
+                    try
+                    {
+                        CheatToggles.forcedRole = PlayerPickMenu.targetPlayerData.Role.Role;
+                    }
+                    catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.ForceRolePPM callback: forcing role"); }
                 }));
 
                 _forceRoleActive = true;
@@ -456,11 +519,15 @@ public static class MalumPPMCheats
                 _forceRoleActive = false;
             }
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.ForceRolePPM: opening force-role menu"); }
     }
 
     public static void SpectatePPM()
     {
-        if (CheatToggles.spectate)
+        try
+        {
+            if (CheatToggles.spectate)
         {
 
             if (!_spectateActive)
@@ -487,7 +554,11 @@ public static class MalumPPMCheats
                 // Player pick menu made for spectating the targeted player
                 PlayerPickMenu.OpenPlayerPickMenu(playerDataList, (Action) (() =>
                 {
-                    Camera.main.gameObject.GetComponent<FollowerCamera>().SetTarget(PlayerPickMenu.targetPlayerData.Object);
+                    try
+                    {
+                        Camera.main.gameObject.GetComponent<FollowerCamera>().SetTarget(PlayerPickMenu.targetPlayerData.Object);
+                    }
+                    catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.SpectatePPM callback: setting spectate target"); }
                 }));
 
                 _spectateActive = true;
@@ -515,5 +586,7 @@ public static class MalumPPMCheats
                 Camera.main.gameObject.GetComponent<FollowerCamera>().SetTarget(PlayerControl.LocalPlayer);
             }
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumPPMCheats.SpectatePPM: opening spectate menu"); }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using MalumMenu.features;
 
@@ -5,49 +6,54 @@ namespace MalumMenu;
 
 public class RolesTab : ITab
 {
+    private const int HandlingId = 60015;
     public string name => "Roles";
 
     public void Draw()
     {
-        GUILayout.BeginHorizontal();
+        try
+        {
+            GUILayout.BeginHorizontal();
 
-        GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
+            GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
 
-        DrawGeneral();
+            DrawGeneral();
 
-        GUILayout.Space(15);
+            GUILayout.Space(15);
 
-        DrawImpostor();
+            DrawImpostor();
 
-        GUILayout.Space(15);
+            GUILayout.Space(15);
 
-        DrawShapeshifter();
+            DrawShapeshifter();
 
-        GUILayout.Space(15);
+            GUILayout.Space(15);
 
-        DrawCrewmate();
+            DrawCrewmate();
 
-        GUILayout.Space(15);
+            GUILayout.Space(15);
 
-        DrawTracker();
+            DrawTracker();
 
-        GUILayout.EndVertical();
+            GUILayout.EndVertical();
 
-        GUILayout.BeginVertical();
+            GUILayout.BeginVertical();
 
-        DrawEngineer();
+            DrawEngineer();
 
-        GUILayout.Space(15);
+            GUILayout.Space(15);
 
-        DrawScientist();
+            DrawScientist();
 
-        GUILayout.Space(15);
+            GUILayout.Space(15);
 
-        DrawDetective();
+            DrawDetective();
 
-        GUILayout.EndVertical();
+            GUILayout.EndVertical();
 
-        GUILayout.EndHorizontal();
+            GUILayout.EndHorizontal();
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "RolesTab.Draw: draw role settings"); }
     }
 
     private void DrawGeneral()

@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using HarmonyLib;
 
 namespace MalumMenu.features
 {
 	internal class Troll
 	{
+		private const int HandlingId = 40009;
+
 		public static Dictionary<PlayerControl, ushort> VentSeqIds = new Dictionary<PlayerControl, ushort>();
 		[HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.MurderPlayer))]
 		public static class AutoReportBodies
@@ -15,18 +18,25 @@ namespace MalumMenu.features
 
 			static void Postfix(PlayerControl __instance, PlayerControl target, MurderResultFlags resultFlags)
 			{
-				if(!Enabled || !resultFlags.HasFlag(MurderResultFlags.Succeeded)) return;
-
-				if(AmongUsClient.Instance.AmHost)
+				try
 				{
-					Utilities.OpenMeeting(source ?? PlayerControl.LocalPlayer, target.Data);
-					return;
+					if(!Enabled || !resultFlags.HasFlag(MurderResultFlags.Succeeded)) return;
+
+					if(AmongUsClient.Instance.AmHost)
+					{
+						Utilities.OpenMeeting(source ?? PlayerControl.LocalPlayer, target.Data);
+						return;
+					}
+
+					if(PlayerControl.LocalPlayer.Data.IsDead) return;
+
+					MalumMenu.notifications.Send("Auto Report Bodies", $"{target.Data.PlayerName} was killed by {__instance.Data.PlayerName} ({Utilities.GetPlayerColor(__instance.Data)}), their body has been automatically reported.");
+					PlayerControl.LocalPlayer.CmdReportDeadBody(target.Data);
 				}
-
-				if(PlayerControl.LocalPlayer.Data.IsDead) return;
-
-				MalumMenu.notifications.Send("Auto Report Bodies", $"{target.Data.PlayerName} was killed by {__instance.Data.PlayerName} ({Utilities.GetPlayerColor(__instance.Data)}), their body has been automatically reported.");
-				PlayerControl.LocalPlayer.CmdReportDeadBody(target.Data);
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "AutoReportBodies.Postfix: auto-reporting murdered body");
+				}
 			}
 		}
 
@@ -37,22 +47,29 @@ namespace MalumMenu.features
 
 			static void Postfix(VentilationSystem __instance)
 			{
-				if(!Enabled) return;
-
-				MalumMenu.Log.LogInfo($"Received update for VentilationSystem, going to kick out all players who are inside a vent");
-
-				if(__instance.PlayersInsideVents.Count >= PlayerControl.AllPlayerControls.Count)
+				try
 				{
-					MalumMenu.Log.LogInfo($"Apparently there are more people inside of vents than people inside the game, the host may be trying to overload our game! Players in vents: {__instance.PlayersInsideVents.Count}, total players: {PlayerControl.AllPlayerControls.Count}");
-					return;
+					if(!Enabled) return;
+
+					MalumMenu.Log.LogInfo($"Received update for VentilationSystem, going to kick out all players who are inside a vent");
+
+					if(__instance.PlayersInsideVents.Count >= PlayerControl.AllPlayerControls.Count)
+					{
+						MalumMenu.Log.LogInfo($"Apparently there are more people inside of vents than people inside the game, the host may be trying to overload our game! Players in vents: {__instance.PlayersInsideVents.Count}, total players: {PlayerControl.AllPlayerControls.Count}");
+						return;
+					}
+
+					foreach(byte ventId in __instance.PlayersInsideVents.Values)
+					{
+						if(ventId >= ShipStatus.Instance.AllVents.Count) continue;
+
+						MalumMenu.Log.LogInfo($"Kicked someone out of vent {ventId}");
+						VentilationSystem.Update(VentilationSystem.Operation.StartCleaning, ventId);
+					}
 				}
-
-				foreach(byte ventId in __instance.PlayersInsideVents.Values)
+				catch (Exception ex)
 				{
-					if(ventId >= ShipStatus.Instance.AllVents.Count) continue;
-
-					MalumMenu.Log.LogInfo($"Kicked someone out of vent {ventId}");
-					VentilationSystem.Update(VentilationSystem.Operation.StartCleaning, ventId);
+					ErrorReporter.Report(ex, HandlingId, "BlockVenting.Postfix: kicking players out of vents");
 				}
 			}
 		}
@@ -87,10 +104,17 @@ namespace MalumMenu.features
 
 			static void Postfix(SabotageSystemType __instance)
 			{
-				if(!Enabled || __instance.Timer > 0.1f) return;
+				try
+				{
+					if(!Enabled || __instance.Timer > 0.1f) return;
 
-				MalumMenu.Log.LogMessage($"Sabotage cooldown has depleted to {__instance.Timer}, sending Sabotage system update");
-				ShipStatus.Instance.RpcUpdateSystem(SystemTypes.Sabotage, 255);
+					MalumMenu.Log.LogMessage($"Sabotage cooldown has depleted to {__instance.Timer}, sending Sabotage system update");
+					ShipStatus.Instance.RpcUpdateSystem(SystemTypes.Sabotage, 255);
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "BlockSabotages.Postfix: sabotaging invalid system to reset cooldown");
+				}
 			}
 		}
 	}

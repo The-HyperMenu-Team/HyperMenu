@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -5,6 +6,8 @@ namespace MalumMenu.routines
 {
     public class JailPlayerRoutine : IRoutine
     {
+        private const int HandlingId = 60105;
+
         public JailPlayerRoutine() : base("JailPlayer") { }
 
         public HashSet<int> targets = new HashSet<int>();
@@ -14,21 +17,28 @@ namespace MalumMenu.routines
 
         public override void Run()
         {
-            timeElapsed += Time.deltaTime;
-            if(timeElapsed < delay) return;
-            timeElapsed = 0f;
-
-            GetMapData(out SystemTypes jailRoom, out int ventId);
-
-            foreach(PlayerControl player in PlayerControl.AllPlayerControls)
+            try
             {
-                if(!targets.Contains(player.GetHashCode())) continue;
+                timeElapsed += Time.deltaTime;
+                if(timeElapsed < delay) return;
+                timeElapsed = 0f;
 
-                SystemTypes room = GetRoomForPlayer(player);
-                if(room != jailRoom)
+                GetMapData(out SystemTypes jailRoom, out int ventId);
+
+                foreach(PlayerControl player in PlayerControl.AllPlayerControls)
                 {
-                    Teleporter.TeleportToVent(player, ventId);
+                    if(!targets.Contains(player.GetHashCode())) continue;
+
+                    SystemTypes room = GetRoomForPlayer(player);
+                    if(room != jailRoom)
+                    {
+                        Teleporter.TeleportToVent(player, ventId);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                ErrorReporter.Report(ex, HandlingId, "JailPlayerRoutine.Run: teleporting escaped targets back to jail");
             }
         }
 
@@ -89,23 +99,44 @@ namespace MalumMenu.routines
 
         protected override void OnEnable()
         {
-            if(PlayerControl.LocalPlayer == null || ShipStatus.Instance == null)
+            try
             {
-                MalumMenu.notifications.Send("Jail Player", "Jail Player can only be used inside of a game.", 10);
-                Enabled = false;
-                return;
+                if(PlayerControl.LocalPlayer == null || ShipStatus.Instance == null)
+                {
+                    MalumMenu.notifications.Send("Jail Player", "Jail Player can only be used inside of a game.", 10);
+                    Enabled = false;
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorReporter.Report(ex, HandlingId, "JailPlayerRoutine.OnEnable: validating game state");
             }
         }
 
         protected override void OnDisable()
         {
-            targets.Clear();
+            try
+            {
+                targets.Clear();
+            }
+            catch (Exception ex)
+            {
+                ErrorReporter.Report(ex, HandlingId, "JailPlayerRoutine.OnDisable: clearing jail targets");
+            }
         }
 
         public override void OnDisconnect()
         {
-            MalumMenu.notifications.Send("Jail Player", "Jail Player has been disabled as you left the game.", 10);
-            Enabled = false;
+            try
+            {
+                MalumMenu.notifications.Send("Jail Player", "Jail Player has been disabled as you left the game.", 10);
+                Enabled = false;
+            }
+            catch (Exception ex)
+            {
+                ErrorReporter.Report(ex, HandlingId, "JailPlayerRoutine.OnDisconnect: disabling routine");
+            }
         }
     }
 }

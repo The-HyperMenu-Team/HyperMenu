@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Il2CppSystem.Collections.Generic;
 
@@ -5,6 +6,7 @@ namespace MalumMenu;
 
 public class DoorsUI : MonoBehaviour
 {
+    private const int HandlingId = 10009;
     public static int windowHeight = 270;
     public static int windowWidth = 480;
     public static Rect windowRect;
@@ -14,22 +16,30 @@ public class DoorsUI : MonoBehaviour
 
     private void Start()
     {
-        // Instantiate 2D area of DoorsUI
-        windowRect = new(
-            Screen.width / 2f - windowWidth / 2f,
-            Screen.height / 2f - windowHeight / 2f,
-            windowWidth,
-            windowHeight
-        );
+        try
+        {
+            // Instantiate 2D area of DoorsUI
+            windowRect = new(
+                Screen.width / 2f - windowWidth / 2f,
+                Screen.height / 2f - windowHeight / 2f,
+                windowWidth,
+                windowHeight
+            );
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "DoorsUI.Start: init window rect"); }
     }
 
     private void OnGUI()
     {
-        if (!CheatToggles.showDoorsMenu || !(MenuUI.isGUIActive || MalumMenu.menuKeepSubwindowsOpen.Value) || MalumMenu.isPanicked) return;
+        try
+        {
+            if (!CheatToggles.showDoorsMenu || !(MenuUI.isGUIActive || MalumMenu.menuKeepSubwindowsOpen.Value) || MalumMenu.isPanicked) return;
 
-        UIHelpers.ApplyUIColor();
+            UIHelpers.ApplyUIColor();
 
-        windowRect = GUI.Window((int)WindowId.DoorsUI, windowRect, (GUI.WindowFunction)DoorsWindow, "Doors");
+            windowRect = GUI.Window((int)WindowId.DoorsUI, windowRect, (GUI.WindowFunction)DoorsWindow, "Doors");
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "DoorsUI.OnGUI: draw doors window"); }
     }
 
     private void DoorsWindow(int windowID)
@@ -164,23 +174,27 @@ public class DoorsUI : MonoBehaviour
 
     public void Update()
     {
-        if (!Utils.isShip) return;
-
-        // Spam close selected doors
-        foreach (var doorRoom in _doorsToSpamClose)
+        try
         {
-            DoorsHandler.CloseDoorsInRoom(doorRoom);
-        }
+            if (!Utils.isShip) return;
 
-        // Spam open selected doors
-        var map = (MapNames)Utils.GetCurrentMapID();
-
-        if (map is MapNames.Polus or MapNames.Airship or MapNames.Fungle)
-        {
-            foreach (var doorRoom in _doorsToSpamOpen)
+            // Spam close selected doors
+            foreach (var doorRoom in _doorsToSpamClose)
             {
-                DoorsHandler.OpenDoorsInRoom(doorRoom);
+                DoorsHandler.CloseDoorsInRoom(doorRoom);
+            }
+
+            // Spam open selected doors
+            var map = (MapNames)Utils.GetCurrentMapID();
+
+            if (map is MapNames.Polus or MapNames.Airship or MapNames.Fungle)
+            {
+                foreach (var doorRoom in _doorsToSpamOpen)
+                {
+                    DoorsHandler.OpenDoorsInRoom(doorRoom);
+                }
             }
         }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "DoorsUI.Update: spam doors"); }
     }
 }

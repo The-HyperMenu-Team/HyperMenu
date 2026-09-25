@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using MalumMenu.features;
 
@@ -5,33 +6,38 @@ namespace MalumMenu;
 
 public class ESPTab : ITab
 {
+    private const int HandlingId = 60007;
     public string name => "ESP";
 
     public void Draw()
     {
-        GUILayout.BeginHorizontal();
+        try
+        {
+            GUILayout.BeginHorizontal();
 
-        GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
+            GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
 
-        DrawGeneral();
+            DrawGeneral();
 
-        GUILayout.Space(15);
+            GUILayout.Space(15);
 
-        DrawCamera();
+            DrawCamera();
 
-        GUILayout.EndVertical();
+            GUILayout.EndVertical();
 
-        GUILayout.BeginVertical();
+            GUILayout.BeginVertical();
 
-        DrawTracers();
+            DrawTracers();
 
-        GUILayout.Space(15);
+            GUILayout.Space(15);
 
-        DrawMinimap();
+            DrawMinimap();
 
-        GUILayout.EndVertical();
+            GUILayout.EndVertical();
 
-        GUILayout.EndHorizontal();
+            GUILayout.EndHorizontal();
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "ESPTab.Draw: draw ESP settings"); }
     }
 
     private void DrawGeneral()

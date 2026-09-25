@@ -1,9 +1,12 @@
-﻿using HarmonyLib;
+﻿using System;
+using HarmonyLib;
 
 namespace MalumMenu.features
 {
 	internal class Chat
 	{
+		private const int HandlingId = 40001;
+
 		[HarmonyPatch(typeof(ChatController), nameof(ChatController.AddChat))]
 		public static class OnChat
 		{
@@ -12,13 +15,20 @@ namespace MalumMenu.features
 
 			static void Postfix(ChatController __instance, PlayerControl sourcePlayer, string chatText)
 			{
-				if(sourcePlayer == null) return;
-
-				if(LogChatMessages) MalumMenu.Log.LogMessage($"[ChatLogger] {sourcePlayer.Data.PlayerName}: {chatText}");
-
-				if(ShowMessagesByGhosts && !PlayerControl.LocalPlayer.Data.IsDead && sourcePlayer.Data.IsDead)
+				try
 				{
-					__instance.AddChatWarning($"{sourcePlayer.Data.PlayerName}\n{chatText}");
+					if(sourcePlayer == null) return;
+
+					if(LogChatMessages) MalumMenu.Log.LogMessage($"[ChatLogger] {sourcePlayer.Data.PlayerName}: {chatText}");
+
+					if(ShowMessagesByGhosts && !PlayerControl.LocalPlayer.Data.IsDead && sourcePlayer.Data.IsDead)
+					{
+						__instance.AddChatWarning($"{sourcePlayer.Data.PlayerName}\n{chatText}");
+					}
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "OnChat.Postfix: logging chat and showing ghost messages");
 				}
 			}
 		}
@@ -30,7 +40,14 @@ namespace MalumMenu.features
 
 			static void Prefix(ref bool visible)
 			{
-				if(Enabled) visible = true;
+				try
+				{
+					if(Enabled) visible = true;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "AlwaysVisibleChat.Prefix: forcing chat visible");
+				}
 			}
 		}
 	}

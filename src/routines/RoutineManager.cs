@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using System;
+using HarmonyLib;
 using MalumMenu.features;
 using UnityEngine;
 
@@ -6,6 +7,8 @@ namespace MalumMenu.routines
 {
     public class RoutineManager : MonoBehaviour
     {
+        private const int HandlingId = 60102;
+
         public AutoTriggerSporesRoutine autoTriggerSpores = new AutoTriggerSporesRoutine();
         public DiscoHostRoutine discoHost = new DiscoHostRoutine();
         public DoorTrollerRoutine doorTroller = new DoorTrollerRoutine();
@@ -25,11 +28,18 @@ namespace MalumMenu.routines
 
         public void Update()
         {
-            foreach(IRoutine routine in routineList)
+            try
             {
-                if(!routine.Enabled) continue;
+                foreach(IRoutine routine in routineList)
+                {
+                    if(!routine.Enabled) continue;
 
-                routine.Run();
+                    routine.Run();
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorReporter.Report(ex, HandlingId, "RoutineManager.Update: running enabled routines");
             }
         }
 
@@ -38,13 +48,20 @@ namespace MalumMenu.routines
         {
             static void Prefix()
             {
-                MalumMenu.Log.LogInfo("Player disconnected from the lobby, disabling relevant routines");
-
-                foreach(IRoutine routine in MalumMenu.routines.routineList)
+                try
                 {
-                    if(!routine.Enabled) continue;
+                    MalumMenu.Log.LogInfo("Player disconnected from the lobby, disabling relevant routines");
 
-                    routine.OnDisconnect();
+                    foreach(IRoutine routine in MalumMenu.routines.routineList)
+                    {
+                        if(!routine.Enabled) continue;
+
+                        routine.OnDisconnect();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ErrorReporter.Report(ex, HandlingId, "DisconnectHandler.Prefix: disabling routines on disconnect");
                 }
             }
         }

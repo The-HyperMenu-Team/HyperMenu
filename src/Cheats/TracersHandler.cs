@@ -1,9 +1,11 @@
+using System;
 using UnityEngine;
 
 namespace MalumMenu;
 
 public static class TracersHandler
 {
+    private const int HandlingId = 20015;
     // Draws a tracer from LocalPlayer to another player.
     public static void DrawPlayerTracer(PlayerPhysics playerPhysics)
     {
@@ -51,32 +53,36 @@ public static class TracersHandler
 
             // Draw tracer between the player and LocalPlayer using the right color
             Utils.DrawTracer(playerPhysics.myPlayer.gameObject, PlayerControl.LocalPlayer.gameObject, color);
-        } catch { }
+        } catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "TracersHandler.DrawPlayerTracer: drawing player tracer"); }
     }
 
     // Draws a tracer LocalPlayer to a dead body. Only draws tracers for unreported dead bodies.
     public static void DrawBodyTracer(DeadBody deadBody)
     {
-        var color = Color.clear; // All tracers are invisible by default
-
-        if (CheatToggles.tracersBodies)
+        try
         {
-            if (CheatToggles.distanceBasedTracers)
-            {
-                color = GetDistanceBasedColor(deadBody.transform.position);
-            }
-            else if (CheatToggles.colorBasedTracers)
-            {
-                color = GameData.Instance.GetPlayerById(deadBody.ParentId).Color; // Color-Based Tracer
-            }
-            else
-            {
-                color = Color.yellow; // Dead Body Tracer (Yellow)
-            }
-        }
+            var color = Color.clear; // All tracers are invisible by default
 
-        // Draw tracer between the dead body and LocalPlayer using the right color
-        Utils.DrawTracer(deadBody.gameObject, PlayerControl.LocalPlayer.gameObject, color);
+            if (CheatToggles.tracersBodies)
+            {
+                if (CheatToggles.distanceBasedTracers)
+                {
+                    color = GetDistanceBasedColor(deadBody.transform.position);
+                }
+                else if (CheatToggles.colorBasedTracers)
+                {
+                    color = GameData.Instance.GetPlayerById(deadBody.ParentId).Color; // Color-Based Tracer
+                }
+                else
+                {
+                    color = Color.yellow; // Dead Body Tracer (Yellow)
+                }
+            }
+
+            // Draw tracer between the dead body and LocalPlayer using the right color
+            Utils.DrawTracer(deadBody.gameObject, PlayerControl.LocalPlayer.gameObject, color);
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "TracersHandler.DrawBodyTracer: drawing body tracer"); }
     }
 
     // Gets a color based on the distance between the LocalPlayer and a target position.

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ namespace MalumMenu;
 
 public class OverloadUI : MonoBehaviour
 {
+    private const int HandlingId = 10008;
     public static int numSuccesses;
     public static int maxPossibleTargets;
     public static int killSwitchThreshold;
@@ -26,18 +28,24 @@ public class OverloadUI : MonoBehaviour
 
     private void Start()
     {
-        killSwitchThreshold = 500 * MalumMenu.killSwitchLvl.Value;
-
-        if (!CheatToggles.olAutoAdapt)
+        try
         {
-            OverloadHandler.strength = MalumMenu.defaultStrength.Value;
-            OverloadHandler.cooldown = MalumMenu.defaultCooldown.Value;
+            killSwitchThreshold = 500 * MalumMenu.killSwitchLvl.Value;
+
+            if (!CheatToggles.olAutoAdapt)
+            {
+                OverloadHandler.strength = MalumMenu.defaultStrength.Value;
+                OverloadHandler.cooldown = MalumMenu.defaultCooldown.Value;
+            }
         }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "OverloadUI.Start: init overload defaults"); }
     }
 
     private void Update()
     {
-        var players = PlayerControl.AllPlayerControls.ToArray().Where(player => player?.Data != null && !player.AmOwner).ToArray();
+        try
+        {
+            var players = PlayerControl.AllPlayerControls.ToArray().Where(player => player?.Data != null && !player.AmOwner).ToArray();
         maxPossibleTargets = players.Length;
 
         if (!Utils.isFreePlay)
@@ -136,17 +144,23 @@ public class OverloadUI : MonoBehaviour
                 StartOverload();
             }
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "OverloadUI.Update: refresh overload targets"); }
     }
 
     private void OnGUI()
     {
-        if (!CheatToggles.showOverload || !MenuUI.isGUIActive || MalumMenu.isPanicked) return;
+        try
+        {
+            if (!CheatToggles.showOverload || !MenuUI.isGUIActive || MalumMenu.isPanicked) return;
 
-        InitStyles();
+            InitStyles();
 
-        UIHelpers.ApplyUIColor();
+            UIHelpers.ApplyUIColor();
 
-        windowRect = GUI.Window((int)WindowId.OverloadUI, windowRect, (GUI.WindowFunction)OverloadWindow, "Overload");
+            windowRect = GUI.Window((int)WindowId.OverloadUI, windowRect, (GUI.WindowFunction)OverloadWindow, "Overload");
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "OverloadUI.OnGUI: draw overload window"); }
     }
 
     private void OverloadWindow(int windowID)

@@ -1,3 +1,4 @@
+using System;
 using HarmonyLib;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,41 +9,89 @@ namespace MalumMenu;
 [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Update))]
 public static class MeetingHud_Update
 {
+    private const int HandlingId = 30010;
     public static List<int> votedPlayers = new List<int>();
 
     // Prefix patch of MeetingHud.Update to constantly bloop new vote icons for each new vote being cast during the meeting
     public static void Prefix(MeetingHud __instance)
     {
-        if (__instance.state < MeetingHud.MeetingStates.Results)
+        try
         {
-            foreach (var playerVoteArea in __instance.playerStates)
+            if (__instance.state < MeetingHud.MeetingStates.Results)
             {
-                if (!playerVoteArea) continue;
-
-                var playerData = GameData.Instance.GetPlayerById(playerVoteArea.PlayerId);
-
-                if (playerData != null && !playerData.Disconnected && playerVoteArea.VotedForId != PlayerVoteArea.HasNotVoted && playerVoteArea.VotedForId != PlayerVoteArea.MissedVote && playerVoteArea.VotedForId != PlayerVoteArea.DeadVote && !votedPlayers.Contains(playerVoteArea.PlayerId))
+                foreach (var playerVoteArea in __instance.playerStates)
                 {
-                    votedPlayers.Add(playerVoteArea.PlayerId);
+                    if (!playerVoteArea) continue;
 
-                    if (playerVoteArea.VotedForId != PlayerVoteArea.SkippedVote)
+                    var playerData = GameData.Instance.GetPlayerById(playerVoteArea.PlayerId);
+
+                    if (playerData != null && !playerData.Disconnected && playerVoteArea.VotedForId != PlayerVoteArea.HasNotVoted && playerVoteArea.VotedForId != PlayerVoteArea.MissedVote && playerVoteArea.VotedForId != PlayerVoteArea.DeadVote && !votedPlayers.Contains(playerVoteArea.PlayerId))
                     {
-                        foreach (var votedForArea in __instance.playerStates)
+                        votedPlayers.Add(playerVoteArea.PlayerId);
+
+                        if (playerVoteArea.VotedForId != PlayerVoteArea.SkippedVote)
                         {
-                            if (votedForArea.PlayerId == playerVoteArea.VotedForId)
+                            foreach (var votedForArea in __instance.playerStates)
                             {
-                                __instance.BloopAVoteIcon(playerData, 0, votedForArea.transform);
-                                break;
+                                if (votedForArea.PlayerId == playerVoteArea.VotedForId)
+                                {
+                                    __instance.BloopAVoteIcon(playerData, 0, votedForArea.transform);
+                                    break;
+                                }
                             }
                         }
-                    }
-                    else if (__instance.SkippedVoting)
-                    {
-                        __instance.BloopAVoteIcon(playerData, 0, __instance.SkippedVoting.transform);
+                        else if (__instance.SkippedVoting)
+                        {
+                            __instance.BloopAVoteIcon(playerData, 0, __instance.SkippedVoting.transform);
+                        }
                     }
                 }
-            }
 
+                foreach (var votedForArea in __instance.playerStates)
+                {
+                    if (!votedForArea) continue;
+
+                    var voteSpreader = votedForArea.transform.GetComponent<VoteSpreader>();
+                    if (!voteSpreader) continue;
+
+                    foreach (var spriteRenderer in voteSpreader.Votes)
+                    {
+                        spriteRenderer.gameObject.SetActive(CheatToggles.revealVotes);
+                    }
+                }
+
+                // This is required to see who skipped the voting
+                if (__instance.SkippedVoting)
+                {
+                    __instance.SkippedVoting.SetActive(CheatToggles.revealVotes);
+                }
+            }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MeetingHud_Update.Prefix: bloop vote icons"); }
+    }
+
+    public static void Postfix(MeetingHud __instance)
+    {
+        try
+        {
+            MalumESP.MeetingNametags(__instance);
+
+            // Bugfix: NoClip staying active if meeting is called whilst climbing ladder
+            PlayerControl.LocalPlayer.onLadder = false;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MeetingHud_Update.Postfix: meeting nametags"); }
+    }
+}
+
+[HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.PopulateResults))]
+public static class MeetingHud_PopulateResults
+{
+    private const int HandlingId = 30010;
+    // Prefix patch of MeetingHud.PopulateResults to clear all vote icons before repopulating them for final results
+    public static void Prefix(MeetingHud __instance)
+    {
+        try
+        {
             foreach (var votedForArea in __instance.playerStates)
             {
                 if (!votedForArea) continue;
@@ -50,123 +99,94 @@ public static class MeetingHud_Update
                 var voteSpreader = votedForArea.transform.GetComponent<VoteSpreader>();
                 if (!voteSpreader) continue;
 
+                var length = voteSpreader.Votes.Count;
+                if (length == 0) continue;
+
                 foreach (var spriteRenderer in voteSpreader.Votes)
                 {
-                    spriteRenderer.gameObject.SetActive(CheatToggles.revealVotes);
+                    Object.DestroyImmediate(spriteRenderer);
                 }
+
+                voteSpreader.Votes.Clear();
             }
 
-            // This is required to see who skipped the voting
             if (__instance.SkippedVoting)
             {
-                __instance.SkippedVoting.SetActive(CheatToggles.revealVotes);
-            }
-        }
-    }
+                var voteSpreader = __instance.SkippedVoting.transform.GetComponent<VoteSpreader>();
 
-    public static void Postfix(MeetingHud __instance)
-    {
-        MalumESP.MeetingNametags(__instance);
+                foreach (var spriteRenderer in voteSpreader.Votes)
+                {
+                    Object.DestroyImmediate(spriteRenderer);
+                }
 
-        // Bugfix: NoClip staying active if meeting is called whilst climbing ladder
-        PlayerControl.LocalPlayer.onLadder = false;
-    }
-}
-
-[HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.PopulateResults))]
-public static class MeetingHud_PopulateResults
-{
-    // Prefix patch of MeetingHud.PopulateResults to clear all vote icons before repopulating them for final results
-    public static void Prefix(MeetingHud __instance)
-    {
-        foreach (var votedForArea in __instance.playerStates)
-        {
-            if (!votedForArea) continue;
-
-            var voteSpreader = votedForArea.transform.GetComponent<VoteSpreader>();
-            if (!voteSpreader) continue;
-
-            var length = voteSpreader.Votes.Count;
-            if (length == 0) continue;
-
-            foreach (var spriteRenderer in voteSpreader.Votes)
-            {
-                Object.DestroyImmediate(spriteRenderer);
+                voteSpreader.Votes.Clear();
             }
 
-            voteSpreader.Votes.Clear();
+            MeetingHud_Update.votedPlayers.Clear();
         }
-
-        if (__instance.SkippedVoting)
-        {
-            var voteSpreader = __instance.SkippedVoting.transform.GetComponent<VoteSpreader>();
-
-            foreach (var spriteRenderer in voteSpreader.Votes)
-            {
-                Object.DestroyImmediate(spriteRenderer);
-            }
-
-            voteSpreader.Votes.Clear();
-        }
-
-        MeetingHud_Update.votedPlayers.Clear();
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MeetingHud_PopulateResults.Prefix: clear vote icons"); }
     }
 }
 
 [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.CheckForEndVoting))]
 public static class MeetingHud_CheckForEndVoting
 {
+    private const int HandlingId = 30010;
     // Prefix patch of MeetingHud.CheckForEndVoting to make the local player immune to being voted out
     public static bool Prefix(MeetingHud __instance)
     {
-        if (!CheatToggles.voteImmune) return true; // We don't need to check whether we are host because this method only runs on the host's side
-
-        if (!__instance.playerStates.All(ps => ps.AmDead || ps.DidVote)) return true;
-
-        var max = __instance.CalculateVotes().MaxPair(out var tie);
-        var exiled = GameData.Instance.AllPlayers.ToArray().FirstOrDefault(v => !tie && v.PlayerId == max.Key);
-
-        bool wasOverruled = false;
-        ushort overruleNonce = 0;
-        JudgeOverrule judgeOverrule;
-        NetworkedPlayerInfo networkedPlayerInfo;
-        NetworkedPlayerInfo networkedPlayerInfo2;
-
-        if (__instance.TryGetWinningOverrule(out judgeOverrule, out networkedPlayerInfo, out networkedPlayerInfo2))
+        try
         {
-            wasOverruled = true;
-            overruleNonce = judgeOverrule.OverruleNonce;
+            if (!CheatToggles.voteImmune) return true; // We don't need to check whether we are host because this method only runs on the host's side
 
-            if (networkedPlayerInfo2.Role.TeamType == RoleTeamTypes.Impostor)
+            if (!__instance.playerStates.All(ps => ps.AmDead || ps.DidVote)) return true;
+
+            var max = __instance.CalculateVotes().MaxPair(out var tie);
+            var exiled = GameData.Instance.AllPlayers.ToArray().FirstOrDefault(v => !tie && v.PlayerId == max.Key);
+
+            bool wasOverruled = false;
+            ushort overruleNonce = 0;
+            JudgeOverrule judgeOverrule;
+            NetworkedPlayerInfo networkedPlayerInfo;
+            NetworkedPlayerInfo networkedPlayerInfo2;
+
+            if (__instance.TryGetWinningOverrule(out judgeOverrule, out networkedPlayerInfo, out networkedPlayerInfo2))
             {
-                exiled = GameData.Instance.GetPlayerById(judgeOverrule.OverruledPlayerId);
+                wasOverruled = true;
+                overruleNonce = judgeOverrule.OverruleNonce;
+
+                if (networkedPlayerInfo2.Role.TeamType == RoleTeamTypes.Impostor)
+                {
+                    exiled = GameData.Instance.GetPlayerById(judgeOverrule.OverruledPlayerId);
+                }
+                else
+                {
+                    exiled = networkedPlayerInfo;
+                }
             }
-            else
+
+            // This is the only change from the original method - make sure local player is not exiled
+            if (exiled != null && exiled == PlayerControl.LocalPlayer.Data)
             {
-                exiled = networkedPlayerInfo;
+                exiled = null;
             }
-        }
 
-        // This is the only change from the original method - make sure local player is not exiled
-        if (exiled != null && exiled == PlayerControl.LocalPlayer.Data)
-        {
-            exiled = null;
-        }
+            var states = new MeetingHud.VoterState[__instance.playerStates.Length];
 
-        var states = new MeetingHud.VoterState[__instance.playerStates.Length];
-
-        for (var index = 0; index < __instance.playerStates.Length; ++index)
-        {
-            var playerState = __instance.playerStates[index];
-            states[index] = new MeetingHud.VoterState
+            for (var index = 0; index < __instance.playerStates.Length; ++index)
             {
-                VoterId = playerState.PlayerId,
-                VotedForId = playerState.VotedForId
-            };
+                var playerState = __instance.playerStates[index];
+                states[index] = new MeetingHud.VoterState
+                {
+                    VoterId = playerState.PlayerId,
+                    VotedForId = playerState.VotedForId
+                };
+            }
+
+            __instance.RpcVotingComplete(states, exiled, tie, wasOverruled, overruleNonce);
+
+            return false;
         }
-
-        __instance.RpcVotingComplete(states, exiled, tie, wasOverruled, overruleNonce);
-
-        return false;
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MeetingHud_CheckForEndVoting.Prefix: apply vote immunity"); return true; }
     }
 }

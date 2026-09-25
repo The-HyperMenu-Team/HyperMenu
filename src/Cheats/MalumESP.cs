@@ -1,37 +1,49 @@
+using System;
 using UnityEngine;
 using Sentry.Internal.Extensions;
 
 namespace MalumMenu;
 public static class MalumESP
 {
+    private const int HandlingId = 20008;
     private static bool _freecamActive;
     private static bool _resolutionChangeNeeded;
     public static void SporeCloudVision(Mushroom mushroom)
     {
-        if (CheatToggles.noShadows)
+        try
         {
-            // Change the Z axis position of spore clouds as to make players appear above them
+            if (CheatToggles.noShadows)
+            {
+                // Change the Z axis position of spore clouds as to make players appear above them
 
-            mushroom.sporeMask.transform.position = new Vector3(mushroom.sporeMask.transform.position.x, mushroom.sporeMask.transform.position.y, -1);
-            return;
+                mushroom.sporeMask.transform.position = new Vector3(mushroom.sporeMask.transform.position.x, mushroom.sporeMask.transform.position.y, -1);
+                return;
+            }
+
+            // Normal Z axis position: 5f
+            mushroom.sporeMask.transform.position = new Vector3(mushroom.sporeMask.transform.position.x, mushroom.sporeMask.transform.position.y, 5f);
         }
-
-        // Normal Z axis position: 5f
-        mushroom.sporeMask.transform.position = new Vector3(mushroom.sporeMask.transform.position.x, mushroom.sporeMask.transform.position.y, 5f);
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumESP.SporeCloudVision: adjusting spore cloud"); }
     }
 
     public static bool IsFullbrightActive()
     {
-        // Fullbright is automatically activated when being a ghost, zooming out, spectating other players, or "freecamming"
-        // This is done to avoid issues with shadows
+        try
+        {
+            // Fullbright is automatically activated when being a ghost, zooming out, spectating other players, or "freecamming"
+            // This is done to avoid issues with shadows
 
-        return CheatToggles.noShadows || (PlayerControl.LocalPlayer?.Data && PlayerControl.LocalPlayer.Data.IsDead) || Camera.main.orthographicSize > 3f || Camera.main.gameObject.GetComponent<FollowerCamera>().Target != PlayerControl.LocalPlayer;
+            return CheatToggles.noShadows || (PlayerControl.LocalPlayer?.Data && PlayerControl.LocalPlayer.Data.IsDead) || Camera.main.orthographicSize > 3f || Camera.main.gameObject.GetComponent<FollowerCamera>().Target != PlayerControl.LocalPlayer;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumESP.IsFullbrightActive: checking fullbright state"); return false; }
     }
 
     public static void ZoomOut(HudManager hudManager)
     {
-        if (CheatToggles.zoomOut)
+        try
         {
+            if (CheatToggles.zoomOut)
+            {
             // Suspend zoomOut whenever a UI screen requires scrolling
             if (hudManager.Chat.IsOpenOrOpening || MatchInfoGuide.Instance.IsActive || PlayerCustomizationMenu.Instance ||
             (Utils.isLobby && (FriendsListUI.Instance.IsOpen || GameStartManager.Instance.LobbyInfoPane.LobbyViewSettingsPane.gameObject.active || GameStartManager.Instance.RulesEditPanel))) return;
@@ -76,6 +88,8 @@ public static class MalumESP
                 _resolutionChangeNeeded = false;
             }
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumESP.ZoomOut: adjusting camera zoom"); }
     }
 
     public static void MeetingNametags(MeetingHud meetingHud)
@@ -110,7 +124,7 @@ public static class MalumESP
                     playerState.NameText.transform.localScale = new Vector3(0.9f, 1f, 1f);
                 }
             }
-        } catch { }
+        } catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumESP.MeetingNametags: updating meeting nametags"); }
     }
 
     public static void PlayerNametags(PlayerPhysics playerPhysics)
@@ -131,7 +145,7 @@ public static class MalumESP
             {
                 playerPhysics.myPlayer.cosmetics.nameText.transform.localPosition = new Vector3(0f, 0f, 0f);
             }
-        } catch { }
+        } catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumESP.PlayerNametags: updating player nametag"); }
     }
 
     public static void ChatNametags(ChatBubble chatBubble)
@@ -146,7 +160,7 @@ public static class MalumESP
             chatBubble.Background.size = new Vector2(5.52f, 0.2f + chatBubble.NameText.GetNotDumbRenderedHeight() + chatBubble.TextArea.GetNotDumbRenderedHeight());
             chatBubble.MaskArea.size = chatBubble.Background.size - new Vector2(0f, 0.03f);
 
-        } catch { }
+        } catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumESP.ChatNametags: updating chat nametag"); }
     }
 
     public static void SeeGhostsCheat(PlayerPhysics playerPhysics)
@@ -158,12 +172,14 @@ public static class MalumESP
                 playerPhysics.myPlayer.Visible = CheatToggles.seeGhosts;
             }
 
-        }catch{}
+        }catch(Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumESP.SeeGhostsCheat: toggling ghost visibility"); }
     }
 
     public static void FreecamCheat()
     {
-        if (CheatToggles.freecam)
+        try
+        {
+            if (CheatToggles.freecam)
         {
             // Completely disable FollowerCamera
             if (!_freecamActive)
@@ -196,5 +212,7 @@ public static class MalumESP
             Camera.main.gameObject.GetComponent<FollowerCamera>().SetTarget(PlayerControl.LocalPlayer);
             _freecamActive = false;
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumESP.FreecamCheat: updating freecam"); }
     }
 }

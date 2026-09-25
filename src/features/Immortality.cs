@@ -1,10 +1,13 @@
-﻿using HarmonyLib;
+﻿using System;
+using HarmonyLib;
 using InnerNet;
 
 namespace MalumMenu.features
 {
 	internal class Immortality
 	{
+		private const int HandlingId = 40003;
+
 		// The PlayerControl::CheckMurder function is the handler for CheckMurder RPCs. When the host of the lobby receives this RPC, it first checks
 		// to make sure that the player who attempted to kill is an imposter and is alive, and then checks if the player who should be killed is alive, is not inside a vent, and is not on a ladder or platform
 		// If everything goes smoothly, a MurderPlayer RPC with flag Succeeded is sent to all online players and the player killed
@@ -62,13 +65,21 @@ namespace MalumMenu.features
 		{
 			static bool Prefix(VentilationSystem.Operation op, int ventId)
 			{
-				if(ventId != CUSTOM_VENT_ID && Enabled && (op == VentilationSystem.Operation.Enter || op == VentilationSystem.Operation.Exit || op == VentilationSystem.Operation.Move))
+				try
 				{
-					MalumMenu.Log.LogInfo($"Our client sent VentilationSystem operation {op} for vent {ventId}, cancelling..");
-					return false;
-				}
+					if(ventId != CUSTOM_VENT_ID && Enabled && (op == VentilationSystem.Operation.Enter || op == VentilationSystem.Operation.Exit || op == VentilationSystem.Operation.Move))
+					{
+						MalumMenu.Log.LogInfo($"Our client sent VentilationSystem operation {op} for vent {ventId}, cancelling..");
+						return false;
+					}
 
-				return true;
+					return true;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "BlockSendingUpdates.Prefix: filtering ventilation updates");
+					return true;
+				}
 			}
 		}
 
@@ -77,7 +88,14 @@ namespace MalumMenu.features
 		{
 			static void Prefix()
 			{
-				_enabled = false;
+				try
+				{
+					_enabled = false;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "OnDisconnect.Prefix: resetting immortality state");
+				}
 			}
 		}
 
@@ -86,10 +104,17 @@ namespace MalumMenu.features
 		{
 			static void Postfix()
 			{
-				if(!Enabled) return;
+				try
+				{
+					if(!Enabled) return;
 
-				MalumMenu.Log.LogMessage($"A new instance of ShipStatus has spawned, sending the immortality RPC");
-				VentilationSystem.Update(VentilationSystem.Operation.Enter, CUSTOM_VENT_ID);
+					MalumMenu.Log.LogMessage($"A new instance of ShipStatus has spawned, sending the immortality RPC");
+					VentilationSystem.Update(VentilationSystem.Operation.Enter, CUSTOM_VENT_ID);
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "OnGameStart.Postfix: re-sending immortality RPC");
+				}
 			}
 		}
 
@@ -98,9 +123,16 @@ namespace MalumMenu.features
 		{
 			static void Postfix(PlayerControl __instance, PlayerControl target)
 			{
-				if(Enabled && target == PlayerControl.LocalPlayer)
+				try
 				{
-					MalumMenu.notifications.Send("Immortality", $"{__instance.Data.PlayerName} attempted to kill you!", 5);
+					if(Enabled && target == PlayerControl.LocalPlayer)
+					{
+						MalumMenu.notifications.Send("Immortality", $"{__instance.Data.PlayerName} attempted to kill you!", 5);
+					}
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "OnMurder.Postfix: notifying blocked kill attempt");
 				}
 			}
 		}
@@ -110,10 +142,17 @@ namespace MalumMenu.features
 		{
 			static void Postfix()
 			{
-				if(!Enabled || PlayerControl.LocalPlayer.Data.IsDead) return;
+				try
+				{
+					if(!Enabled || PlayerControl.LocalPlayer.Data.IsDead) return;
 
-				MalumMenu.Log.LogInfo("Meeting has ended, resending Immortality RPC to retain immortal status");
-				VentilationSystem.Update(VentilationSystem.Operation.Enter, CUSTOM_VENT_ID);
+					MalumMenu.Log.LogInfo("Meeting has ended, resending Immortality RPC to retain immortal status");
+					VentilationSystem.Update(VentilationSystem.Operation.Enter, CUSTOM_VENT_ID);
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "OnMeetingEnd.Postfix: re-sending immortality RPC after meeting");
+				}
 			}
 		}
 	}

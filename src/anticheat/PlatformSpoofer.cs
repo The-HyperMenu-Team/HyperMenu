@@ -1,25 +1,35 @@
-﻿using HarmonyLib;
+﻿using System;
+using HarmonyLib;
 using InnerNet;
 
 namespace MalumMenu.anticheat
 {
 	internal class PlatformSpoofer
 	{
+		private const int HandlingId = 50003;
+
 		[HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.Start))]
 		class PlatformSpoof
 		{
 			static void Postfix(PlayerControl __instance)
 			{
-				if(!Anticheat.Enabled || !Anticheat.CheckSpoofedPlatforms) return;
-
-				ClientData clientData = AmongUsClient.Instance.GetClientFromCharacter(__instance);
-				if(clientData == null) return;
-
-				PlatformSpecificData platformData = clientData.PlatformData;
-
-				if(!IsValidPlatform(platformData))
+				try
 				{
-					Anticheat.Flag(__instance, $"{clientData.PlayerName} was detected with spoofed platform information. Platform: {platformData.Platform}, Platform name: {platformData.PlatformName}, XUID: {platformData.XboxPlatformId}, PSID: {platformData.PsnPlatformId}.");
+					if(!Anticheat.Enabled || !Anticheat.CheckSpoofedPlatforms) return;
+
+					ClientData clientData = AmongUsClient.Instance.GetClientFromCharacter(__instance);
+					if(clientData == null) return;
+
+					PlatformSpecificData platformData = clientData.PlatformData;
+
+					if(!IsValidPlatform(platformData))
+					{
+						Anticheat.Flag(__instance, $"{clientData.PlayerName} was detected with spoofed platform information. Platform: {platformData.Platform}, Platform name: {platformData.PlatformName}, XUID: {platformData.XboxPlatformId}, PSID: {platformData.PsnPlatformId}.");
+					}
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "PlatformSpoof.Postfix: checking player platform info");
 				}
 			}
 		}

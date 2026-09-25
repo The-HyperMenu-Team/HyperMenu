@@ -1,9 +1,11 @@
+using System;
 using UnityEngine;
 
 namespace MalumMenu;
 
 public class ChatTab : ITab
 {
+    private const int HandlingId = 60004;
     public string name => "Chat";
 
     private TextField _chatColorField;
@@ -11,25 +13,29 @@ public class ChatTab : ITab
 
     public void Draw()
     {
-        if (!_initialized)
+        try
         {
-            Initialize();
-            _initialized = true;
+            if (!_initialized)
+            {
+                Initialize();
+                _initialized = true;
+            }
+
+            GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
+
+            DrawGeneral();
+
+            GUILayout.Space(15);
+
+            DrawTextbox();
+
+            GUILayout.Space(15);
+
+            DrawColorSettings();
+
+            GUILayout.EndVertical();
         }
-
-        GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
-
-        DrawGeneral();
-
-        GUILayout.Space(15);
-
-        DrawTextbox();
-
-        GUILayout.Space(15);
-
-        DrawColorSettings();
-
-        GUILayout.EndVertical();
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "ChatTab.Draw: draw chat settings"); }
     }
 
     public void Initialize()

@@ -1,18 +1,24 @@
+using System;
 using UnityEngine;
 
 namespace MalumMenu;
 
 public class PassiveTab : ITab
 {
+    private const int HandlingId = 60012;
     public string name => "Passive";
 
     public void Draw()
     {
-        GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
+        try
+        {
+            GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
 
-        DrawGeneral();
+            DrawGeneral();
 
-        GUILayout.EndVertical();
+            GUILayout.EndVertical();
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "PassiveTab.Draw: draw passive toggles"); }
     }
 
     private void DrawGeneral()

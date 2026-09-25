@@ -1,18 +1,24 @@
+using System;
 using UnityEngine;
 
 namespace MalumMenu;
 
 public class ConsoleTab : ITab
 {
+    private const int HandlingId = 60006;
     public string name => "Console";
 
     public void Draw()
     {
-        GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
+        try
+        {
+            GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
 
-        DrawGeneral();
+            DrawGeneral();
 
-        GUILayout.EndVertical();
+            GUILayout.EndVertical();
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "ConsoleTab.Draw: draw console toggles"); }
     }
 
     private void DrawGeneral()

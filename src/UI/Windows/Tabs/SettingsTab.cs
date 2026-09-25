@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using System.Globalization;
 
@@ -5,6 +6,7 @@ namespace MalumMenu;
 
 public class SettingsTab : ITab
 {
+    private const int HandlingId = 60018;
     public string name => "Settings";
 
     private bool _initialized = false;
@@ -23,25 +25,29 @@ public class SettingsTab : ITab
 
     public void Draw()
     {
-        if (!_initialized)
+        try
         {
-            InitializeInputFields();
-            _initialized = true;
+            if (!_initialized)
+            {
+                InitializeInputFields();
+                _initialized = true;
+            }
+
+            GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
+
+            DrawGUISettings();
+
+            GUILayout.Space(15);
+
+            DrawSpoofingSettings();
+
+            GUILayout.Space(15);
+
+            DrawPrivacySettings();
+
+            GUILayout.EndVertical();
         }
-
-        GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
-
-        DrawGUISettings();
-
-        GUILayout.Space(15);
-
-        DrawSpoofingSettings();
-
-        GUILayout.Space(15);
-
-        DrawPrivacySettings();
-
-        GUILayout.EndVertical();
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "SettingsTab.Draw: draw settings controls"); }
     }
 
     private void InitializeInputFields()

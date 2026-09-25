@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -5,68 +6,94 @@ namespace MalumMenu;
 
 public static class DoorsHandler
 {
+    private const int HandlingId = 20007;
+
     // Returns a list of all rooms that have doors
     public static List<SystemTypes> GetRoomsWithDoors()
     {
-        if (!Utils.isShip || ShipStatus.Instance.AllDoors.Count <= 0) return new List<SystemTypes>();
+        try
+        {
+            if (!Utils.isShip || ShipStatus.Instance.AllDoors.Count <= 0) return new List<SystemTypes>();
 
-        return ShipStatus.Instance.AllDoors.Select(d => d.Room).Distinct().ToList();
+            return ShipStatus.Instance.AllDoors.Select(d => d.Room).Distinct().ToList();
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "DoorsHandler.GetRoomsWithDoors: listing rooms with doors"); return new List<SystemTypes>(); }
     }
 
     // Returns a list of all doors in a specified room
     public static List<OpenableDoor> GetDoorsInRoom(SystemTypes room)
     {
-        if (!Utils.isShip || ShipStatus.Instance.AllDoors.Count <= 0) return new List<OpenableDoor>();
+        try
+        {
+            if (!Utils.isShip || ShipStatus.Instance.AllDoors.Count <= 0) return new List<OpenableDoor>();
 
-        return ShipStatus.Instance.AllDoors.Where(d => d.Room == room).ToList();
+            return ShipStatus.Instance.AllDoors.Where(d => d.Room == room).ToList();
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "DoorsHandler.GetDoorsInRoom: listing doors in room"); return new List<OpenableDoor>(); }
     }
 
     // Returns the aggregate status of doors in a specified room
     public static string GetStatusOfDoorsInRoom(SystemTypes room, bool colorize)
     {
-        var doorsInRoom = GetDoorsInRoom(room);
-        if (doorsInRoom.Count <= 0) return "N/A";
-        if (doorsInRoom.All(d => d.IsOpen)) return colorize ? "<color=#00FF00>Open</color>" : "Open";
-        if (doorsInRoom.All(d => !d.IsOpen)) return colorize ? "<color=#FF0000>Closed</color>" : "Closed";
-        return colorize ? "<color=#FFFF00>Mixed</color>" : "Mixed";
+        try
+        {
+            var doorsInRoom = GetDoorsInRoom(room);
+            if (doorsInRoom.Count <= 0) return "N/A";
+            if (doorsInRoom.All(d => d.IsOpen)) return colorize ? "<color=#00FF00>Open</color>" : "Open";
+            if (doorsInRoom.All(d => !d.IsOpen)) return colorize ? "<color=#FF0000>Closed</color>" : "Closed";
+            return colorize ? "<color=#FFFF00>Mixed</color>" : "Mixed";
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "DoorsHandler.GetStatusOfDoorsInRoom: aggregating door status"); return "N/A"; }
     }
 
     // Opens all doors in a specified room
     public static void OpenDoorsInRoom(SystemTypes doorRoom)
     {
-        foreach (var door in GetDoorsInRoom(doorRoom))
+        try
         {
-            OpenDoor(door);
+            foreach (var door in GetDoorsInRoom(doorRoom))
+            {
+                OpenDoor(door);
+            }
         }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "DoorsHandler.OpenDoorsInRoom: opening doors in room"); }
     }
 
     // Closes all doors in a specified room
     public static void CloseDoorsInRoom(SystemTypes doorRoom)
     {
-        try { ShipStatus.Instance.RpcCloseDoorsOfType(doorRoom); } catch { }
+        try { ShipStatus.Instance.RpcCloseDoorsOfType(doorRoom); } catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "DoorsHandler.CloseDoorsInRoom: closing doors in room"); }
     }
 
     // Opens all doors on the map
     public static void OpenAllDoors()
     {
-        foreach (var door in ShipStatus.Instance.AllDoors)
+        try
         {
-            OpenDoor(door);
+            foreach (var door in ShipStatus.Instance.AllDoors)
+            {
+                OpenDoor(door);
+            }
         }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "DoorsHandler.OpenAllDoors: opening all doors"); }
     }
 
     // Closes all doors on the map
     public static void CloseAllDoors()
     {
-        foreach (var door in ShipStatus.Instance.AllDoors)
+        try
         {
-            try { ShipStatus.Instance.RpcCloseDoorsOfType(door.Room); } catch { }
+            foreach (var door in ShipStatus.Instance.AllDoors)
+            {
+                try { ShipStatus.Instance.RpcCloseDoorsOfType(door.Room); } catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "DoorsHandler.CloseAllDoors: closing door"); }
+            }
         }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "DoorsHandler.CloseAllDoors: enumerating doors"); }
     }
 
     // Opens a specific door
     public static void OpenDoor(OpenableDoor openableDoor)
     {
-        try { ShipStatus.Instance.RpcUpdateSystem(SystemTypes.Doors, (byte)(openableDoor.Id | 64)); } catch { }
+        try { ShipStatus.Instance.RpcUpdateSystem(SystemTypes.Doors, (byte)(openableDoor.Id | 64)); } catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "DoorsHandler.OpenDoor: opening door"); }
     }
 }

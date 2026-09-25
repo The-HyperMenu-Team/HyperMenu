@@ -6,6 +6,7 @@ using System.Linq;
 namespace MalumMenu;
 public static class OverloadHandler
 {
+    private const int HandlingId = 20014;
     public static float cooldown;
     public static int strength;
     private static HashSet<int> _customTargets = new();
@@ -17,7 +18,9 @@ public static class OverloadHandler
 
     public static void Run()
     {
-        if (!CheatToggles.runOverload || OverloadUI.currentTargets.Count <= 0)
+        try
+        {
+            if (!CheatToggles.runOverload || OverloadUI.currentTargets.Count <= 0)
         {
             _timer = cooldown;
             _attackLogTimer = MalumMenu.attackLogDelay.Value;
@@ -165,29 +168,45 @@ public static class OverloadHandler
                 _rpcCounters.Clear();
             }
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "OverloadHandler.Run: running overload"); }
     }
 
     public static void AddCustomTarget(NetworkedPlayerInfo playerData)
     {
-        int clientId = playerData.ClientId;
-        _customTargets.Add(clientId);
+        try
+        {
+            int clientId = playerData.ClientId;
+            _customTargets.Add(clientId);
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "OverloadHandler.AddCustomTarget: adding custom target"); }
     }
 
     public static void RemoveCustomTarget(NetworkedPlayerInfo playerData)
     {
-        int clientId = playerData.ClientId;
-        _customTargets.Remove(clientId);
+        try
+        {
+            int clientId = playerData.ClientId;
+            _customTargets.Remove(clientId);
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "OverloadHandler.RemoveCustomTarget: removing custom target"); }
     }
 
     public static bool IsCustomTarget(NetworkedPlayerInfo playerData)
     {
-        return _customTargets.Contains(playerData.ClientId);
+        try
+        {
+            return _customTargets.Contains(playerData.ClientId);
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "OverloadHandler.IsCustomTarget: checking custom target"); return false; }
     }
 
     public static (HashSet<TargetType> targetTypes, bool isTarget) GetTarget(NetworkedPlayerInfo playerData)
     {
-        bool isTarget = false;
-        var targetTypes = new HashSet<TargetType>();
+        try
+        {
+            bool isTarget = false;
+            var targetTypes = new HashSet<TargetType>();
 
         if (CheatToggles.overloadAll)
         {
@@ -234,18 +253,26 @@ public static class OverloadHandler
         }
 
         return (targetTypes, isTarget);
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "OverloadHandler.GetTarget: resolving target"); return (new HashSet<TargetType> { TargetType.None }, false); }
     }
 
     public static void ClearCustomTargets()
     {
-        _customTargets.Clear();
+        try
+        {
+            _customTargets.Clear();
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "OverloadHandler.ClearCustomTargets: clearing custom targets"); }
     }
 
     // Iterates through all given players and
     // adds all that are marked as targets and match given targetType to _customTargets
     public static void PopulateCustomTargets(PlayerControl[] players, TargetType targetType)
     {
-        int playerCount = players.Length;
+        try
+        {
+            int playerCount = players.Length;
 
         for (int i = 0; i < playerCount; i++)
         {
@@ -262,25 +289,31 @@ public static class OverloadHandler
                 }
             }
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "OverloadHandler.PopulateCustomTargets: populating custom targets"); }
     }
 
     // Returns adapted strength and cooldown using number of currentTargets and AmongUsClient ping
     // Should balance them to aim for low lag but effective output
     public static (int strength, float cooldown) CalculateAdaptedValues()
     {
-        int targetCount = OverloadUI.maxPossibleTargets == OverloadUI.currentTargets.Count
-                        ? 1 // Broadcast mode counts as one target
-                        : Math.Max(1, OverloadUI.currentTargets.Count); // Prevents division by 0
+        try
+        {
+            int targetCount = OverloadUI.maxPossibleTargets == OverloadUI.currentTargets.Count
+                            ? 1 // Broadcast mode counts as one target
+                            : Math.Max(1, OverloadUI.currentTargets.Count); // Prevents division by 0
 
-        float maxCooldown = MalumMenu.adaptMaxCooldown.Value;
-        float cooldown = maxCooldown / targetCount;
+            float maxCooldown = MalumMenu.adaptMaxCooldown.Value;
+            float cooldown = maxCooldown / targetCount;
 
-        int pingLevel = Math.Max(1, Utils.GetPing() / 100); // 0-99 ms = Lvl 1, 100-199 ms = Lvl 1, 200-299 ms = Lvl 2, ...
+            int pingLevel = Math.Max(1, Utils.GetPing() / 100); // 0-99 ms = Lvl 1, 100-199 ms = Lvl 1, 200-299 ms = Lvl 2, ...
 
-        int maxStrength = MalumMenu.adaptMaxStrength.Value;
-        int strength = Math.Max(1, maxStrength / pingLevel / targetCount);
+            int maxStrength = MalumMenu.adaptMaxStrength.Value;
+            int strength = Math.Max(1, maxStrength / pingLevel / targetCount);
 
-        return (strength, cooldown);
+            return (strength, cooldown);
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "OverloadHandler.CalculateAdaptedValues: calculating adapted values"); return (1, 1f); }
     }
 
     public enum TargetType

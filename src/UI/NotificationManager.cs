@@ -6,6 +6,7 @@ namespace MalumMenu.ui
 {
     public class NotificationManager : MonoBehaviour
     {
+        private const int HandlingId = 10005;
         public List<Notification> notifications = new List<Notification>();
         public bool DisableNotifications = false;
 
@@ -36,36 +37,44 @@ namespace MalumMenu.ui
 
         public void Update()
         {
-            int notificaions = Math.Min(GetMaxNotifications(), notifications.Count);
-
-            for (int i = 0; i < notificaions; i++)
+            try
             {
-                Notification notification = notifications[i];
-                notification.lifetime += Time.deltaTime;
+                int notificaions = Math.Min(GetMaxNotifications(), notifications.Count);
 
-                if (notification.HasExpired)
+                for (int i = 0; i < notificaions; i++)
                 {
-                    notifications.RemoveAt(i);
+                    Notification notification = notifications[i];
+                    notification.lifetime += Time.deltaTime;
 
-                    // Since we removed an element from the notifications list, we have to decrement both the current notification index
-                    // and the max notifications to avoid errors from accessing outside the list length
-                    i--;
-                    notificaions--;
-                    continue;
+                    if (notification.HasExpired)
+                    {
+                        notifications.RemoveAt(i);
+
+                        // Since we removed an element from the notifications list, we have to decrement both the current notification index
+                        // and the max notifications to avoid errors from accessing outside the list length
+                        i--;
+                        notificaions--;
+                        continue;
+                    }
                 }
             }
+            catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "NotificationManager.Update: expire notifications"); }
         }
 
         public void OnGUI()
         {
-            if (DisableNotifications) return;
-
-            int notificaions = Math.Min(GetMaxNotifications(), notifications.Count);
-
-            for (byte i = 0; i < notificaions; i++)
+            try
             {
-                RenderNotification(i, notifications[i]);
+                if (DisableNotifications) return;
+
+                int notificaions = Math.Min(GetMaxNotifications(), notifications.Count);
+
+                for (byte i = 0; i < notificaions; i++)
+                {
+                    RenderNotification(i, notifications[i]);
+                }
             }
+            catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "NotificationManager.OnGUI: render notifications"); }
         }
 
         private void RenderNotification(byte position, Notification notification)

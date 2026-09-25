@@ -74,10 +74,15 @@ public partial class MalumMenu : BasePlugin
     public static RoutineManager routines;
     public static NotificationManager notifications;
 
+    // 5-digit handling ID for MalumMenu.cs (see HandlingIds.cs). Reserved for future catch blocks.
+    private const int HandlingId = 10001;
+
     public override void Load()
     {
         Instance = this;
         Log = base.Log;
+        ErrorReporter.EnsureDirectories();
+        ErrorReporter.Initialize();
 		Log.LogInfo($"HyperMenu has loaded!");
         Plugin = this;
         notifications = AddComponent<NotificationManager>();
@@ -285,6 +290,8 @@ public partial class MalumMenu : BasePlugin
 
         SceneManager.add_sceneLoaded((Action<Scene, LoadSceneMode>) ((scene, _) =>
         {
+            try
+            {
             if (scene.name == "MainMenu" && !(inStealthMode || isPanicked))
             {
                 // Warns about unsupported AU versions
@@ -296,6 +303,8 @@ public partial class MalumMenu : BasePlugin
                     Utils.ShowNewPopup("This version of HyperMenu and this version of Among Us are not fully compatible\n\nSome features may not work properly, as HyperMenu is not updated to keep compatibility with older Among Us versions.");
                 }
             }
+            }
+            catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "sceneLoaded handler"); }
         }));
     }
 }
