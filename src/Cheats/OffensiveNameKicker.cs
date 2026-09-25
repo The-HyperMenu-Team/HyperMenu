@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -5,6 +6,7 @@ namespace MalumMenu;
 
 public static class OffensiveNameKicker
 {
+    private const int HandlingId = 20013;
     // List of offensive names to auto-kick
     private static readonly List<string> BannedNames = new()
     {
@@ -22,24 +24,28 @@ public static class OffensiveNameKicker
 
     public static void CheckAndKickOffensiveNames()
     {
-        if (!CheatToggles.kickOffensiveNames || !Utils.isHost) return;
-
-        foreach (var player in PlayerControl.AllPlayerControls)
+        try
         {
-            if (player == null || player.Data == null || player.Data.Disconnected) continue;
+            if (!CheatToggles.kickOffensiveNames || !Utils.isHost) return;
 
-            string playerName = player.Data.PlayerName.ToLower().Trim();
-
-            // Check if player name contains any banned names
-            foreach (var bannedName in BannedNames)
+            foreach (var player in PlayerControl.AllPlayerControls)
             {
-                if (playerName.Contains(bannedName.ToLower()))
+                if (player == null || player.Data == null || player.Data.Disconnected) continue;
+
+                string playerName = player.Data.PlayerName.ToLower().Trim();
+
+                // Check if player name contains any banned names
+                foreach (var bannedName in BannedNames)
                 {
-                    // Kick the player by forcing them to disconnect
-                    AmongUsClient.Instance.KickPlayer((int)player.Data.NetId, false);
-                    break;
+                    if (playerName.Contains(bannedName.ToLower()))
+                    {
+                        // Kick the player by forcing them to disconnect
+                        AmongUsClient.Instance.KickPlayer((int)player.Data.NetId, false);
+                        break;
+                    }
                 }
             }
         }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "OffensiveNameKicker.CheckAndKickOffensiveNames: checking player names"); }
     }
 }

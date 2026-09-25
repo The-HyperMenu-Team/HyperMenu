@@ -10,6 +10,8 @@ namespace MalumMenu.anticheat
 {
 	internal class Anticheat
 	{
+		private const int HandlingId = 50001;
+
 		public static bool Enabled { get; set; } = true;
 
 		public static Dictionary<GameDataTypes, GameDataCheck> GameDataHandlers = new Dictionary<GameDataTypes, GameDataCheck>()
@@ -62,7 +64,15 @@ namespace MalumMenu.anticheat
 		{
 			static bool Prefix(PlayerControl __instance, byte callId, MessageReader reader)
 			{
-				return HandleRpc(typeof(PlayerControl), __instance, (RpcCalls)callId, reader);
+				try
+				{
+					return HandleRpc(typeof(PlayerControl), __instance, (RpcCalls)callId, reader);
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "OnPlayerControlRPC.Prefix: validating PlayerControl RPC");
+					return false;
+				}
 			}
 		}
 
@@ -71,7 +81,15 @@ namespace MalumMenu.anticheat
 		{
 			static bool Prefix(PlayerPhysics __instance, byte callId, MessageReader reader)
 			{
-				return HandleRpc(typeof(PlayerPhysics), __instance.myPlayer, (RpcCalls)callId, reader);
+				try
+				{
+					return HandleRpc(typeof(PlayerPhysics), __instance.myPlayer, (RpcCalls)callId, reader);
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "OnPlayerPhysicsRPC.Prefix: validating PlayerPhysics RPC");
+					return false;
+				}
 			}
 		}
 
@@ -80,7 +98,15 @@ namespace MalumMenu.anticheat
 		{
 			static bool Prefix(CustomNetworkTransform __instance, byte callId, MessageReader reader)
 			{
-				return HandleRpc(typeof(CustomNetworkTransform), __instance.myPlayer, (RpcCalls)callId, reader);
+				try
+				{
+					return HandleRpc(typeof(CustomNetworkTransform), __instance.myPlayer, (RpcCalls)callId, reader);
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "OnNetTransformRPC.Prefix: validating NetTransform RPC");
+					return false;
+				}
 			}
 		}
 
@@ -89,7 +115,15 @@ namespace MalumMenu.anticheat
 		{
 			static bool Prefix(byte callId, MessageReader reader)
 			{
-				return HandleRpc(typeof(ShipStatus), null, (RpcCalls)callId, reader);
+				try
+				{
+					return HandleRpc(typeof(ShipStatus), null, (RpcCalls)callId, reader);
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "OnShipStatusRPC.Prefix: validating ShipStatus RPC");
+					return false;
+				}
 			}
 		}
 

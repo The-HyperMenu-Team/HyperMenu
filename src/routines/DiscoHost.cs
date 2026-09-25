@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -6,6 +7,8 @@ namespace MalumMenu.routines
 {
     public class DiscoHostRoutine : IRoutine
     {
+        private const int HandlingId = 60109;
+
         public DiscoHostRoutine() : base("DiscoHost") { }
         public HashSet<int> targets = new HashSet<int>();
 
@@ -16,33 +19,40 @@ namespace MalumMenu.routines
 
         public override void Run()
         {
-            timeElapsed += Time.deltaTime;
-            if(timeElapsed < randomizationDelay) return;
-            timeElapsed = 0f;
-
-            List<int> colors = Enumerable.Range(0, 18).ToList();
-
-            Network.BatchedMessage batch = new Network.BatchedMessage();
-
-            foreach(PlayerControl player in PlayerControl.AllPlayerControls)
+            try
             {
-                if(!IsGlobal && !targets.Contains(player.GetHashCode())) continue;
+                timeElapsed += Time.deltaTime;
+                if(timeElapsed < randomizationDelay) return;
+                timeElapsed = 0f;
 
-                int color;
-                if(colors.Count != 0)
+                List<int> colors = Enumerable.Range(0, 18).ToList();
+
+                Network.BatchedMessage batch = new Network.BatchedMessage();
+
+                foreach(PlayerControl player in PlayerControl.AllPlayerControls)
                 {
-                    color = colors[rnd.Next(0, colors.Count)];
-                    colors.Remove(color);
-                }
-                else
-                {
-                    color = rnd.Next(0, 18);
+                    if(!IsGlobal && !targets.Contains(player.GetHashCode())) continue;
+
+                    int color;
+                    if(colors.Count != 0)
+                    {
+                        color = colors[rnd.Next(0, colors.Count)];
+                        colors.Remove(color);
+                    }
+                    else
+                    {
+                        color = rnd.Next(0, 18);
+                    }
+
+                    batch.QueueSetColor(player, (byte)color);
                 }
 
-                batch.QueueSetColor(player, (byte)color);
+                batch.FinishBatch();
             }
-
-            batch.FinishBatch();
+            catch (Exception ex)
+            {
+                ErrorReporter.Report(ex, HandlingId, "DiscoHostRoutine.Run: randomizing target colors");
+            }
         }
 
         public bool IsGlobal
@@ -52,30 +62,51 @@ namespace MalumMenu.routines
 
         protected override void OnEnable()
         {
-            if(PlayerControl.LocalPlayer == null)
+            try
             {
-                MalumMenu.notifications.Send("Disco Party", "Disco Party can only be used inside of a game.", 10);
-                Enabled = false;
-                return;
-            }
+                if(PlayerControl.LocalPlayer == null)
+                {
+                    MalumMenu.notifications.Send("Disco Party", "Disco Party can only be used inside of a game.", 10);
+                    Enabled = false;
+                    return;
+                }
 
-            if(Utilities.IsAnticheatPresent() && !AmongUsClient.Instance.AmHost)
+                if(Utilities.IsAnticheatPresent() && !AmongUsClient.Instance.AmHost)
+                {
+                    MalumMenu.notifications.Send("Disco Party", "Disco Party can only be used if you are the host of the lobby.", 10);
+                    Enabled = false;
+                    return;
+                }
+            }
+            catch (Exception ex)
             {
-                MalumMenu.notifications.Send("Disco Party", "Disco Party can only be used if you are the host of the lobby.", 10);
-                Enabled = false;
-                return;
+                ErrorReporter.Report(ex, HandlingId, "DiscoHostRoutine.OnEnable: validating host permissions");
             }
         }
 
         protected override void OnDisable()
         {
-            targets.Clear();
+            try
+            {
+                targets.Clear();
+            }
+            catch (Exception ex)
+            {
+                ErrorReporter.Report(ex, HandlingId, "DiscoHostRoutine.OnDisable: clearing disco targets");
+            }
         }
 
         public override void OnDisconnect()
         {
-            MalumMenu.notifications.Send("Disco Party", "Disco Party was disabled as you left the game.", 10);
-            Enabled = false;
+            try
+            {
+                MalumMenu.notifications.Send("Disco Party", "Disco Party was disabled as you left the game.", 10);
+                Enabled = false;
+            }
+            catch (Exception ex)
+            {
+                ErrorReporter.Report(ex, HandlingId, "DiscoHostRoutine.OnDisconnect: disabling routine");
+            }
         }
     }
 }

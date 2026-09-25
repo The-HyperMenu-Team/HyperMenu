@@ -1,32 +1,38 @@
+using System;
 using UnityEngine;
 
 namespace MalumMenu;
 
 public class ShipTab : ITab
 {
+    private const int HandlingId = 60019;
     public string name => "Ship";
 
     public void Draw()
     {
-        GUILayout.BeginHorizontal();
+        try
+        {
+            GUILayout.BeginHorizontal();
 
-        GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
+            GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
 
-        DrawGeneral();
+            DrawGeneral();
 
-        GUILayout.Space(15);
+            GUILayout.Space(15);
 
-        DrawSabotage();
+            DrawSabotage();
 
-        GUILayout.EndVertical();
+            GUILayout.EndVertical();
 
-        GUILayout.BeginVertical();
+            GUILayout.BeginVertical();
 
-        DrawVents();
+            DrawVents();
 
-        GUILayout.EndVertical();
+            GUILayout.EndVertical();
 
-        GUILayout.EndHorizontal();
+            GUILayout.EndHorizontal();
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "ShipTab.Draw: draw ship controls"); }
     }
 
     private void DrawGeneral()

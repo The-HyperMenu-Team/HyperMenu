@@ -10,13 +10,16 @@ namespace MalumMenu;
 
 public class HostOnlyTab2 : ITab
 {
+    private const int HandlingId = 60009;
     public string name => "Host-Only 2";
 
     private byte selectedMap = 0;
 
     public void Draw()
     {
-        if (PlayerControl.LocalPlayer == null)
+        try
+        {
+            if (PlayerControl.LocalPlayer == null)
         {
             GUILayout.Label("You are not currently in a game, these options will not work.");
         }
@@ -108,7 +111,7 @@ public class HostOnlyTab2 : ITab
 
         if (GUILayout.Button("Spawn Map"))
         {
-            AmongUsClient.Instance.StartCoroutine(SpawnMap(selectedMap).WrapToIl2Cpp());
+            AmongUsClient.Instance.StartCoroutine(ErrorReporter.GuardCoroutine(SpawnMap(selectedMap), HandlingId, "SpawnMap").WrapToIl2Cpp());
         }
         GUILayout.EndHorizontal();
 
@@ -118,6 +121,8 @@ public class HostOnlyTab2 : ITab
         MalumMenu.routines.discoHost.Enabled = GUILayout.Toggle(MalumMenu.routines.discoHost.Enabled, "Enabled");
         GUILayout.Label($"Color randomization delay: {MalumMenu.routines.discoHost.randomizationDelay:F2}s");
         MalumMenu.routines.discoHost.randomizationDelay = GUILayout.HorizontalSlider(MalumMenu.routines.discoHost.randomizationDelay, 0.1f, 2.0f);
+        }
+        catch (System.Exception ex) { ErrorReporter.Report(ex, HandlingId, "HostOnlyTab2.Draw: draw host-only 2 controls"); }
     }
     private static IEnumerator SpawnMap(byte mapId)
     {

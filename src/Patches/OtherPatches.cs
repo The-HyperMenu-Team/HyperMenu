@@ -12,267 +12,341 @@ namespace MalumMenu;
 [HarmonyPatch(typeof(Constants), nameof(Constants.GetPlatformData))]
 public static class Constants_GetPlatformData
 {
+    private const int HandlingId = 30013;
     // Postfix patch of Constants.GetPlatformData to spoof the user's platform type
     public static void Postfix(ref PlatformSpecificData __result)
     {
-        if (Utils.StringToPlatformType(MalumMenu.spoofPlatform.Value, out Platforms? platformType))
+        try
         {
-            __result = new PlatformSpecificData
+            if (Utils.StringToPlatformType(MalumMenu.spoofPlatform.Value, out Platforms? platformType))
             {
-                Platform = (Platforms)platformType,
-                PlatformName = Constants.GetPlatformName()
-            };
+                __result = new PlatformSpecificData
+                {
+                    Platform = (Platforms)platformType,
+                    PlatformName = Constants.GetPlatformName()
+                };
+            }
         }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "Constants_GetPlatformData.Postfix: spoof platform"); }
     }
 }
 
 [HarmonyPatch(typeof(GameData), nameof(GameData.HandleDisconnect), new[] { typeof(PlayerControl), typeof(DisconnectReasons) })]
 public static class GameData_HandleDisconnect
 {
+    private const int HandlingId = 30013;
     public static HashSet<int> disconnectQueue = new();
 
     // Prefix patch of GameData.HandleDisconnect to keep track of successful overloads
     public static void Prefix(PlayerControl player)
     {
-        if (!CheatToggles.runOverload) return;
+        try
+        {
+            if (!CheatToggles.runOverload) return;
 
-        NetworkedPlayerInfo playerData = player?.Data;
-        if (playerData == null) return;
+            NetworkedPlayerInfo playerData = player?.Data;
+            if (playerData == null) return;
 
-        bool isTarget = OverloadUI.currentTargets.Contains(playerData);
+            bool isTarget = OverloadUI.currentTargets.Contains(playerData);
 
-        if (isTarget) disconnectQueue.Add(playerData.ClientId);
+            if (isTarget) disconnectQueue.Add(playerData.ClientId);
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "GameData_HandleDisconnect.Prefix: track overload disconnect"); }
     }
 
     // Postfix patch of GameData.HandleDisconnect to keep track of successful overloads
     // (Avoids race-condition double counting)
     public static void Postfix(PlayerControl player)
     {
-        if (!CheatToggles.runOverload) return;
-
-        NetworkedPlayerInfo playerData = player?.Data;
-        if (playerData == null) return;
-
-        int clientId = player.Data.ClientId;
-
-        if (disconnectQueue.Contains(clientId))
+        try
         {
-            OverloadUI.numSuccesses++;
+            if (!CheatToggles.runOverload) return;
 
-            if (CheatToggles.olLogDisconnect)
+            NetworkedPlayerInfo playerData = player?.Data;
+            if (playerData == null) return;
+
+            int clientId = player.Data.ClientId;
+
+            if (disconnectQueue.Contains(clientId))
             {
-                int total = OverloadUI.currentTargets.Count // Targets still connected
-                            + OverloadUI.numSuccesses // Targets already crashed
-                            - disconnectQueue.Count; // Pending disconnect logs (Avoids race-condition double counting)
+                OverloadUI.numSuccesses++;
 
-                string colorStr = ColorUtility.ToHtmlStringRGB(Color.green);
+                if (CheatToggles.olLogDisconnect)
+                {
+                    int total = OverloadUI.currentTargets.Count // Targets still connected
+                                + OverloadUI.numSuccesses // Targets already crashed
+                                - disconnectQueue.Count; // Pending disconnect logs (Avoids race-condition double counting)
 
-                OverloadUI.LogConsole($"> <b><color=#{colorStr}>!! {playerData.DefaultOutfit.PlayerName} (ID : {playerData.ClientId}) Disconnected !! - [{OverloadUI.numSuccesses}/{total}]</color></b>");
+                    string colorStr = ColorUtility.ToHtmlStringRGB(Color.green);
+
+                    OverloadUI.LogConsole($"> <b><color=#{colorStr}>!! {playerData.DefaultOutfit.PlayerName} (ID : {playerData.ClientId}) Disconnected !! - [{OverloadUI.numSuccesses}/{total}]</color></b>");
+                }
+
+                disconnectQueue.Remove(clientId);
             }
-
-            disconnectQueue.Remove(clientId);
         }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "GameData_HandleDisconnect.Postfix: count overload disconnect"); }
     }
 }
 
 [HarmonyPatch(typeof(FreeChatInputField), nameof(FreeChatInputField.UpdateCharCount))]
 public static class FreeChatInputField_UpdateCharCount
 {
+    private const int HandlingId = 30013;
     // Postfix patch of FreeChatInputField.UpdateCharCount to change how charCountText displays
     public static void Postfix(FreeChatInputField __instance)
     {
-        // Only works if CheatToggles.longerMsgs is enabled
-        if (!CheatToggles.longerMessages) return;
+        try
+        {
+            // Only works if CheatToggles.longerMsgs is enabled
+            if (!CheatToggles.longerMessages) return;
 
-        // Update charCountText to account for longer characterLimit
-        int length = __instance.textArea.text.Length;
-        __instance.charCountText.SetText($"{length}/{__instance.textArea.characterLimit}");
+            // Update charCountText to account for longer characterLimit
+            int length = __instance.textArea.text.Length;
+            __instance.charCountText.SetText($"{length}/{__instance.textArea.characterLimit}");
 
-        if (length < 90) // Under 75%
-        {
-            __instance.charCountText.color = Color.black;
+            if (length < 90) // Under 75%
+            {
+                __instance.charCountText.color = Color.black;
+            }
+            else if (length < 120) // Under 100%
+            {
+                __instance.charCountText.color = new Color(1f, 1f, 0f, 1f);
+            }
+            else // Over or equal to 100%
+            {
+                __instance.charCountText.color = Color.red;
+            }
         }
-        else if (length < 120) // Under 100%
-        {
-            __instance.charCountText.color = new Color(1f, 1f, 0f, 1f);
-        }
-        else // Over or equal to 100%
-        {
-            __instance.charCountText.color = Color.red;
-        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "FreeChatInputField_UpdateCharCount.Postfix: update char count"); }
     }
 }
 
 [HarmonyPatch(typeof(ChatBubble), nameof(ChatBubble.SetName))]
 public static class ChatBubble_SetName
 {
+    private const int HandlingId = 30013;
     public static void Postfix(ChatBubble __instance)
 	{
-        MalumESP.ChatNametags(__instance);
+        try
+        {
+            MalumESP.ChatNametags(__instance);
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "ChatBubble_SetName.Postfix: apply chat nametags"); }
     }
 }
 
 [HarmonyPatch(typeof(SystemInfo), nameof(SystemInfo.deviceUniqueIdentifier), MethodType.Getter)]
 public static class SystemInfo_deviceUniqueIdentifier_Getter
 {
+    private const int HandlingId = 30013;
     // Postfix patch of SystemInfo.deviceUniqueIdentifier Getter method
     // Made to hide the user's real unique deviceId by generating a random fake one
     public static void Postfix(ref string __result)
     {
-        if (!MalumMenu.spoofDeviceId.Value) return;
-
-        var bytes = new byte[16];
-        using (var rng = RandomNumberGenerator.Create())
+        try
         {
-            rng.GetBytes(bytes);
-        }
+            if (!MalumMenu.spoofDeviceId.Value) return;
 
-        __result = BitConverter.ToString(bytes).Replace("-", "").ToLower();
+            var bytes = new byte[16];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(bytes);
+            }
+
+            __result = BitConverter.ToString(bytes).Replace("-", "").ToLower();
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "SystemInfo_deviceUniqueIdentifier_Getter.Postfix: spoof device id"); }
     }
 }
 
 [HarmonyPatch(typeof(VersionShower), nameof(VersionShower.Start))]
 public static class VersionShower_Start
 {
+    private const int HandlingId = 30013;
     // Postfix patch of VersionShower.Start to show MalumMenu version
     public static void Postfix(VersionShower __instance)
     {
-        if (MalumMenu.inStealthMode || MalumMenu.isPanicked) return;
+        try
+        {
+            if (MalumMenu.inStealthMode || MalumMenu.isPanicked) return;
 
-        if (MalumMenu.supportedAU.Contains(Application.version)) // Checks if Among Us version is supported
-        {
-            __instance.text.text =  $"HyperMenu V{MalumMenu.hyperVersion}, MalumMenu V{MalumMenu.malumVersion} ( AU V{Application.version})"; // Supported
+            if (MalumMenu.supportedAU.Contains(Application.version)) // Checks if Among Us version is supported
+            {
+                __instance.text.text =  $"HyperMenu V{MalumMenu.hyperVersion}, MalumMenu V{MalumMenu.malumVersion} ( AU V{Application.version})"; // Supported
+            }
+            else if (MalumMenu.toleratedAU.Contains(Application.version)) // Checks if Among Us version is tolerated
+            {
+                __instance.text.text =  $"HyperMenu V{MalumMenu.hyperVersion}, MalumMenu V{MalumMenu.malumVersion} (<color=yellow>AU V{Application.version}</color>)"; // Tolerated
+            }
+            else
+            {
+                __instance.text.text =  $"HyperMenu V{MalumMenu.hyperVersion}, MalumMenu V{MalumMenu.malumVersion} (<color=red>AU V{Application.version}</color>)"; // Unsupported
+            }
         }
-        else if (MalumMenu.toleratedAU.Contains(Application.version)) // Checks if Among Us version is tolerated
-        {
-            __instance.text.text =  $"HyperMenu V{MalumMenu.hyperVersion}, MalumMenu V{MalumMenu.malumVersion} (<color=yellow>AU V{Application.version}</color>)"; // Tolerated
-        }
-        else
-        {
-            __instance.text.text =  $"HyperMenu V{MalumMenu.hyperVersion}, MalumMenu V{MalumMenu.malumVersion} (<color=red>AU V{Application.version}</color>)"; // Unsupported
-        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "VersionShower_Start.Postfix: show menu version"); }
     }
 }
 
 [HarmonyPatch(typeof(PingTracker), nameof(PingTracker.Update))]
 public static class PingTracker_Update
 {
+    private const int HandlingId = 30013;
     // Postfix patch of PingTracker.Update to show MalumMenu authors and colored ping text
     public static void Postfix(PingTracker __instance)
     {
-        if (MalumMenu.inStealthMode)
+        try
         {
-            __instance.text.alignment = TMPro.TextAlignmentOptions.TopLeft;
+            if (MalumMenu.inStealthMode)
+            {
+                __instance.text.alignment = TMPro.TextAlignmentOptions.TopLeft;
 
-            return;
+                return;
+            }
+
+            __instance.text.alignment = TMPro.TextAlignmentOptions.Center;
+
+            int ping = Utils.GetPing();
+            string pingStr = $"PING : {ping} ms";
+            string pingText = Utils.GetColoredPingText(pingStr, ping);
+
+            if (AmongUsClient.Instance.IsGameStarted)
+            {
+                __instance.aspectPosition.DistanceFromEdge = new Vector3(-0.21f, 0.50f, 0f);
+
+                __instance.text.text = $"HyperMenu by Simon McLaurin\nMalumMenu by scp222thj & Astral ~ {Utils.GetColoredPingText($"PING : {AmongUsClient.Instance.Ping} ms", AmongUsClient.Instance.Ping)}";
+
+                return;
+            }
+
+            __instance.text.text = $"HyperMenu by Simon McLaurin\nMalumMenu by scp222thj & Astral\n{Utils.GetColoredPingText($"PING : {AmongUsClient.Instance.Ping} ms", AmongUsClient.Instance.Ping)}";
+
         }
-
-        __instance.text.alignment = TMPro.TextAlignmentOptions.Center;
-
-        int ping = Utils.GetPing();
-        string pingStr = $"PING : {ping} ms";
-        string pingText = Utils.GetColoredPingText(pingStr, ping);
-
-        if (AmongUsClient.Instance.IsGameStarted)
-        {
-            __instance.aspectPosition.DistanceFromEdge = new Vector3(-0.21f, 0.50f, 0f);
-
-            __instance.text.text = $"HyperMenu by Simon McLaurin\nMalumMenu by scp222thj & Astral ~ {Utils.GetColoredPingText($"PING : {AmongUsClient.Instance.Ping} ms", AmongUsClient.Instance.Ping)}";
-
-            return;
-        }
-
-        __instance.text.text = $"HyperMenu by Simon McLaurin\nMalumMenu by scp222thj & Astral\n{Utils.GetColoredPingText($"PING : {AmongUsClient.Instance.Ping} ms", AmongUsClient.Instance.Ping)}";
-
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "PingTracker_Update.Postfix: show ping text"); }
     }
 }
 
 [HarmonyPatch(typeof(DisconnectPopup), nameof(DisconnectPopup.DoShow))]
 public static class DisconnectPopup_DoShow
 {
+    private const int HandlingId = 30013;
     // Postfix patch of DisconnectPopup.DoShow to copy lobby code to clipboard on disconnect
     public static void Postfix(DisconnectPopup __instance)
     {
-        if (!CheatToggles.copyLobbyCodeOnDisconnect) return;
+        try
+        {
+            if (!CheatToggles.copyLobbyCodeOnDisconnect) return;
 
-        GUIUtility.systemCopyBuffer = AmongUsClient_OnGameJoined.lastGameIdString;
+            GUIUtility.systemCopyBuffer = AmongUsClient_OnGameJoined.lastGameIdString;
 
-        __instance.SetText(__instance._textArea.text + "\n\n<size=60%>Lobby code has been copied to the clipboard</size>");
+            __instance.SetText(__instance._textArea.text + "\n\n<size=60%>Lobby code has been copied to the clipboard</size>");
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "DisconnectPopup_DoShow.Postfix: copy lobby code"); }
     }
 }
 
 [HarmonyPatch(typeof(PlayerBanData), nameof(PlayerBanData.BanMinutesLeft), MethodType.Getter)]
 public static class PlayerBanData_BanMinutesLeft_Getter
 {
+    private const int HandlingId = 30013;
     // Postfix patch of PlayerBanData.BanMinutesLeft Getter method to remove disconnect penalty
     public static void Postfix(PlayerBanData __instance, ref int __result)
     {
-        if (!CheatToggles.avoidPenalties) return;
+        try
+        {
+            if (!CheatToggles.avoidPenalties) return;
 
-        __instance.BanPoints = 0f; // Removes all BanPoints
-        __result = 0; // Removes all BanMinutes
+            __instance.BanPoints = 0f; // Removes all BanPoints
+            __result = 0; // Removes all BanMinutes
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "PlayerBanData_BanMinutesLeft_Getter.Postfix: remove ban penalty"); }
     }
 }
 
 [HarmonyPatch(typeof(FullAccount), nameof(FullAccount.CanSetCustomName))]
 public static class FullAccount_CanSetCustomName
 {
+    private const int HandlingId = 30013;
     // Prefix patch of FullAccount.CanSetCustomName to allow the usage of custom names
     public static void Prefix(ref bool canSetName)
     {
-        if (CheatToggles.unlockFeatures)
+        try
         {
-            canSetName = true;
+            if (CheatToggles.unlockFeatures)
+            {
+                canSetName = true;
+            }
         }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "FullAccount_CanSetCustomName.Prefix: allow custom name"); }
     }
 }
 
 [HarmonyPatch(typeof(AccountManager), nameof(AccountManager.CanPlayOnline))]
 public static class AccountManager_CanPlayOnline
 {
+    private const int HandlingId = 30013;
     // Prefix patch of AccountManager.CanPlayOnline to allow online games
     public static void Postfix(ref bool __result)
     {
-        if (CheatToggles.unlockFeatures)
+        try
         {
-            __result = true;
+            if (CheatToggles.unlockFeatures)
+            {
+                __result = true;
+            }
         }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "AccountManager_CanPlayOnline.Postfix: allow online play"); }
     }
 }
 
 [HarmonyPatch(typeof(InnerNetClient), nameof(InnerNetClient.JoinGame))]
 public static class InnerNetClient_JoinGame
 {
+    private const int HandlingId = 30013;
     // Prefix patch of InnerNetClient.JoinGame to allow online games
     public static void Prefix()
     {
-        if (CheatToggles.unlockFeatures)
+        try
         {
-            DataManager.Player.Account.LoginStatus = EOSManager.AccountLoginStatus.LoggedIn;
+            if (CheatToggles.unlockFeatures)
+            {
+                DataManager.Player.Account.LoginStatus = EOSManager.AccountLoginStatus.LoggedIn;
+            }
         }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "InnerNetClient_JoinGame.Prefix: allow online join"); }
     }
 }
 
 [HarmonyPatch(typeof(GameManager), nameof(GameManager.CheckTaskCompletion))]
 public static class GameManager_CheckTaskCompletion
 {
+    private const int HandlingId = 30013;
     // Prefix patch of GameManager.CheckTaskCompletion to prevent a running game from ending
     public static bool Prefix(ref bool __result)
     {
-        if (!CheatToggles.noGameEnd) return true;
+        try
+        {
+            if (!CheatToggles.noGameEnd) return true;
 
-        __result = false;
+            __result = false;
 
-        return false;
+            return false;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "GameManager_CheckTaskCompletion.Prefix: block task completion end"); return true; }
     }
 }
 
 [HarmonyPatch(typeof(Mushroom), nameof(Mushroom.FixedUpdate))]
 public static class Mushroom_FixedUpdate
 {
+    private const int HandlingId = 30013;
     public static void Postfix(Mushroom __instance)
     {
-        MalumESP.SporeCloudVision(__instance);
+        try
+        {
+            MalumESP.SporeCloudVision(__instance);
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "Mushroom_FixedUpdate.Postfix: spore cloud vision"); }
     }
 }
 
@@ -280,16 +354,21 @@ public static class Mushroom_FixedUpdate
 [HarmonyPatch(typeof(DoorBreakerGame), nameof(DoorBreakerGame.Start))]
 public static class DoorBreakerGame_Start
 {
+    private const int HandlingId = 30013;
     // Prefix patch of DoorBreakerGame.Start to automatically open a door when the player interacts with it
     public static bool Prefix(DoorBreakerGame __instance)
     {
-        if (!CheatToggles.autoOpenDoorsOnUse) return true;
+        try
+        {
+            if (!CheatToggles.autoOpenDoorsOnUse) return true;
 
-        DoorsHandler.OpenDoor(__instance.MyDoor);
-        __instance.MyDoor.SetDoorway(true);
-        __instance.Close();
+            DoorsHandler.OpenDoor(__instance.MyDoor);
+            __instance.MyDoor.SetDoorway(true);
+            __instance.Close();
 
-        return false;
+            return false;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "DoorBreakerGame_Start.Prefix: auto open door"); return true; }
     }
 }
 
@@ -297,16 +376,21 @@ public static class DoorBreakerGame_Start
 [HarmonyPatch(typeof(DoorCardSwipeGame), nameof(DoorCardSwipeGame.Begin))]
 public static class DoorCardSwipeGame_Begin
 {
+    private const int HandlingId = 30013;
     // Prefix patch of DoorCardSwipeGame.Begin to automatically open a door when the player interacts with it
     public static bool Prefix(DoorCardSwipeGame __instance)
     {
-        if (!CheatToggles.autoOpenDoorsOnUse) return true;
+        try
+        {
+            if (!CheatToggles.autoOpenDoorsOnUse) return true;
 
-        DoorsHandler.OpenDoor(__instance.MyDoor);
-        __instance.MyDoor.SetDoorway(true);
-        __instance.Close();
+            DoorsHandler.OpenDoor(__instance.MyDoor);
+            __instance.MyDoor.SetDoorway(true);
+            __instance.Close();
 
-        return false;
+            return false;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "DoorCardSwipeGame_Begin.Prefix: auto open door"); return true; }
     }
 }
 
@@ -314,28 +398,38 @@ public static class DoorCardSwipeGame_Begin
 [HarmonyPatch(typeof(MushroomDoorSabotageMinigame), nameof(MushroomDoorSabotageMinigame.Begin))]
 public static class MushroomDoorSabotageMinigame_Begin
 {
+    private const int HandlingId = 30013;
     // Prefix patch of MushroomDoorSabotageMinigame.Begin to automatically open a door when the player interacts with it
     public static bool Prefix(MushroomDoorSabotageMinigame __instance)
     {
-        if (!CheatToggles.autoOpenDoorsOnUse) return true;
+        try
+        {
+            if (!CheatToggles.autoOpenDoorsOnUse) return true;
 
-        __instance.FixDoorAndCloseMinigame();
+            __instance.FixDoorAndCloseMinigame();
 
-        return false;
+            return false;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MushroomDoorSabotageMinigame_Begin.Prefix: auto open door"); return true; }
     }
 }
 
 [HarmonyPatch(typeof(Console), nameof(Console.CanUse))]
 public static class Console_CanUse
 {
+    private const int HandlingId = 30013;
     // Prefix patch of Console.CanUse to allow impostors to do tasks
     public static void Prefix(Console __instance)
     {
-        if (CheatToggles.impostorTasks)
+        try
         {
-            __instance.AllowImpostor = true;
+            if (CheatToggles.impostorTasks)
+            {
+                __instance.AllowImpostor = true;
+            }
+            // Prefix patch of Console.CanUse to allow impostors to interact with task consoles
         }
-        // Prefix patch of Console.CanUse to allow impostors to interact with task consoles
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "Console_CanUse.Prefix: allow impostor tasks"); }
     }
 
     // Postfix patch of Console.CanUse to allow any player to use any task console when in range
@@ -343,50 +437,59 @@ public static class Console_CanUse
     // Harmony patches use 'ref' to modify 'out' parameters in Postfix methods.
     public static void Postfix(Console __instance, ref float __result, ref bool canUse, ref bool couldUse)
     {
-        if (!CheatToggles.fakeTasks) return;
-
-        float distance = Vector2.Distance(PlayerControl.LocalPlayer.GetTruePosition(), __instance.transform.position);
-
-        if (distance <= __instance.UsableDistance)
+        try
         {
-            canUse = true;
-            couldUse = true;
-            __result = distance;
+            if (!CheatToggles.fakeTasks) return;
+
+            float distance = Vector2.Distance(PlayerControl.LocalPlayer.GetTruePosition(), __instance.transform.position);
+
+            if (distance <= __instance.UsableDistance)
+            {
+                canUse = true;
+                couldUse = true;
+                __result = distance;
+            }
         }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "Console_CanUse.Postfix: allow fake tasks"); }
     }
 }
 
 [HarmonyPatch(typeof(IntroCutscene), "CoBegin")]
 public static class IntroCutscene_CoBegin
 {
+    private const int HandlingId = 30013;
     // Prefix patch of IntroCutscene.CoBegin to force the LocalPlayer's role to a specified role
     public static void Prefix()
     {
-        if (!Utils.isHost || !CheatToggles.forcedRole.HasValue) return;
-
-        var forcedRole = CheatToggles.forcedRole.Value;
-
-        // If LocalPlayer already has the forced role, do nothing
-        if (PlayerControl.LocalPlayer.Data.RoleType == forcedRole)
+        try
         {
-            return;
-        }
+            if (!Utils.isHost || !CheatToggles.forcedRole.HasValue) return;
 
-        // Find a player with the forced role to swap roles with
-        PlayerControl roleSwapTarget = null;
-        foreach (var player in PlayerControl.AllPlayerControls)
-        {
-            if (player.Data.RoleType != forcedRole) continue;
-            roleSwapTarget = player;
-            break;
-        }
+            var forcedRole = CheatToggles.forcedRole.Value;
 
-        DestroyableSingleton<RoleManager>.Instance.SetRole(PlayerControl.LocalPlayer, forcedRole);
+            // If LocalPlayer already has the forced role, do nothing
+            if (PlayerControl.LocalPlayer.Data.RoleType == forcedRole)
+            {
+                return;
+            }
 
-        if (roleSwapTarget != null)
-        {
-            DestroyableSingleton<RoleManager>.Instance.SetRole(roleSwapTarget, PlayerControl.LocalPlayer.Data.RoleType);
+            // Find a player with the forced role to swap roles with
+            PlayerControl roleSwapTarget = null;
+            foreach (var player in PlayerControl.AllPlayerControls)
+            {
+                if (player.Data.RoleType != forcedRole) continue;
+                roleSwapTarget = player;
+                break;
+            }
+
+            DestroyableSingleton<RoleManager>.Instance.SetRole(PlayerControl.LocalPlayer, forcedRole);
+
+            if (roleSwapTarget != null)
+            {
+                DestroyableSingleton<RoleManager>.Instance.SetRole(roleSwapTarget, PlayerControl.LocalPlayer.Data.RoleType);
+            }
         }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "IntroCutscene_CoBegin.Prefix: force role"); }
     }
 }
 
@@ -394,93 +497,119 @@ public static class IntroCutscene_CoBegin
 [HarmonyPatch(typeof(GameContainer), nameof(GameContainer.SetupGameInfo))]
 public static class GameContainer_SetupGameInfo
 {
+    private const int HandlingId = 30013;
     // Postfix patch of GameContainer.SetupGameInfo to show more information when finding a game:
     // host name (e.g. Astral), lobby code (e.g. KLHCEG), host platform (e.g. Epic), and lobby age in minutes (e.g. 4:20)
     public static void Postfix(GameContainer __instance)
     {
-        if (!CheatToggles.seeLobbyInfo) return;
+        try
+        {
+            if (!CheatToggles.seeLobbyInfo) return;
 
-        // The Crewmate icon gets aligned properly with this
-        const string separator = "<#0000>000000000000000</color>";
+            // The Crewmate icon gets aligned properly with this
+            const string separator = "<#0000>000000000000000</color>";
 
-        var trueHostName = __instance.gameListing.TrueHostName;
+            var trueHostName = __instance.gameListing.TrueHostName;
 
-        var age = __instance.gameListing.Age;
-        var lobbyTime = $"Age: {age / 60}:{(age % 60 < 10 ? "0" : "")}{age % 60}";
+            var age = __instance.gameListing.Age;
+            var lobbyTime = $"Age: {age / 60}:{(age % 60 < 10 ? "0" : "")}{age % 60}";
 
-        var platform = Utils.PlatformTypeToString(__instance.gameListing.Platform);
+            var platform = Utils.PlatformTypeToString(__instance.gameListing.Platform);
 
-        // Sets the text of the capacity field to include the new information
-        __instance.capacity.text = $"<size=40%>{separator}\n{trueHostName}\n{__instance.capacity.text}\n" +
-                                   $"<#fb0>{GameCode.IntToGameName(__instance.gameListing.GameId)}</color>\n" +
-                                   $"<#b0f>{platform}</color>\n{lobbyTime}\n{separator}</size>";
+            // Sets the text of the capacity field to include the new information
+            __instance.capacity.text = $"<size=40%>{separator}\n{trueHostName}\n{__instance.capacity.text}\n" +
+                                       $"<#fb0>{GameCode.IntToGameName(__instance.gameListing.GameId)}</color>\n" +
+                                       $"<#b0f>{platform}</color>\n{lobbyTime}\n{separator}</size>";
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "GameContainer_SetupGameInfo.Postfix: show lobby info"); }
     }
 }
 
 [HarmonyPatch(typeof(BanMenu), nameof(BanMenu.SetVisible))]
 public static class BanMenu_SetVisible
 {
+    private const int HandlingId = 30013;
     // Prefix patch of BanMenu.SetVisible to always show kick and ban buttons as host
     public static bool Prefix(BanMenu __instance, bool show)
     {
-        if (!Utils.isHost) return true;
+        try
+        {
+            if (!Utils.isHost) return true;
 
-        show &= PlayerControl.LocalPlayer && PlayerControl.LocalPlayer.Data != null;
+            show &= PlayerControl.LocalPlayer && PlayerControl.LocalPlayer.Data != null;
 
-        __instance.BanButton.gameObject.SetActive(true);
-        __instance.KickButton.gameObject.SetActive(true);
-        __instance.MenuButton.gameObject.SetActive(show);
+            __instance.BanButton.gameObject.SetActive(true);
+            __instance.KickButton.gameObject.SetActive(true);
+            __instance.MenuButton.gameObject.SetActive(show);
 
-        return false;
+            return false;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "BanMenu_SetVisible.Prefix: show kick ban buttons"); return true; }
     }
 }
 
 [HarmonyPatch(typeof(IGameOptionsExtensions), nameof(IGameOptionsExtensions.GetAdjustedNumImpostors))]
 public static class IGameOptionsExtensions_GetAdjustedNumImpostors
 {
+    private const int HandlingId = 30013;
     // Prefix patch of IGameOptionsExtensions.GetAdjustedNumImpostors to remove impostor limits
     public static bool Prefix(ref int __result)
     {
-        if (!CheatToggles.noOptionsLimits) return true;
+        try
+        {
+            if (!CheatToggles.noOptionsLimits) return true;
 
-        __result = GameOptionsManager.Instance.CurrentGameOptions.NumImpostors;
+            __result = GameOptionsManager.Instance.CurrentGameOptions.NumImpostors;
 
-        return false;
+            return false;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "IGameOptionsExtensions_GetAdjustedNumImpostors.Prefix: remove impostor limit"); return true; }
     }
 }
 
 [HarmonyPatch(typeof(MatchInfoHudButton), nameof(MatchInfoHudButton.Update))]
 public static class MatchInfoHudButton_Update
 {
+    private const int HandlingId = 30013;
     // Prefix patch of MatchInfoHudButton.Update to prevent the MatchInfo and Chat buttons from overlapping
     public static bool Prefix(MatchInfoHudButton __instance)
     {
-        if (CheatToggles.enableChat)
+        try
         {
-            __instance.aspectPosition.DistanceFromEdge = MatchInfoHudButton.adjustedDistanceFromEdge;
+            if (CheatToggles.enableChat)
+            {
+                __instance.aspectPosition.DistanceFromEdge = MatchInfoHudButton.adjustedDistanceFromEdge;
 
-            return false;
+                return false;
+            }
+
+            return true;
         }
-
-        return true;
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MatchInfoHudButton_Update.Prefix: adjust button position"); return true; }
     }
 }
 
 [HarmonyPatch(typeof(PlayerPurchasesData), nameof(PlayerPurchasesData.GetPurchase))]
 public static class PlayerPurchasesData_GetPurchase
 {
+    private const int HandlingId = 30013;
     // Postfix patch of PlayerPurchasesData.GetPurchase to unlock all cosmetics
     public static void Postfix(ref bool __result)
     {
-        if (!CheatToggles.freeCosmetics) return;
+        try
+        {
+            if (!CheatToggles.freeCosmetics) return;
 
-        __result = true;
+            __result = true;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "PlayerPurchasesData_GetPurchase.Postfix: unlock cosmetics"); }
     }
 }
 
 [HarmonyPatch]
 public static class PassiveUiElement_Patches
 {
+    private const int HandlingId = 30013;
     [HarmonyPrefix]
     [HarmonyPatch(typeof(PassiveButton), nameof(PassiveButton.ReceiveClickDown))]
     [HarmonyPatch(typeof(PassiveButton), nameof(PassiveButton.ReceiveClickUp))]
@@ -495,19 +624,23 @@ public static class PassiveUiElement_Patches
     // Prefix patch for all classes that inherit from PassiveUiElement to prevent clicks from going through Malum's UI
     public static bool Prefix()
     {
-        if (MalumMenu.menuAllowClickThrough.Value) return true;
+        try
+        {
+            if (MalumMenu.menuAllowClickThrough.Value) return true;
 
-        // Input.mousePosition has a bottom-left origin
-        // Convert it to a top-left origin by flipping the Y coordinate
-        Vector2 mousePosition = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+            // Input.mousePosition has a bottom-left origin
+            // Convert it to a top-left origin by flipping the Y coordinate
+            Vector2 mousePosition = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
 
-        // Rect.Contains() uses GUI coordinates (top-left origin)
-        return !((MenuUI.isGUIActive && MalumMenu.menuUI.WindowRect.Contains(mousePosition)) ||
-                 (CheatToggles.showConsole && ConsoleUI.windowRect.Contains(mousePosition)) ||
-                 (CheatToggles.showDoorsMenu && DoorsUI.windowRect.Contains(mousePosition)) ||
-                 (CheatToggles.showOverload && OverloadUI.windowRect.Contains(mousePosition)) ||
-                 (CheatToggles.showProtectMenu && ProtectUI.windowRect.Contains(mousePosition)) ||
-                 (CheatToggles.showRolesMenu && RolesUI.windowRect.Contains(mousePosition)) ||
-                 (CheatToggles.showTasksMenu && TasksUI.windowRect.Contains(mousePosition)));
+            // Rect.Contains() uses GUI coordinates (top-left origin)
+            return !((MenuUI.isGUIActive && MalumMenu.menuUI.WindowRect.Contains(mousePosition)) ||
+                     (CheatToggles.showConsole && ConsoleUI.windowRect.Contains(mousePosition)) ||
+                     (CheatToggles.showDoorsMenu && DoorsUI.windowRect.Contains(mousePosition)) ||
+                     (CheatToggles.showOverload && OverloadUI.windowRect.Contains(mousePosition)) ||
+                     (CheatToggles.showProtectMenu && ProtectUI.windowRect.Contains(mousePosition)) ||
+                     (CheatToggles.showRolesMenu && RolesUI.windowRect.Contains(mousePosition)) ||
+                     (CheatToggles.showTasksMenu && TasksUI.windowRect.Contains(mousePosition)));
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "PassiveUiElement_Patches.Prefix: block click-through"); return true; }
     }
 }

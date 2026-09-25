@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Il2CppSystem.Collections.Generic;
 
@@ -5,6 +6,7 @@ namespace MalumMenu;
 
 public class ProtectUI : MonoBehaviour
 {
+    private const int HandlingId = 10007;
     public static int windowHeight = 300;
     public static int windowWidth = 500;
     public static Rect windowRect;
@@ -15,22 +17,30 @@ public class ProtectUI : MonoBehaviour
 
     private void Start()
     {
-        // Instantiate 2D area of ProtectUI
-        windowRect = new(
-            Screen.width / 2f - windowWidth / 2f,
-            Screen.height / 2f - windowHeight / 2f,
-            windowWidth,
-            windowHeight
-        );
+        try
+        {
+            // Instantiate 2D area of ProtectUI
+            windowRect = new(
+                Screen.width / 2f - windowWidth / 2f,
+                Screen.height / 2f - windowHeight / 2f,
+                windowWidth,
+                windowHeight
+            );
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "ProtectUI.Start: init window rect"); }
     }
 
     private void OnGUI()
     {
-        if (!CheatToggles.showProtectMenu || !(MenuUI.isGUIActive || MalumMenu.menuKeepSubwindowsOpen.Value) || MalumMenu.isPanicked) return;
+        try
+        {
+            if (!CheatToggles.showProtectMenu || !(MenuUI.isGUIActive || MalumMenu.menuKeepSubwindowsOpen.Value) || MalumMenu.isPanicked) return;
 
-        UIHelpers.ApplyUIColor();
+            UIHelpers.ApplyUIColor();
 
-        windowRect = GUI.Window((int)WindowId.ProtectUI, windowRect, (GUI.WindowFunction)ProtectWindow, "Protect Players");
+            windowRect = GUI.Window((int)WindowId.ProtectUI, windowRect, (GUI.WindowFunction)ProtectWindow, "Protect Players");
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "ProtectUI.OnGUI: draw protect window"); }
     }
 
     private void ProtectWindow(int windowID)

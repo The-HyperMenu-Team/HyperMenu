@@ -1,3 +1,4 @@
+using System;
 using HarmonyLib;
 using Hazel;
 
@@ -72,23 +73,33 @@ public static class RpcValidator
 [HarmonyPatch(typeof(PlayerPhysics), nameof(PlayerPhysics.HandleRpc))]
 public static class PlayerPhysics_HandleRpc
 {
+    private const int HandlingId = 30002;
     // Prefix patch of PlayerPhysics.HandleRpc to drop RPCs with malformed payloads
     public static bool Prefix(byte callId, MessageReader reader)
     {
-        if (!CheatToggles.antiOverload) return true;
+        try
+        {
+            if (!CheatToggles.antiOverload) return true;
 
-        return RpcValidator.IsValidPhysicsRpc(callId, reader);
+            return RpcValidator.IsValidPhysicsRpc(callId, reader);
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "PlayerPhysics_HandleRpc.Prefix: validate physics RPC"); return false; }
     }
 }
 
 [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.HandleRpc))]
 public static class PlayerControl_HandleRpc
 {
+    private const int HandlingId = 30002;
     // Prefix patch of PlayerControl.HandleRpc to drop RPCs with malformed payloads
     public static bool Prefix(byte callId, MessageReader reader)
     {
-        if (!CheatToggles.antiOverload) return true;
+        try
+        {
+            if (!CheatToggles.antiOverload) return true;
 
-        return RpcValidator.IsValidControlRpc(callId, reader);
+            return RpcValidator.IsValidControlRpc(callId, reader);
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "PlayerControl_HandleRpc.Prefix: validate control RPC"); return false; }
     }
 }

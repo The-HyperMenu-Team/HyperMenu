@@ -1,4 +1,5 @@
-﻿using AmongUs.GameOptions;
+﻿using System;
+using AmongUs.GameOptions;
 using HarmonyLib;
 using InnerNet;
 using UnityEngine;
@@ -7,22 +8,31 @@ namespace MalumMenu.features
 {
 	internal class Roles : MonoBehaviour
 	{
+		private const int HandlingId = 40006;
+
 		public static bool DisableShapeshiftAnimation { get; set; } = false;
 		// public static bool DisablePhantomEndAnimation { get; set; } = false;
 		public static bool AllowVentingForCrewmates { get; set; } = true;
 
 		public void Update()
 		{
-			// If PlayerControl::Data isn't null, then we know the player has fully loaded into the game
-			if(PlayerControl.LocalPlayer == null || PlayerControl.LocalPlayer.Data == null) return;
-
-			if(SkipSabotageChecks.SabotageAsCrewmate) HudManager.Instance.SabotageButton.gameObject.SetActive(true);
-			if(AllowVentingForCrewmates) HudManager.Instance.ImpostorVentButton.gameObject.SetActive(true);
-
-			// The Chat button and Match Info buttons will overlap if both are active in-game (but not in meetings)
-			if(Chat.AlwaysVisibleChat.Enabled)
+			try
 			{
-				HudManager.Instance.MatchInfoButton.gameObject.SetActive(MeetingHud.Instance != null);
+				// If PlayerControl::Data isn't null, then we know the player has fully loaded into the game
+				if(PlayerControl.LocalPlayer == null || PlayerControl.LocalPlayer.Data == null) return;
+
+				if(SkipSabotageChecks.SabotageAsCrewmate) HudManager.Instance.SabotageButton.gameObject.SetActive(true);
+				if(AllowVentingForCrewmates) HudManager.Instance.ImpostorVentButton.gameObject.SetActive(true);
+
+				// The Chat button and Match Info buttons will overlap if both are active in-game (but not in meetings)
+				if(Chat.AlwaysVisibleChat.Enabled)
+				{
+					HudManager.Instance.MatchInfoButton.gameObject.SetActive(MeetingHud.Instance != null);
+				}
+			}
+			catch (Exception ex)
+			{
+				ErrorReporter.Report(ex, HandlingId, "Roles.Update: refreshing sabotage/vent/match-info buttons");
 			}
 		}
 
@@ -31,7 +41,14 @@ namespace MalumMenu.features
 		{
 			static void Prefix(ref bool shouldAnimate)
 			{
-				if(DisableShapeshiftAnimation) shouldAnimate = false;
+				try
+				{
+					if(DisableShapeshiftAnimation) shouldAnimate = false;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "ShapeshiftStart.Prefix: disabling shapeshift animation");
+				}
 			}
 		}
 
@@ -42,7 +59,14 @@ namespace MalumMenu.features
 		{
 			static void Prefix(ref bool shouldAnimate)
 			{
-				if(DisableShapeshiftAnimation) shouldAnimate = false;
+				try
+				{
+					if(DisableShapeshiftAnimation) shouldAnimate = false;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "ShapeshiftEnd.Prefix: disabling revert-shapeshift animation");
+				}
 			}
 		}
 
@@ -69,13 +93,21 @@ namespace MalumMenu.features
 
 			static bool Prefix()
 			{
-				PlayerControl player = PlayerControl.LocalPlayer;
+				try
+				{
+					PlayerControl player = PlayerControl.LocalPlayer;
 
-				// We have to limit this to Imposters as the crewmate exit vent button will be on the same position as the imposter sabotage button
-				if(!SabotageInVents && player.inVent && !RoleManager.IsImpostorRole(player.Data.RoleType)) return true;
+					// We have to limit this to Imposters as the crewmate exit vent button will be on the same position as the imposter sabotage button
+					if(!SabotageInVents && player.inVent && !RoleManager.IsImpostorRole(player.Data.RoleType)) return true;
 
-				HudManager.Instance.ToggleMapVisible(new MapOptions { Mode = MapOptions.Modes.Sabotage });
-				return false;
+					HudManager.Instance.ToggleMapVisible(new MapOptions { Mode = MapOptions.Modes.Sabotage });
+					return false;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "SkipSabotageChecks.Prefix: opening sabotage map");
+					return true;
+				}
 			}
 		}
 
@@ -86,18 +118,26 @@ namespace MalumMenu.features
 		{
 			static bool Prefix(Vent __instance, NetworkedPlayerInfo pc, ref bool canUse, ref bool couldUse, ref float __result)
 			{
-				if(!AllowVentingForCrewmates) return true;
+				try
+				{
+					if(!AllowVentingForCrewmates) return true;
 
-				PlayerControl player = pc.Object;
-				if(pc.IsDead) return true;
+					PlayerControl player = pc.Object;
+					if(pc.IsDead) return true;
 
-				couldUse = true;
-				__result = Vector2.Distance(player.Collider.bounds.center, __instance.transform.position);
+					couldUse = true;
+					__result = Vector2.Distance(player.Collider.bounds.center, __instance.transform.position);
 
-				bool isObstructed = PhysicsHelpers.AnythingBetween(player.Collider, player.Collider.bounds.center, __instance.transform.position, Constants.ShipOnlyMask, false);
-				if(__result <= __instance.UsableDistance && !isObstructed) canUse = true;
+					bool isObstructed = PhysicsHelpers.AnythingBetween(player.Collider, player.Collider.bounds.center, __instance.transform.position, Constants.ShipOnlyMask, false);
+					if(__result <= __instance.UsableDistance && !isObstructed) canUse = true;
 
-				return false;
+					return false;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "SkipVentChecks.Prefix: allowing crewmate vent use");
+					return true;
+				}
 			}
 		}
 
@@ -108,15 +148,23 @@ namespace MalumMenu.features
 
 			static bool Prefix(PlayerControl __instance, ref bool __result)
 			{
-				if(HudManager.Instance.Chat.IsOpenOrOpening) return true;
-
-				if(__instance.inVent && MoveInVents)
+				try
 				{
-					__result = true;
-					return false;
-				}
+					if(HudManager.Instance.Chat.IsOpenOrOpening) return true;
 
-				return true;
+					if(__instance.inVent && MoveInVents)
+					{
+						__result = true;
+						return false;
+					}
+
+					return true;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "MoveModifier.Prefix: allowing movement inside vents");
+					return true;
+				}
 			}
 		}
 
@@ -127,15 +175,23 @@ namespace MalumMenu.features
 		{
 			static bool Prefix(NetworkedPlayerInfo target, ref bool __result)
 			{
-				if(target == PlayerControl.LocalPlayer.Data) return true;
+				try
+				{
+					if(target == PlayerControl.LocalPlayer.Data) return true;
 
-				if(NoKillChecks)
-				{
-					__result = true;
-					return false;
+					if(NoKillChecks)
+					{
+						__result = true;
+						return false;
+					}
+					else
+					{
+						return true;
+					}
 				}
-				else
+				catch (Exception ex)
 				{
+					ErrorReporter.Report(ex, HandlingId, "NoNormalKillChecks.Prefix: skipping normal kill checks");
 					return true;
 				}
 			}
@@ -146,15 +202,23 @@ namespace MalumMenu.features
 		{
 			static bool Prefix(NetworkedPlayerInfo target, ref bool __result)
 			{
-				if(target == PlayerControl.LocalPlayer.Data) return true;
+				try
+				{
+					if(target == PlayerControl.LocalPlayer.Data) return true;
 
-				if(NoKillChecks)
-				{
-					__result = true;
-					return false;
+					if(NoKillChecks)
+					{
+						__result = true;
+						return false;
+					}
+					else
+					{
+						return true;
+					}
 				}
-				else
+				catch (Exception ex)
 				{
+					ErrorReporter.Report(ex, HandlingId, "NoImpKillChecks.Prefix: skipping impostor kill checks");
 					return true;
 				}
 			}

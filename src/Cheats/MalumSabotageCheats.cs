@@ -1,7 +1,10 @@
+using System;
+
 namespace MalumMenu;
 
 public static class MalumSabotageCheats
 {
+    private const int HandlingId = 20010;
     private static bool _reactorSab;
     private static bool _oxygenSab;
     private static bool _commsSab;
@@ -10,7 +13,9 @@ public static class MalumSabotageCheats
 
     public static void HandleReactor(ShipStatus shipStatus, byte mapId)
     {
-        switch (mapId)
+        try
+        {
+            switch (mapId)
         {
             case 2:
             {
@@ -67,11 +72,15 @@ public static class MalumSabotageCheats
                 break;
             }
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumSabotageCheats.HandleReactor: handling reactor sabotage"); }
     }
 
     public static void HandleOxygen(ShipStatus shipStatus, byte mapId)
     {
-        if (mapId != 4 && mapId != 2 && mapId != 5) { // Maps without Oxygen system: Airship, MiraHQ, Fungle
+        try
+        {
+            if (mapId != 4 && mapId != 2 && mapId != 5) { // Maps without Oxygen system: Airship, MiraHQ, Fungle
 
             var oxygenSys = shipStatus.Systems[SystemTypes.LifeSupp].Cast<LifeSuppSystemType>();
 
@@ -91,11 +100,15 @@ public static class MalumSabotageCheats
         if (!CheatToggles.oxygenSab) return;
         HudManager.Instance.Notifier.AddDisconnectMessage("Oxygen system not present on this map");
         CheatToggles.oxygenSab = false;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumSabotageCheats.HandleOxygen: handling oxygen sabotage"); }
     }
 
     public static void HandleComms(ShipStatus shipStatus, byte mapId)
     {
-        if (mapId is 1 or 5) // Fungle & Skeld use HqHudSystemType instead of HudOverrideSystemType
+        try
+        {
+            if (mapId is 1 or 5) // Fungle & Skeld use HqHudSystemType instead of HudOverrideSystemType
         {
 
             var hqCommsSys = shipStatus.Systems[SystemTypes.Comms].Cast<HqHudSystemType>();
@@ -134,11 +147,15 @@ public static class MalumSabotageCheats
             CheatToggles.commsSab = _commsSab = commsSys.IsActive;
 
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumSabotageCheats.HandleComms: handling comms sabotage"); }
     }
 
     public static void HandleElectrical(ShipStatus shipStatus, byte mapId)
     {
-        if (mapId != 5) // Fungle has no electrical system
+        try
+        {
+            if (mapId != 5) // Fungle has no electrical system
         {
 
             var elecSys = shipStatus.Systems[SystemTypes.Electrical].Cast<SwitchSystem>();
@@ -191,11 +208,15 @@ public static class MalumSabotageCheats
 
         HudManager.Instance.Notifier.AddDisconnectMessage("Electrical system not present on this map");
         CheatToggles.elecSab = CheatToggles.unfixableLights = false;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumSabotageCheats.HandleElectrical: handling electrical sabotage"); }
     }
 
     public static void HandleUnfixLights(ShipStatus shipStatus)
     {
-        if (CheatToggles.unfixableLights == _unfixableLights) return;
+        try
+        {
+            if (CheatToggles.unfixableLights == _unfixableLights) return;
 
         // Apparently most values you put for amount in RpcUpdateSystem will break lights completely
         // They are unfixable through regular means (toggling switches)
@@ -209,11 +230,15 @@ public static class MalumSabotageCheats
         shipStatus.RpcUpdateSystem(SystemTypes.Electrical, 69); // Repair or Sabotage
 
         _unfixableLights = CheatToggles.unfixableLights;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumSabotageCheats.HandleUnfixLights: handling unfixable lights"); }
     }
 
     public static void HandleMushMix(ShipStatus shipStatus, byte mapId)
     {
-        if (!CheatToggles.mushSab) return;
+        try
+        {
+            if (!CheatToggles.mushSab) return;
 
         if (mapId == 5) // MushroomMixup only works on Fungle
         {
@@ -233,11 +258,15 @@ public static class MalumSabotageCheats
         // mushSys.Deteriorate(mushSys.currentSecondsUntilHeal);
 
         CheatToggles.mushSab = false;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumSabotageCheats.HandleMushMix: handling mushroom mixup"); }
     }
 
     public static void HandleSpores(FungleShipStatus shipStatus, byte mapId)
     {
-        if (!CheatToggles.mushSpore) return;
+        try
+        {
+            if (!CheatToggles.mushSpore) return;
 
         if (mapId == 5)
         {
@@ -252,11 +281,15 @@ public static class MalumSabotageCheats
         }
 
         CheatToggles.mushSpore = false;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumSabotageCheats.HandleSpores: handling spores"); }
     }
 
     public static void HandleDoors(ShipStatus shipStatus)
     {
-        if (CheatToggles.closeAllDoors)
+        try
+        {
+            if (CheatToggles.closeAllDoors)
         {
             DoorsHandler.CloseAllDoors();
             CheatToggles.closeAllDoors = false;
@@ -275,11 +308,15 @@ public static class MalumSabotageCheats
         {
             DoorsHandler.OpenAllDoors();
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumSabotageCheats.HandleDoors: handling doors"); }
     }
 
     public static void Process(ShipStatus shipStatus)
     {
-        var currentMapID = Utils.GetCurrentMapID();
+        try
+        {
+            var currentMapID = Utils.GetCurrentMapID();
 
         // Handle all sabotage systems
         HandleReactor(shipStatus, currentMapID);
@@ -287,14 +324,20 @@ public static class MalumSabotageCheats
         HandleComms(shipStatus, currentMapID);
         HandleElectrical(shipStatus, currentMapID);
         HandleDoors(shipStatus);
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumSabotageCheats.Process: processing sabotages"); }
     }
 
     public static void ProcessFungle(FungleShipStatus shipStatus)
     {
-        var currentMapID = Utils.GetCurrentMapID();
+        try
+        {
+            var currentMapID = Utils.GetCurrentMapID();
 
         // Handle Fungle sabotage systems
         HandleMushMix(shipStatus, currentMapID);
         HandleSpores(shipStatus, currentMapID);
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumSabotageCheats.ProcessFungle: processing fungle sabotages"); }
     }
 }

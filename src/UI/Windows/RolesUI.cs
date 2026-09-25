@@ -1,9 +1,11 @@
+using System;
 using UnityEngine;
 
 namespace MalumMenu;
 
 public class RolesUI : MonoBehaviour
 {
+    private const int HandlingId = 10006;
     public static int windowHeight = 100;
     public static int windowWidth = 450;
     public static Rect windowRect;
@@ -12,22 +14,30 @@ public class RolesUI : MonoBehaviour
 
     private void Start()
     {
-        // Instantiate 2D area of RolesUI
-        windowRect = new(
-            Screen.width / 2f - windowWidth / 2f,
-            Screen.height / 2f - windowHeight / 2f,
-            windowWidth,
-            windowHeight
-        );
+        try
+        {
+            // Instantiate 2D area of RolesUI
+            windowRect = new(
+                Screen.width / 2f - windowWidth / 2f,
+                Screen.height / 2f - windowHeight / 2f,
+                windowWidth,
+                windowHeight
+            );
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "RolesUI.Start: init window rect"); }
     }
 
     private void OnGUI()
     {
-        if (!CheatToggles.showRolesMenu || !(MenuUI.isGUIActive || MalumMenu.menuKeepSubwindowsOpen.Value) || MalumMenu.isPanicked) return;
+        try
+        {
+            if (!CheatToggles.showRolesMenu || !(MenuUI.isGUIActive || MalumMenu.menuKeepSubwindowsOpen.Value) || MalumMenu.isPanicked) return;
 
-        UIHelpers.ApplyUIColor();
+            UIHelpers.ApplyUIColor();
 
-        windowRect = GUI.Window((int)WindowId.RolesUI, windowRect, (GUI.WindowFunction)RolesWindow, "Assign Roles");
+            windowRect = GUI.Window((int)WindowId.RolesUI, windowRect, (GUI.WindowFunction)RolesWindow, "Assign Roles");
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "RolesUI.OnGUI: draw roles window"); }
     }
 
     private void RolesWindow(int windowID)

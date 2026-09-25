@@ -19,6 +19,9 @@ namespace MalumMenu;
 
 public static class Utils
 {
+    // 5-digit handling ID for Utils.cs (see HandlingIds.cs).
+    private const int HandlingId = 10002;
+
     public static bool isPastingInput;
     public static ReferenceDataManager ReferenceDataManager = DestroyableSingleton<ReferenceDataManager>.Instance; // Useful for getting full lists of all the Among Us cosmetics IDs
     public static SabotageSystemType SabotageSystem => ShipStatus.Instance.Systems[SystemTypes.Sabotage].Cast<SabotageSystemType>();
@@ -689,9 +692,9 @@ public static class Utils
 
             return CachedSprites[path + pixelsPerUnit] = sprite;
         }
-        catch
+        catch (Exception ex)
         {
-            MalumMenu.Log.LogError($"Failed to read Texture: {path}");
+            ErrorReporter.Report(ex, HandlingId, "LoadSprite: " + path);
         }
         return null;
     }
@@ -710,9 +713,9 @@ public static class Utils
             ImageConversion.LoadImage(texture, ms.ToArray(), false);
             return texture;
         }
-        catch
+        catch (Exception ex)
         {
-            MalumMenu.Log.LogError($"Failed to read Texture: {path}");
+            ErrorReporter.Report(ex, HandlingId, "LoadTextureFromResources: " + path);
         }
         return null;
     }
@@ -739,7 +742,7 @@ public static class Utils
                 }
                 catch (Exception ex)
                 {
-                    MalumMenu.Log.LogError(ex.Message);
+                    ErrorReporter.Report(ex, HandlingId, "OpenConfigFile with editor: " + configEditor);
                 }
             }
             else
@@ -768,7 +771,7 @@ public static class Utils
         // This allows some patches to run for a last time and finish properly
         private void LateUpdate()
         {
-            try { Harmony.UnpatchID(MalumMenu.Id); } catch { }
+            try { Harmony.UnpatchID(MalumMenu.Id); } catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "PanicCleaner unpatch"); }
             Destroy(gameObject);
         }
     }

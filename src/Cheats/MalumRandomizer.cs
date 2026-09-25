@@ -8,7 +8,8 @@ namespace MalumMenu;
 
 public static class MalumRandomizer
 {
-    // Kept for LobbyBehaviour_Start guard compatibility.
+    // 5-digit handling ID for MalumRandomizer.cs (see HandlingIds.cs).
+    private const int HandlingId = 20001;    // Kept for LobbyBehaviour_Start guard compatibility.
     public static bool isRejoinInProgress = false;
     private static bool isLobbyApplyInProgress;
 
@@ -62,7 +63,7 @@ public static class MalumRandomizer
         }
         catch (Exception e)
         {
-            MalumMenu.Log.LogError($"Randomizer error: {e.Message}");
+            ErrorReporter.Report(e, HandlingId, "Randomize cosmetics");
         }
     }
 

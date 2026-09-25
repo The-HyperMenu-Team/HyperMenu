@@ -1,3 +1,4 @@
+using System;
 using HarmonyLib;
 
 namespace MalumMenu;
@@ -7,57 +8,72 @@ namespace MalumMenu;
 [HarmonyPatch(typeof(NumberOption), nameof(NumberOption.Increase))]
 public static class NumberOption_Increase
 {
+    private const int HandlingId = 30012;
     // Increases the value of a numerical game option without limits
     public static bool Prefix(NumberOption __instance)
     {
-        if (!CheatToggles.noOptionsLimits) return true;
+        try
+        {
+            if (!CheatToggles.noOptionsLimits) return true;
 
-        // Avoid bypassing imp amount and player speed restrictions in non-HnS games
-        // due to anticheat restrictions
-        if (!Utils.isHideNSeek && __instance.Title is StringNames.GameNumImpostors or StringNames.GamePlayerSpeed) return true;
+            // Avoid bypassing imp amount and player speed restrictions in non-HnS games
+            // due to anticheat restrictions
+            if (!Utils.isHideNSeek && __instance.Title is StringNames.GameNumImpostors or StringNames.GamePlayerSpeed) return true;
 
-        __instance.Value += __instance.Increment;
-        __instance.UpdateValue();
-        __instance.OnValueChanged.Invoke(__instance);
-        __instance.AdjustButtonsActiveState();
+            __instance.Value += __instance.Increment;
+            __instance.UpdateValue();
+            __instance.OnValueChanged.Invoke(__instance);
+            __instance.AdjustButtonsActiveState();
 
-        return false;
+            return false;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "NumberOption_Increase.Prefix: increase option value"); return true; }
     }
 }
 
 [HarmonyPatch(typeof(NumberOption), nameof(NumberOption.Decrease))]
 public static class NumberOption_Decrease
 {
+    private const int HandlingId = 30012;
     // Decreases the value of a numerical game option without limits
     public static bool Prefix(NumberOption __instance)
     {
-        if (!CheatToggles.noOptionsLimits) return true;
+        try
+        {
+            if (!CheatToggles.noOptionsLimits) return true;
 
-        // Avoids bypassing imp amount and player speed restrictions in non-HnS games
-        // due to anticheat restrictions
-        if (!Utils.isHideNSeek && __instance.Title is StringNames.GameNumImpostors or StringNames.GamePlayerSpeed) return true;
+            // Avoids bypassing imp amount and player speed restrictions in non-HnS games
+            // due to anticheat restrictions
+            if (!Utils.isHideNSeek && __instance.Title is StringNames.GameNumImpostors or StringNames.GamePlayerSpeed) return true;
 
-        __instance.Value -= __instance.Increment;
-        __instance.UpdateValue();
-        __instance.OnValueChanged.Invoke(__instance);
-        __instance.AdjustButtonsActiveState();
+            __instance.Value -= __instance.Increment;
+            __instance.UpdateValue();
+            __instance.OnValueChanged.Invoke(__instance);
+            __instance.AdjustButtonsActiveState();
 
-        return false;
+            return false;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "NumberOption_Decrease.Prefix: decrease option value"); return true; }
     }
 }
 
 [HarmonyPatch(typeof(NumberOption), nameof(NumberOption.Initialize))]
 public static class NumberOption_Initialize
 {
+    private const int HandlingId = 30012;
     // Sets the valid range of a numerical game option to be practically unlimited
     public static void Postfix(NumberOption __instance)
     {
-        if (!CheatToggles.noOptionsLimits) return;
+        try
+        {
+            if (!CheatToggles.noOptionsLimits) return;
 
-        // Avoids bypassing imp amount and player speed restrictions in non-HnS games
-        // due to anticheat restrictions
-        if (!Utils.isHideNSeek && __instance.Title is StringNames.GameNumImpostors or StringNames.GamePlayerSpeed) return;
+            // Avoids bypassing imp amount and player speed restrictions in non-HnS games
+            // due to anticheat restrictions
+            if (!Utils.isHideNSeek && __instance.Title is StringNames.GameNumImpostors or StringNames.GamePlayerSpeed) return;
 
-        __instance.ValidRange = new FloatRange(-999f, 999f);
+            __instance.ValidRange = new FloatRange(-999f, 999f);
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "NumberOption_Initialize.Postfix: widen valid range"); }
     }
 }

@@ -1,4 +1,5 @@
-﻿using AmongUs.GameOptions;
+﻿using System;
+using AmongUs.GameOptions;
 using HarmonyLib;
 using Hazel;
 using InnerNet;
@@ -7,6 +8,8 @@ namespace MalumMenu.features
 {
 	internal class Protections
 	{
+		private const int HandlingId = 40005;
+
 		public static bool BlockLargeGameMessages { get; set; } = true;
 		public static bool BlockInvalidGameDataMessages { get; set; } = true;
 		public static bool BlockUnauthorizedSystemUpdates { get; set; } = true;
@@ -19,7 +22,14 @@ namespace MalumMenu.features
 
 			static void Prefix(ref bool dtls)
 			{
-				if(Enabled) dtls = true;
+				try
+				{
+					if(Enabled) dtls = true;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "ForceDTLS.Prefix: forcing DTLS endpoint");
+				}
 			}
 		}
 
@@ -30,10 +40,18 @@ namespace MalumMenu.features
 
 			static bool Prefix(CustomNetworkTransform __instance, byte callId)
 			{
-				if(!Enabled || callId != (byte)RpcCalls.SnapTo || __instance.myPlayer != PlayerControl.LocalPlayer) return true;
+				try
+				{
+					if(!Enabled || callId != (byte)RpcCalls.SnapTo || __instance.myPlayer != PlayerControl.LocalPlayer) return true;
 
-				MalumMenu.Log.LogMessage($"Received SnapTo RPC for our player, since block server teleports is enabled we will disregard the RPC");
-				return false;
+					MalumMenu.Log.LogMessage($"Received SnapTo RPC for our player, since block server teleports is enabled we will disregard the RPC");
+					return false;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "BlockServerTeleports.Prefix: blocking server teleport");
+					return false;
+				}
 			}
 		}
 
@@ -72,33 +90,41 @@ namespace MalumMenu.features
 
 			static bool Prefix(MessageReader __instance, ref uint __result)
 			{
-				if(!Enabled) return true;
-
-				bool readMore = true;
-				int shift = 0;
-				uint output = 0;
-
-				while(readMore)
+				try
 				{
-					if(__instance.BytesRemaining < 1) break;
+					if(!Enabled) return true;
 
-					byte b = __instance.ReadByte();
-					if(b >= 0x80)
+					bool readMore = true;
+					int shift = 0;
+					uint output = 0;
+
+					while(readMore)
 					{
-						readMore = true;
-						b ^= 0x80;
-					}
-					else
-					{
-						readMore = false;
+						if(__instance.BytesRemaining < 1) break;
+
+						byte b = __instance.ReadByte();
+						if(b >= 0x80)
+						{
+							readMore = true;
+							b ^= 0x80;
+						}
+						else
+						{
+							readMore = false;
+						}
+
+						output |= (uint)(b << shift);
+						shift += 7;
 					}
 
-					output |= (uint)(b << shift);
-					shift += 7;
+					__result = output;
+					return false;
 				}
-
-				__result = output;
-				return false;
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "HardenedReadPackedUInt.Prefix: bounds-checked packed uint read");
+					return false;
+				}
 			}
 		}
 
@@ -109,16 +135,24 @@ namespace MalumMenu.features
 
 			static bool Prefix(int srcClient, int clientId)
 			{
-				MalumMenu.Log.LogInfo($"[VotekickLogger] {srcClient} voted to kick out {clientId}");
-				if(clientId != PlayerControl.LocalPlayer.OwnerId) return true;
+				try
+				{
+					MalumMenu.Log.LogInfo($"[VotekickLogger] {srcClient} voted to kick out {clientId}");
+					if(clientId != PlayerControl.LocalPlayer.OwnerId) return true;
 
-				ClientData player = AmongUsClient.Instance.FindClientById(srcClient);
-				if(player == null) return false;
+					ClientData player = AmongUsClient.Instance.FindClientById(srcClient);
+					if(player == null) return false;
 
-				MalumMenu.notifications.Send("Votekick Logger", $"{player.PlayerName} has voted to kick you out.");
+					MalumMenu.notifications.Send("Votekick Logger", $"{player.PlayerName} has voted to kick you out.");
 
-				// Prevent players from being able to votekick you as host
-				return !(Enabled && AmongUsClient.Instance.AmHost);
+					// Prevent players from being able to votekick you as host
+					return !(Enabled && AmongUsClient.Instance.AmHost);
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "Votekicks.Prefix: logging and blocking votekick against local player");
+					return false;
+				}
 			}
 		}
 
@@ -129,15 +163,22 @@ namespace MalumMenu.features
 
 			static void Postfix()
 			{
-				if(!Enabled || !AmongUsClient.Instance.AmHost) return;
+				try
+				{
+					if(!Enabled || !AmongUsClient.Instance.AmHost) return;
 
-				PlayerControl player = Utilities.GetRandomPlayer();
-				if(player == null) return;
+					PlayerControl player = Utilities.GetRandomPlayer();
+					if(player == null) return;
 
-				IGameOptions options = GameOptions.CreateCloneOptions(GameManager.Instance.LogicOptions.currentGameOptions);
-				options.SetFloat(FloatOptionNames.ShapeshifterCooldown, 0.0f);
+					IGameOptions options = GameOptions.CreateCloneOptions(GameManager.Instance.LogicOptions.currentGameOptions);
+					options.SetFloat(FloatOptionNames.ShapeshifterCooldown, 0.0f);
 
-				GameOptions.SendGameOptionsToClient(options, player.OwnerId);
+					GameOptions.SendGameOptionsToClient(options, player.OwnerId);
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "BypassShapeshiftRatelimits.Postfix: zeroing shapeshifter cooldown");
+				}
 			}
 		}
 
@@ -148,22 +189,30 @@ namespace MalumMenu.features
 
 			static bool Prefix(byte callId, MessageReader reader)
 			{
-				if(!Enabled || callId != (byte)RpcCalls.VotingComplete) return true;
-
-				int oldReadPosition = reader.Position;
-
-				// The game creates an array with the size of the following value
-				// If this value is very large, then the client will attempt to allocate several gigabytes of memory
-
-				int arrayLength = reader.ReadPackedInt32();
-
-				if(arrayLength > 1024 || arrayLength > reader.BytesRemaining)
+				try
 				{
+					if(!Enabled || callId != (byte)RpcCalls.VotingComplete) return true;
+
+					int oldReadPosition = reader.Position;
+
+					// The game creates an array with the size of the following value
+					// If this value is very large, then the client will attempt to allocate several gigabytes of memory
+
+					int arrayLength = reader.ReadPackedInt32();
+
+					if(arrayLength > 1024 || arrayLength > reader.BytesRemaining)
+					{
+						return false;
+					}
+
+					reader.Position = oldReadPosition;
+					return true;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "MemoryAllocationOverload.Prefix: blocking oversized vote array");
 					return false;
 				}
-
-				reader.Position = oldReadPosition;
-				return true;
 			}
 		}
 
@@ -172,25 +221,33 @@ namespace MalumMenu.features
 		{
 			static bool Prefix(byte callId, MessageReader reader)
 			{
-				int oldReadPosition = reader.Position;
-				switch((RpcCalls)callId)
+				try
 				{
-					case RpcCalls.CloseDoorsOfType:
-						if(BlockUnauthorizedSystemUpdates && !AmongUsClient.Instance.AmHost) return false;
-						break;
-					case RpcCalls.UpdateSystem:
-						SystemTypes system = (SystemTypes)reader.ReadByte();
-						PlayerControl player = reader.ReadNetObject<PlayerControl>();
-						if(ProtectAgainstNonHostKickExploit && system == SystemTypes.Ventilation && !AmongUsClient.Instance.AmHost)
-						{
-							MalumMenu.notifications.Send("Protections Alert", $"{player.Data.PlayerName} attempted to use the VentilationSystem kick exploit on you!");
-							return false;
-						}
-						if(BlockUnauthorizedSystemUpdates && !AmongUsClient.Instance.AmHost) return false;
-						break;
+					int oldReadPosition = reader.Position;
+					switch((RpcCalls)callId)
+					{
+						case RpcCalls.CloseDoorsOfType:
+							if(BlockUnauthorizedSystemUpdates && !AmongUsClient.Instance.AmHost) return false;
+							break;
+						case RpcCalls.UpdateSystem:
+							SystemTypes system = (SystemTypes)reader.ReadByte();
+							PlayerControl player = reader.ReadNetObject<PlayerControl>();
+							if(ProtectAgainstNonHostKickExploit && system == SystemTypes.Ventilation && !AmongUsClient.Instance.AmHost)
+							{
+								MalumMenu.notifications.Send("Protections Alert", $"{player.Data.PlayerName} attempted to use the VentilationSystem kick exploit on you!");
+								return false;
+							}
+							if(BlockUnauthorizedSystemUpdates && !AmongUsClient.Instance.AmHost) return false;
+							break;
+					}
+					reader.Position = oldReadPosition;
+					return true;
 				}
-				reader.Position = oldReadPosition;
-				return true;
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "OnShipStatusRPC.Prefix: filtering hostile ShipStatus RPCs");
+					return false;
+				}
 			}
 		}
 	}

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
@@ -7,6 +8,7 @@ namespace MalumMenu;
 
 public class MenuUI : MonoBehaviour
 {
+    private const int HandlingId = 10004;
     public static int windowHeight => (int)(600 * MalumMenu.menuScale.Value * MalumMenu.menuHeightMult.Value);
     public static int windowWidth => (int)(800 * MalumMenu.menuScale.Value * MalumMenu.menuWidthMult.Value);
 
@@ -22,8 +24,10 @@ public class MenuUI : MonoBehaviour
 
     private void Start()
     {
-        // Add all tabs on start
-        _tabs.Add(new MovementTab());
+        try
+        {
+            // Add all tabs on start
+            _tabs.Add(new MovementTab());
         _tabs.Add(new SelfTab());
         _tabs.Add(new ESPTab());
         _tabs.Add(new RolesTab());
@@ -51,6 +55,8 @@ public class MenuUI : MonoBehaviour
             windowHeight
         );
         _tabs.Add(new SettingsTab());
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MenuUI.Start: init tabs and window rect"); }
     }
 
     public void InitStyles()
@@ -65,8 +71,10 @@ public class MenuUI : MonoBehaviour
 
     private void Update()
     {
+        try
+        {
 
-        if (Input.GetKeyDown(Utils.StringToKeycode(MalumMenu.menuKeybind.Value)))
+            if (Input.GetKeyDown(Utils.StringToKeycode(MalumMenu.menuKeybind.Value)))
         {
             // Enable or disable GUI with DELETE key
             isGUIActive = !isGUIActive;
@@ -204,11 +212,15 @@ public class MenuUI : MonoBehaviour
             CheatToggles.skipMeeting = false;
             CheatToggles.ejectPlayer = false;
         }
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MenuUI.Update: per-frame menu state"); }
     }
 
     public void OnGUI()
     {
-        if (!isGUIActive || MalumMenu.isPanicked) return;
+        try
+        {
+            if (!isGUIActive || MalumMenu.isPanicked) return;
 
         InitStyles();
 
@@ -223,6 +235,8 @@ public class MenuUI : MonoBehaviour
         UIHelpers.ApplyUIColor();
 
         windowRect = GUI.Window((int)WindowId.MenuUI, windowRect, (GUI.WindowFunction)WindowFunction, "HyperMenu " + MalumMenu.hyperVersion + ", " + MalumMenu.hyperBuild + " build.");
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MenuUI.OnGUI: draw main menu window"); }
     }
 
     private void DisableSabotageCheats()

@@ -6,6 +6,9 @@ namespace MalumMenu;
 
 public class MovementTab : ITab
 {
+    // 5-digit handling ID for MovementTab.cs (see HandlingIds.cs).
+    private const int HandlingId = 60001;
+
     public string name => "Movement";
 
     public void Draw()
@@ -55,7 +58,7 @@ public class MovementTab : ITab
                 Utils.SnapSpeedToDefault(0.05f);
                 GUILayout.Label($"Current Speed: {PlayerControl.LocalPlayer?.MyPhysics.Speed} {(Utils.IsSpeedDefault() ? "(Default)" : "")}");
             }
-        } catch (NullReferenceException) { MalumMenu.Log.LogWarning($"Failed to draw general movement tab."); }
+        } catch (NullReferenceException ex) { ErrorReporter.Report(ex, HandlingId, "DrawGeneral speed slider"); }
         MalumMenu.Log.LogInfo($"Finished Drawing General Movement Tab");
     }
 

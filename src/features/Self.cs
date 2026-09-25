@@ -1,10 +1,13 @@
-﻿using HarmonyLib;
+﻿using System;
+using HarmonyLib;
 using AmongUs.Data.Player;
 
 namespace MalumMenu.features
 {
 	internal class Self
 	{
+		private const int HandlingId = 40007;
+
 		// When PlayerControl::RpcPlayAnimation or PlayerControl::RpcSetScanner is called, they check if visual tasks are on before sending the RPC
 		// If we want to be able to send those RPCs even with visual tasks are off, then we will need to reimplement those functions
 		// We could just patch LogicOptionsNormal::GetVisualTasks and LogicOptionsHnS::GetVisualTasks, however the latter is inlined so our patch won't actually get applied
@@ -29,15 +32,23 @@ namespace MalumMenu.features
 		{
 			static bool Prefix(PlayerControl __instance, bool value)
 			{
-				if(__instance != PlayerControl.LocalPlayer) return true;
+				try
+				{
+					if(__instance != PlayerControl.LocalPlayer) return true;
 
-				if(AlwaysShowTaskAnimations)
-				{
-					Network.RPCEmitter.SendSetScanner(value);
-					return false;
+					if(AlwaysShowTaskAnimations)
+					{
+						Network.RPCEmitter.SendSetScanner(value);
+						return false;
+					}
+					else
+					{
+						return true;
+					}
 				}
-				else
+				catch (Exception ex)
 				{
+					ErrorReporter.Report(ex, HandlingId, "AlwaysDoScanAnimation.Prefix: re-sending set-scanner RPC");
 					return true;
 				}
 			}
@@ -48,15 +59,23 @@ namespace MalumMenu.features
 		{
 			static bool Prefix(PlayerControl __instance, byte animType)
 			{
-				if(__instance != PlayerControl.LocalPlayer) return true;
+				try
+				{
+					if(__instance != PlayerControl.LocalPlayer) return true;
 
-				if(AlwaysShowTaskAnimations)
-				{
-					Network.RPCEmitter.SendPlayAnimation(animType);
-					return false;
+					if(AlwaysShowTaskAnimations)
+					{
+						Network.RPCEmitter.SendPlayAnimation(animType);
+						return false;
+					}
+					else
+					{
+						return true;
+					}
 				}
-				else
+				catch (Exception ex)
 				{
+					ErrorReporter.Report(ex, HandlingId, "AlwaysDoTaskAnimaton.Prefix: re-sending play-animation RPC");
 					return true;
 				}
 			}
@@ -69,9 +88,16 @@ namespace MalumMenu.features
 
 			static void Prefix(PlayerStatsData __instance)
 			{
-				if(Enabled)
+				try
 				{
-					__instance.isTrackingStats = true;
+					if(Enabled)
+					{
+						__instance.isTrackingStats = true;
+					}
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "UpdateStatsFreeplay.Prefix: forcing stat tracking on");
 				}
 			}
 		}
@@ -83,7 +109,14 @@ namespace MalumMenu.features
 
 			static void Postfix(ref float __result)
 			{
-				__result *= Multiplier;
+				try
+				{
+					__result *= Multiplier;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "PlayerSpeedModifier.Postfix: applying speed multiplier");
+				}
 			}
 		}
 
@@ -93,11 +126,18 @@ namespace MalumMenu.features
 			public static bool Enabled { get; set; } = true;
 			static void Postfix(Ladder __instance)
 			{
-				if(Enabled)
+				try
 				{
-					MalumMenu.Log.LogMessage($"Used ladder");
-					__instance.CoolDown = 0.0f;
-					__instance.Destination.CoolDown = 0.0f;
+					if(Enabled)
+					{
+						MalumMenu.Log.LogMessage($"Used ladder");
+						__instance.CoolDown = 0.0f;
+						__instance.Destination.CoolDown = 0.0f;
+					}
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "NoLadderCooldown.Postfix: clearing ladder cooldown");
 				}
 			}
 		}
@@ -109,7 +149,14 @@ namespace MalumMenu.features
 
 			static void Prefix()
 			{
-				if(enabled) PlayerControl.LocalPlayer.RemainingEmergencies = 999999;
+				try
+				{
+					if(enabled) PlayerControl.LocalPlayer.RemainingEmergencies = 999999;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "UnlimitedMeetings.Prefix: refilling emergency meetings");
+				}
 			}
 		}
 	}

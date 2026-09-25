@@ -1,15 +1,19 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using System.Collections.Generic;
 
 namespace MalumMenu;
 
 public class SabotageTab : ITab
 {
+    private const int HandlingId = 60016;
     public string name => "Sabotage";
 
     public void Draw()
     {
-        GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
+        try
+        {
+            GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
 
         if (ShipStatus.Instance == null)
         {
@@ -101,6 +105,8 @@ public class SabotageTab : ITab
             GUILayout.EndHorizontal();
         }
 
-        GUILayout.EndVertical();
+            GUILayout.EndVertical();
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "SabotageTab.Draw: draw sabotage controls"); }
     }
 }

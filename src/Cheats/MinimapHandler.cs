@@ -1,16 +1,22 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace MalumMenu;
 public static class MinimapHandler
 {
+    private const int HandlingId = 20012;
     public static bool minimapActive;
     public static List<HerePoint> herePoints = new List<HerePoint>();
     public static List<HerePoint> herePointsToRemove = new List<HerePoint>();
 
     public static bool IsCheatEnabled()
     {
-        return CheatToggles.mapCrew || CheatToggles.mapGhosts || CheatToggles.mapImps;
+        try
+        {
+            return CheatToggles.mapCrew || CheatToggles.mapGhosts || CheatToggles.mapImps;
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MinimapHandler.IsCheatEnabled: checking cheat state"); return false; }
     }
 
     public static void HandleHerePoint(HerePoint herePoint)
@@ -82,10 +88,11 @@ public static class MinimapHandler
                 herePoint.sprite.transform.localPosition = vector;
             }
         }
-        catch
+        catch (Exception ex)
         {
+            ErrorReporter.Report(ex, HandlingId, "MinimapHandler.HandleHerePoint: updating here point");
             // Remove icons that are causing problems
-            Object.Destroy(herePoint.sprite.gameObject);
+            UnityEngine.Object.Destroy(herePoint.sprite.gameObject);
             herePointsToRemove.Add(herePoint);
         }
     }

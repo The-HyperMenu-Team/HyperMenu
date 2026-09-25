@@ -1,45 +1,51 @@
+using System;
 using UnityEngine;
 
 namespace MalumMenu;
 
 public class HostOnlyTab : ITab
 {
+    private const int HandlingId = 60008;
     public string name => "Host-Only";
 
     public void Draw()
     {
-        GUILayout.BeginHorizontal();
-
-        GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
-
-        if (PlayerControl.LocalPlayer == null)
+        try
         {
-            GUILayout.Label("You are not currently in a game, these options will not work.");
+            GUILayout.BeginHorizontal();
+
+            GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
+
+            if (PlayerControl.LocalPlayer == null)
+            {
+                GUILayout.Label("You are not currently in a game, these options will not work.");
+            }
+            else if (!AmongUsClient.Instance.AmHost)
+            {
+                GUILayout.Label("You are not the host of the current lobby. Using these options will either do nothing or get you banned by the anticheat");
+            }
+
+            DrawGeneral();
+
+            GUILayout.Space(15);
+
+            DrawMurder();
+
+            GUILayout.Space(15);
+
+            DrawGameState();
+
+            GUILayout.EndVertical();
+
+            GUILayout.BeginVertical();
+
+            DrawMeetings();
+
+            GUILayout.EndVertical();
+
+            GUILayout.EndHorizontal();
         }
-        else if (!AmongUsClient.Instance.AmHost)
-        {
-            GUILayout.Label("You are not the host of the current lobby. Using these options will either do nothing or get you banned by the anticheat");
-        }
-
-        DrawGeneral();
-
-        GUILayout.Space(15);
-
-        DrawMurder();
-
-        GUILayout.Space(15);
-
-        DrawGameState();
-
-        GUILayout.EndVertical();
-
-        GUILayout.BeginVertical();
-
-        DrawMeetings();
-
-        GUILayout.EndVertical();
-
-        GUILayout.EndHorizontal();
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "HostOnlyTab.Draw: draw host-only controls"); }
     }
 
     private void DrawGeneral()

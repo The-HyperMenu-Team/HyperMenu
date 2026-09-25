@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
+using BepInEx.Unity.IL2CPP.Utils.Collections;
 using UnityEngine;
 
 namespace MalumMenu;
 
 public class StreamerUI : MonoBehaviour
 {
+    internal const int HandlingId = 10011;
     private Camera _captureCamera;
     private Camera _uiCaptureCamera;
     private RenderTexture _renderTexture;
@@ -23,41 +25,49 @@ public class StreamerUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        Cleanup();
-        StreamerNativeWindowHost.Stop();
-        _hostStarted = false;
-        _captureQueued = false;
-    }
-
-    private void LateUpdate()
-    {
-        if (!CheatToggles.streamerMode || MalumMenu.isPanicked)
+        try
         {
             Cleanup();
             StreamerNativeWindowHost.Stop();
             _hostStarted = false;
             _captureQueued = false;
-            return;
         }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "StreamerUI.OnDestroy: stop streamer capture"); }
+    }
 
-
-        var sourceCamera = ResolveSourceCamera();
-        if (!sourceCamera)
+    private void LateUpdate()
+    {
+        try
         {
-            Cleanup();
-            return;
+            if (!CheatToggles.streamerMode || MalumMenu.isPanicked)
+            {
+                Cleanup();
+                StreamerNativeWindowHost.Stop();
+                _hostStarted = false;
+                _captureQueued = false;
+                return;
+            }
+
+
+            var sourceCamera = ResolveSourceCamera();
+            if (!sourceCamera)
+            {
+                Cleanup();
+                return;
+            }
+
+            if (!_hostStarted || !StreamerNativeWindowHost.IsRunning)
+            {
+                StreamerNativeWindowHost.Start();
+                _hostStarted = true;
+            }
+
+            if (_captureQueued || !isActiveAndEnabled || !gameObject.activeInHierarchy) return;
+
+            _captureQueued = true;
+            StartCoroutine(ErrorReporter.GuardCoroutine(CaptureFrame(), HandlingId, "CaptureFrame").WrapToIl2Cpp());
         }
-
-        if (!_hostStarted || !StreamerNativeWindowHost.IsRunning)
-        {
-            StreamerNativeWindowHost.Start();
-            _hostStarted = true;
-        }
-
-        if (_captureQueued || !isActiveAndEnabled || !gameObject.activeInHierarchy) return;
-
-        _captureQueued = true;
-        StartCoroutine(nameof(CaptureFrame));
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "StreamerUI.LateUpdate: queue capture frame"); }
     }
 
     private System.Collections.IEnumerator CaptureFrame()
@@ -393,7 +403,7 @@ internal static class StreamerNativeWindowHost
         {
             _thread.SetApartmentState(ApartmentState.STA);
         }
-        catch { }
+        catch (Exception ex) { ErrorReporter.Report(ex, StreamerUI.HandlingId, "StreamerNativeWindowHost.Start: set STA apartment state"); }
 
         _thread.Start();
     }
@@ -440,53 +450,57 @@ internal static class StreamerNativeWindowHost
 
     private static void WindowThread()
     {
-        const string className = "MalumMenuStreamerWindowClass";
-
-        var wndClass = new WndClassEx
+        try
         {
-            cbSize = (uint)Marshal.SizeOf<WndClassEx>(),
-            style = 0x0003,
-            lpfnWndProc = Marshal.GetFunctionPointerForDelegate(WndProc),
-            hInstance = HInstance,
-            hCursor = LoadCursor(IntPtr.Zero, new IntPtr(32512)),
-            hbrBackground = new IntPtr(5),
-            lpszClassName = className
-        };
+            const string className = "MalumMenuStreamerWindowClass";
 
-        RegisterClassEx(ref wndClass);
+            var wndClass = new WndClassEx
+            {
+                cbSize = (uint)Marshal.SizeOf<WndClassEx>(),
+                style = 0x0003,
+                lpfnWndProc = Marshal.GetFunctionPointerForDelegate(WndProc),
+                hInstance = HInstance,
+                hCursor = LoadCursor(IntPtr.Zero, new IntPtr(32512)),
+                hbrBackground = new IntPtr(5),
+                lpszClassName = className
+            };
 
-        _hwnd = CreateWindowEx(
-            0x00040000,
-            className,
-            "Streamer Mode Preview",
-            WsOverlappedWindow,
-            unchecked((int)0x80000000),
-            unchecked((int)0x80000000),
-            1280,
-            720,
-            IntPtr.Zero,
-            IntPtr.Zero,
-            HInstance,
-            IntPtr.Zero);
+            RegisterClassEx(ref wndClass);
 
-        if (_hwnd == IntPtr.Zero)
-        {
+            _hwnd = CreateWindowEx(
+                0x00040000,
+                className,
+                "Streamer Mode Preview",
+                WsOverlappedWindow,
+                unchecked((int)0x80000000),
+                unchecked((int)0x80000000),
+                1280,
+                720,
+                IntPtr.Zero,
+                IntPtr.Zero,
+                HInstance,
+                IntPtr.Zero);
+
+            if (_hwnd == IntPtr.Zero)
+            {
+                _running = false;
+                return;
+            }
+
+            ShowWindow(_hwnd, SwShow);
+            UpdateWindow(_hwnd);
+
+            Msg msg;
+            while (_running && GetMessage(out msg, IntPtr.Zero, 0, 0))
+            {
+                TranslateMessage(ref msg);
+                DispatchMessage(ref msg);
+            }
+
+            _hwnd = IntPtr.Zero;
             _running = false;
-            return;
         }
-
-        ShowWindow(_hwnd, SwShow);
-        UpdateWindow(_hwnd);
-
-        Msg msg;
-        while (_running && GetMessage(out msg, IntPtr.Zero, 0, 0))
-        {
-            TranslateMessage(ref msg);
-            DispatchMessage(ref msg);
-        }
-
-        _hwnd = IntPtr.Zero;
-        _running = false;
+        catch (Exception ex) { ErrorReporter.Report(ex, StreamerUI.HandlingId, "StreamerNativeWindowHost.WindowThread: native preview window loop"); }
     }
 
     private static IntPtr WndProcImpl(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 using BepInEx.Unity.IL2CPP.Utils.Collections;
 using MalumMenu.features;
@@ -7,13 +8,16 @@ namespace MalumMenu
 {
     internal class SelfTab : ITab
     {
+        private const int HandlingId = 60017;
         public string name => "Self";
 
         private uint level = 0;
 
         public void Draw()
         {
-            GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
+            try
+            {
+                GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
             if (PlayerControl.LocalPlayer == null || PlayerControl.LocalPlayer.Data == null)
             {
                 GUILayout.Label("You are not currently in a game, these options will not work.");
@@ -45,7 +49,7 @@ namespace MalumMenu
 
             if (GUILayout.Button("Complete All Tasks"))
             {
-                PlayerControl.LocalPlayer.StartCoroutine(CompleteAllTasks().WrapToIl2Cpp());
+                PlayerControl.LocalPlayer.StartCoroutine(ErrorReporter.GuardCoroutine(CompleteAllTasks(), HandlingId, "CompleteAllTasks").WrapToIl2Cpp());
             }
 
             if (GUILayout.Button("Randomize Avatar"))
@@ -135,6 +139,8 @@ namespace MalumMenu
                 MalumMenu.notifications.Send("Level Updater", $"Your level has been changed to {level + 1}", 5);
             }
             GUILayout.EndVertical();
+            }
+            catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "SelfTab.Draw: draw self controls"); }
         }
         private IEnumerator CompleteAllTasks()
         {

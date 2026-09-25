@@ -5,6 +5,7 @@ namespace MalumMenu;
 
 public class OverloadTab : ITab
 {
+    private const int HandlingId = 60011;
     public string name => "Overload";
 
     private GUIStyle _sliderSubtitle;
@@ -16,37 +17,41 @@ public class OverloadTab : ITab
 
     public void Draw()
     {
-        InitStyles();
-
-        GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
-
-        if (MalumMenu.overloadFixed)
+        try
         {
-            DrawGeneral();
+            InitStyles();
 
-            GUILayout.Space(15);
+            GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
 
-            DrawSettingsToggle();
-        } else
-        {
-            GUILayout.Label("Overload has been patched by Innersloth.");
-            GUILayout.Label("Until a workaround is found, overload features will be unavailable.");
-            GUILayout.Label("We apologize for the inconvenience.");
-            GUILayout.Space(5);
-            GUILayout.Label(" - The HyperMenu Team");
-        }
-        
+            if (MalumMenu.overloadFixed)
+            {
+                DrawGeneral();
 
-        GUILayout.EndVertical();
+                GUILayout.Space(15);
 
-        if (CheatToggles.showOverloadSettings && MalumMenu.overloadFixed)
-        {
-            GUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(MenuUI.windowWidth * 0.75f));
-
-            DrawSettingsSection();
+                DrawSettingsToggle();
+            } else
+            {
+                GUILayout.Label("Overload has been patched by Innersloth.");
+                GUILayout.Label("Until a workaround is found, overload features will be unavailable.");
+                GUILayout.Label("We apologize for the inconvenience.");
+                GUILayout.Space(5);
+                GUILayout.Label(" - The HyperMenu Team");
+            }
+            
 
             GUILayout.EndVertical();
+
+            if (CheatToggles.showOverloadSettings && MalumMenu.overloadFixed)
+            {
+                GUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(MenuUI.windowWidth * 0.75f));
+
+                DrawSettingsSection();
+
+                GUILayout.EndVertical();
+            }
         }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "OverloadTab.Draw: draw overload settings"); }
     }
 
     private void InitStyles()

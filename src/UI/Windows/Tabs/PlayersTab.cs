@@ -10,6 +10,7 @@ namespace MalumMenu;
 
 public class PlayersTab : ITab
 {
+    private const int HandlingId = 60013;
     public string name => "Players";
 
     private Vector2 _subsectionScrollVector = Vector2.zero;
@@ -18,32 +19,36 @@ public class PlayersTab : ITab
 
     public void Draw()
     {
-        if (PlayerControl.AllPlayerControls.Count == 0)
+        try
         {
-            GUILayout.Label("There are currently no online players.");
-            return;
-        }
+            if (PlayerControl.AllPlayerControls.Count == 0)
+            {
+                GUILayout.Label("There are currently no online players.");
+                return;
+            }
 
-        GUILayout.BeginHorizontal();
+            GUILayout.BeginHorizontal();
 
-        // Left panel: Player list
-        GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.35f));
-        _subsectionScrollVector = GUILayout.BeginScrollView(_subsectionScrollVector);
-        DrawPlayerList();
-        GUILayout.EndScrollView();
-        GUILayout.EndVertical();
-
-        // Right panel: Player controls
-        if (PlayersSection.selectedPlayer != null)
-        {
-            GUILayout.BeginVertical();
-            _subsectionScrollVector2 = GUILayout.BeginScrollView(_subsectionScrollVector2);
-            DrawPlayerControls(PlayersSection.selectedPlayer);
+            // Left panel: Player list
+            GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.35f));
+            _subsectionScrollVector = GUILayout.BeginScrollView(_subsectionScrollVector);
+            DrawPlayerList();
             GUILayout.EndScrollView();
             GUILayout.EndVertical();
-        }
 
-        GUILayout.EndHorizontal();
+            // Right panel: Player controls
+            if (PlayersSection.selectedPlayer != null)
+            {
+                GUILayout.BeginVertical();
+                _subsectionScrollVector2 = GUILayout.BeginScrollView(_subsectionScrollVector2);
+                DrawPlayerControls(PlayersSection.selectedPlayer);
+                GUILayout.EndScrollView();
+                GUILayout.EndVertical();
+            }
+
+            GUILayout.EndHorizontal();
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "PlayersTab.Draw: draw player list and controls"); }
     }
 
     private void DrawPlayerList()
@@ -210,7 +215,7 @@ public class PlayersTab : ITab
                 MalumMenu.notifications.Send("Frame Shapesift", "This is a host-only cheat.");
             } else
             {
-                target.StartCoroutine(AttemptShapeshiftFrame(target).WrapToIl2Cpp());
+                target.StartCoroutine(ErrorReporter.GuardCoroutine(AttemptShapeshiftFrame(target), HandlingId, "AttemptShapeshiftFrame").WrapToIl2Cpp());
             }
         }
 

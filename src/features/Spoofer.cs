@@ -1,4 +1,5 @@
-﻿using AmongUs.InnerNet.GameDataMessages;
+﻿using System;
+using AmongUs.InnerNet.GameDataMessages;
 using HarmonyLib;
 using Hazel;
 
@@ -6,6 +7,8 @@ namespace MalumMenu.features
 {
 	internal class Spoofer
 	{
+		private const int HandlingId = 40008;
+
 		public static bool shouldSpoofVersion = false;
 		public static int spoofedVersion = Constants.GetBroadcastVersion();
 		public static bool useModdedProtocol = false;
@@ -16,13 +19,21 @@ namespace MalumMenu.features
 		{
 			static bool Prefix(ref int __result)
 			{
-				// Starting a local lobby or entering freeplay will bug out if we are using a spoofed version
-				if(!shouldSpoofVersion || !AmongUsClient.Instance || AmongUsClient.Instance.NetworkMode != NetworkModes.OnlineGame) return true;
+				try
+				{
+					// Starting a local lobby or entering freeplay will bug out if we are using a spoofed version
+					if(!shouldSpoofVersion || !AmongUsClient.Instance || AmongUsClient.Instance.NetworkMode != NetworkModes.OnlineGame) return true;
 
-				__result = spoofedVersion;
-				if(useModdedProtocol) __result += 25;
+					__result = spoofedVersion;
+					if(useModdedProtocol) __result += 25;
 
-				return false;
+					return false;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "SpoofVersion.Prefix: spoofing broadcast version");
+					return true;
+				}
 			}
 		}
 
@@ -31,12 +42,20 @@ namespace MalumMenu.features
 		{
 			static bool Prefix(ref bool __result)
 			{
-				if(shouldSpoofVersion && useModdedProtocol)
+				try
 				{
-					__result = true;
-					return false;
-				} else
+					if(shouldSpoofVersion && useModdedProtocol)
+					{
+						__result = true;
+						return false;
+					} else
+					{
+						return true;
+					}
+				}
+				catch (Exception ex)
 				{
+					ErrorReporter.Report(ex, HandlingId, "MarkVersionModded.Prefix: marking version as modded");
 					return true;
 				}
 			}
@@ -51,11 +70,19 @@ namespace MalumMenu.features
 
 			static bool Prefix(MessageWriter msg)
 			{
-				if(!Enabled) return true;
+				try
+				{
+					if(!Enabled) return true;
 
-				msg.WritePacked(newLevel - 1);
-				PlayerControl.LocalPlayer.SetLevel(newLevel - 1);
-				return false;
+					msg.WritePacked(newLevel - 1);
+					PlayerControl.LocalPlayer.SetLevel(newLevel - 1);
+					return false;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "SpoofLevel.Prefix: spoofing player level");
+					return true;
+				}
 			}
 		}
 
@@ -64,35 +91,42 @@ namespace MalumMenu.features
 		{
 			static void Prefix(PlatformSpecificData __instance)
 			{
-				__instance.Platform = spoofedPlatform;
-
-				switch (spoofedPlatform)
+				try
 				{
-					case Platforms.StandaloneWin10:
-						__instance.XboxPlatformId = 2584878536129841;
-						break;
+					__instance.Platform = spoofedPlatform;
 
-					case Platforms.Xbox:
-						// You can find the proper XUID for an Xbox gamertag at https://www.cxkes.me/xbox/xuid
-						__instance.PlatformName = "Major Nelson";
-						__instance.XboxPlatformId = 2584878536129841;
-						break;
+					switch (spoofedPlatform)
+					{
+						case Platforms.StandaloneWin10:
+							__instance.XboxPlatformId = 2584878536129841;
+							break;
 
-					case Platforms.Playstation:
-						__instance.PlatformName = "";
-						__instance.PsnPlatformId = 0;
-						break;
+						case Platforms.Xbox:
+							// You can find the proper XUID for an Xbox gamertag at https://www.cxkes.me/xbox/xuid
+							__instance.PlatformName = "Major Nelson";
+							__instance.XboxPlatformId = 2584878536129841;
+							break;
 
-					case Platforms.Switch:
-						__instance.PlatformName = "Sus";
-						break;
+						case Platforms.Playstation:
+							__instance.PlatformName = "";
+							__instance.PsnPlatformId = 0;
+							break;
 
-					default:
-						// Other platforms do not send additional platform specific data
-						__instance.PlatformName = "TESTNAME";
-						__instance.XboxPlatformId = 0;
-						__instance.PsnPlatformId = 0;
-						break;
+						case Platforms.Switch:
+							__instance.PlatformName = "Sus";
+							break;
+
+						default:
+							// Other platforms do not send additional platform specific data
+							__instance.PlatformName = "TESTNAME";
+							__instance.XboxPlatformId = 0;
+							__instance.PsnPlatformId = 0;
+							break;
+					}
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "SpoofPlatform.Prefix: spoofing platform data");
 				}
 			}
 		}

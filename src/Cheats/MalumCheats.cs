@@ -9,6 +9,9 @@ using Il2CppInterop.Runtime.InteropTypes.Arrays;
 namespace MalumMenu;
 public static class MalumCheats
 {
+    // 5-digit handling ID for MalumCheats.cs (see HandlingIds.cs).
+    private const int HandlingId = 20002;
+
     private static bool _isScanAnimActive;
     private static bool _isCamsAnimActive;
 
@@ -231,7 +234,7 @@ public static class MalumCheats
 				hudManager.ImpostorVentButton.gameObject.SetActive(CheatToggles.unlockVents);
 			}
 
-        } catch { }
+        } catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumCheats.UseVentCheat: toggling vent button"); }
     }
 
     public static void WalkInVentCheat()
@@ -243,7 +246,7 @@ public static class MalumCheats
             PlayerControl.LocalPlayer.inVent = false;
             PlayerControl.LocalPlayer.moveable = true;
 
-        } catch { }
+        } catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumCheats.WalkInVentCheat: walking in vent"); }
     }
 
     public static void KickVentsCheat()
@@ -357,7 +360,7 @@ public static class MalumCheats
 
             PlayerControl.LocalPlayer.Collider.enabled = !(CheatToggles.noClip || PlayerControl.LocalPlayer.onLadder);
 
-        } catch { }
+        } catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "MalumCheats.NoClipCheat: toggling collider"); }
     }
 
     public static void PlayScannerCheat()
@@ -508,7 +511,7 @@ public static class MalumCheats
                 }
                 catch (Exception ex)
                 {
-                    MalumMenu.Log.LogWarning($"DoAnyTaskCheat: exception while checking task {task.TaskType}: {ex.Message}");
+                    ErrorReporter.Report(ex, HandlingId, $"DoAnyTaskCheat checking task {task.TaskType}");
                 }
             }
         }

@@ -1,22 +1,28 @@
+using System;
 using UnityEngine;
 
 namespace MalumMenu;
 
 public class AnimationsTab : ITab
 {
+    private const int HandlingId = 60003;
     public string name => "Animations";
 
     public void Draw()
     {
-        GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
+        try
+        {
+            GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
 
-        DrawGeneral();
+            DrawGeneral();
 
-        GUILayout.Space(15);
+            GUILayout.Space(15);
 
-        DrawClientSided();
+            DrawClientSided();
 
-        GUILayout.EndVertical();
+            GUILayout.EndVertical();
+        }
+        catch (Exception ex) { ErrorReporter.Report(ex, HandlingId, "AnimationsTab.Draw: draw animation toggles"); }
     }
 
     private void DrawGeneral()

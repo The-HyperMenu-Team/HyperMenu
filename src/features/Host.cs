@@ -1,4 +1,5 @@
-﻿using AmongUs.GameOptions;
+﻿using System;
+using AmongUs.GameOptions;
 using HarmonyLib;
 using Hazel;
 using Il2CppSystem.Collections.Generic;
@@ -9,6 +10,8 @@ namespace MalumMenu.features
 {
 	internal class Host
 	{
+		private const int HandlingId = 40002;
+
 		private static bool isSkeldFlipped = false;
 		public static bool FlippedSkeld
 		{
@@ -38,7 +41,15 @@ namespace MalumMenu.features
 
 			static bool Prefix()
 			{
-				return !Enabled;
+				try
+				{
+					return !Enabled;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "DisableMeetings.Prefix: deciding whether to allow meeting");
+					return true;
+				}
 			}
 		}
 
@@ -49,7 +60,15 @@ namespace MalumMenu.features
 
 			static bool Prefix()
 			{
-				return !Enabled;
+				try
+				{
+					return !Enabled;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "DisableSabotages.Prefix: deciding whether to allow sabotage");
+					return true;
+				}
 			}
 		}
 
@@ -60,7 +79,15 @@ namespace MalumMenu.features
 
 			static bool Prefix()
 			{
-				return !Enabled;
+				try
+				{
+					return !Enabled;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "DisableCloseDoors.Prefix: deciding whether to allow door close");
+					return true;
+				}
 			}
 		}
 
@@ -86,9 +113,16 @@ namespace MalumMenu.features
 
 			static void Prefix(PlayerControl __instance, uint level)
 			{
-                if (!Enabled || !AmongUsClient.Instance.AmHost || __instance == PlayerControl.LocalPlayer || level > MinLevel) return;
-                MalumMenu.notifications.Send("Block Low Levels", $"{__instance.Data.PlayerName} is level {level}, which is below the level threshold. They will be kicked from the game.");
-				AmongUsClient.Instance.KickPlayer(__instance.OwnerId, false);
+				try
+				{
+					if (!Enabled || !AmongUsClient.Instance.AmHost || __instance == PlayerControl.LocalPlayer || level > MinLevel) return;
+					MalumMenu.notifications.Send("Block Low Levels", $"{__instance.Data.PlayerName} is level {level}, which is below the level threshold. They will be kicked from the game.");
+					AmongUsClient.Instance.KickPlayer(__instance.OwnerId, false);
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "BlockLowLevels.Prefix: kicking below-threshold player");
+				}
 			}
 		}
 
@@ -99,10 +133,18 @@ namespace MalumMenu.features
 
 			static bool Prefix(InnerNetClient __instance, ref bool __result)
 			{
-				if(!Enabled) return true;
+				try
+				{
+					if(!Enabled) return true;
 
-				__result = __instance.AmHost;
-				return false;
+					__result = __instance.AmHost;
+					return false;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "BanMidGame.Prefix: allowing mid-game bans");
+					return true;
+				}
 			}
 		}
 
@@ -114,42 +156,49 @@ namespace MalumMenu.features
 
 			static void Prefix(ref List<NetworkedPlayerInfo> players, ref List<RoleTypes> roleList, ref int rolesAssigned)
 			{
-				if(!Enabled || !AmongUsClient.Instance.AmHost) return;
-
-				MalumMenu.Log.LogInfo($"Attempting to assign ourselves the {assignedRole} role");
-
-				Il2CppSystem.Predicate<NetworkedPlayerInfo> predicate = (Il2CppSystem.Predicate<NetworkedPlayerInfo>)(player => player == PlayerControl.LocalPlayer.Data);
-				int playerIndex = players.FindIndex(predicate);
-
-				if(playerIndex == -1)
+				try
 				{
-					MalumMenu.Log.LogInfo("Our NetworkedPlayerInfo does not exist in this list, skipping");
-					return;
+					if(!Enabled || !AmongUsClient.Instance.AmHost) return;
+
+					MalumMenu.Log.LogInfo($"Attempting to assign ourselves the {assignedRole} role");
+
+					Il2CppSystem.Predicate<NetworkedPlayerInfo> predicate = (Il2CppSystem.Predicate<NetworkedPlayerInfo>)(player => player == PlayerControl.LocalPlayer.Data);
+					int playerIndex = players.FindIndex(predicate);
+
+					if(playerIndex == -1)
+					{
+						MalumMenu.Log.LogInfo("Our NetworkedPlayerInfo does not exist in this list, skipping");
+						return;
+					}
+
+					MalumMenu.Log.LogInfo($"Found our NetworkedPlayerInfo in the players list at index {playerIndex}, removing from the list");
+					players.RemoveAt(playerIndex);
+
+					Il2CppSystem.Predicate<RoleTypes> predicate2 = (Il2CppSystem.Predicate<RoleTypes>)(roleType => roleType == assignedRole);
+					int roleIndex = roleList.FindIndex(predicate2);
+
+					MalumMenu.Log.LogMessage($"Player index is {roleIndex}");
+
+					if(roleIndex != -1)
+					{
+						MalumMenu.Log.LogInfo($"Found an instance of our role in the roles list at index {roleIndex}, removing from the list");
+						roleList.RemoveAt(roleIndex);
+					}
+
+					if(RoleManager.IsGhostRole(assignedRole) && players.Count == 0)
+					{
+						PlayerControl.LocalPlayer.RpcSetRole(RoleManager.IsImpostorRole(assignedRole) ? RoleTypes.Impostor : RoleTypes.Crewmate);
+					}
+
+					PlayerControl.LocalPlayer.RpcSetRole(assignedRole);
+					rolesAssigned++;
+
+					MalumMenu.Log.LogInfo($"Assigned ourself the {assignedRole} role!");
 				}
-
-				MalumMenu.Log.LogInfo($"Found our NetworkedPlayerInfo in the players list at index {playerIndex}, removing from the list");
-				players.RemoveAt(playerIndex);
-
-				Il2CppSystem.Predicate<RoleTypes> predicate2 = (Il2CppSystem.Predicate<RoleTypes>)(roleType => roleType == assignedRole);
-				int roleIndex = roleList.FindIndex(predicate2);
-
-				MalumMenu.Log.LogMessage($"Player index is {roleIndex}");
-
-				if(roleIndex != -1)
+				catch (Exception ex)
 				{
-					MalumMenu.Log.LogInfo($"Found an instance of our role in the roles list at index {roleIndex}, removing from the list");
-					roleList.RemoveAt(roleIndex);
+					ErrorReporter.Report(ex, HandlingId, "AlwaysImposter.Prefix: assigning chosen role to local player");
 				}
-
-				if(RoleManager.IsGhostRole(assignedRole) && players.Count == 0)
-				{
-					PlayerControl.LocalPlayer.RpcSetRole(RoleManager.IsImpostorRole(assignedRole) ? RoleTypes.Impostor : RoleTypes.Crewmate);
-				}
-
-				PlayerControl.LocalPlayer.RpcSetRole(assignedRole);
-				rolesAssigned++;
-
-				MalumMenu.Log.LogInfo($"Assigned ourself the {assignedRole} role!");
 			}
 		}
 
@@ -160,9 +209,16 @@ namespace MalumMenu.features
 
             static void Prefix(PlayerControl __instance, ref float time)
             {
-                if (!Enabled || __instance != PlayerControl.LocalPlayer) return;
+                try
+                {
+                    if (!Enabled || __instance != PlayerControl.LocalPlayer) return;
 
-                time = 0;
+                    time = 0;
+                }
+                catch (Exception ex)
+                {
+                    ErrorReporter.Report(ex, HandlingId, "NoKillCooldown.Prefix: zeroing local kill timer");
+                }
             }
         }
 
@@ -175,33 +231,40 @@ namespace MalumMenu.features
 
 			static void Postfix(PlayerControl player, MessageReader msgReader)
 			{
-				if(!Enabled || !AmongUsClient.Instance.AmHost || player.OwnerId == AmongUsClient.Instance.HostId) return;
-
-				// Prevent an exploit where if the comms sabotage is active, someone could enter and leave the security cameras to remove the comms effect from themselves
-				if(Sabotage.IsSabotageActive(SystemTypes.Comms))
+				try
 				{
-					// There is an edge case where if someone is on the security cameras panel when comms are actively sabotaged, and the sabotage is fixed,
-					// then the player will be able to watch the security cameras
-					// I don't think it is worthwhile to fix this edge case considering this feature is unlikely to even be used by anyone
-					MalumMenu.Log.LogMessage($"{player.Data.name} updated security cameras, we do not need to do anything as the Comms sabotage is already active");
-					return;
+					if(!Enabled || !AmongUsClient.Instance.AmHost || player.OwnerId == AmongUsClient.Instance.HostId) return;
+
+					// Prevent an exploit where if the comms sabotage is active, someone could enter and leave the security cameras to remove the comms effect from themselves
+					if(Sabotage.IsSabotageActive(SystemTypes.Comms))
+					{
+						// There is an edge case where if someone is on the security cameras panel when comms are actively sabotaged, and the sabotage is fixed,
+						// then the player will be able to watch the security cameras
+						// I don't think it is worthwhile to fix this edge case considering this feature is unlikely to even be used by anyone
+						MalumMenu.Log.LogMessage($"{player.Data.name} updated security cameras, we do not need to do anything as the Comms sabotage is already active");
+						return;
+					}
+
+					MalumMenu.Log.LogMessage($"{player.Data.PlayerName} updated security cameras, sending Comms system update");
+
+					msgReader.Position--;
+					// 1 = Player started to watch cameras, 2 (and every other value) = Player stopped watching cameras
+					byte operation = msgReader.ReadByte();
+
+					MessageWriter systemUpdate = MessageWriter.Get(SendOption.Reliable);
+					systemUpdate.StartMessage((byte)SystemTypes.Comms);
+					// 1 = Comms sabotage is active, 0 = Comms sabotage is inactive
+					systemUpdate.Write(operation == 1);
+					systemUpdate.EndMessage();
+
+					Network.BatchedMessage batch = new Network.BatchedMessage(player.OwnerId);
+					batch.QueueDataFlag(ShipStatus.Instance.NetId, systemUpdate);
+					batch.FinishBatch();
 				}
-
-				MalumMenu.Log.LogMessage($"{player.Data.PlayerName} updated security cameras, sending Comms system update");
-
-				msgReader.Position--;
-				// 1 = Player started to watch cameras, 2 (and every other value) = Player stopped watching cameras
-				byte operation = msgReader.ReadByte();
-
-				MessageWriter systemUpdate = MessageWriter.Get(SendOption.Reliable);
-				systemUpdate.StartMessage((byte)SystemTypes.Comms);
-				// 1 = Comms sabotage is active, 0 = Comms sabotage is inactive
-				systemUpdate.Write(operation == 1);
-				systemUpdate.EndMessage();
-
-				Network.BatchedMessage batch = new Network.BatchedMessage(player.OwnerId);
-				batch.QueueDataFlag(ShipStatus.Instance.NetId, systemUpdate);
-				batch.FinishBatch();
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "DisableCameras.Postfix: sabotaging comms for camera watcher");
+				}
 			}
 		}
 
@@ -212,7 +275,15 @@ namespace MalumMenu.features
 
 			static bool Prefix()
 			{
-				return !Enabled;
+				try
+				{
+					return !Enabled;
+				}
+				catch (Exception ex)
+				{
+					ErrorReporter.Report(ex, HandlingId, "DisableGameEnd.Prefix: deciding whether to allow game end");
+					return true;
+				}
 			}
 		}
 	}
