@@ -41,8 +41,13 @@ https://discord.gg/GZKcdkFD5
 <!-- omit in toc -->
 
 ---
-# NOTE: See our wiki for more information
-https://the-hypermenu-team.github.io/Wiki/
+<details>
+
+<summary><h2>👾 I found a bug</h2></summary>
+
+To report a bug, open our Discord server, which you can join [here](https://discord.gg/gkpdeAX5u9). Create a bug report in the [bugs channel](https://discord.com/channels/1486399509150830622/1486401039023210609) - you need to have joined the server to access it - in the discord. Next, open your Among Us directory. There will be a folder called 'HyperMenu', which contains 2 other folders: 'ConsoleLogs' (saves the data from the console) and 'ErrorReports'. Open the Error Reports folder and upload the latest file in the folder to the bug report you have created in the discord. (Note that you will need to wait 1 minute after you join the discord server - this is a measure taken to prevent bots from raiding the server)
+
+</details>
 
 ---
 # 😎 Table Of Contents
@@ -191,14 +196,6 @@ When installing MalumMenu for the first time, it will take **MUCH** longer than 
 <img src="https://scp222thj.dev/static/images/bepinexConsole.png" alt="drawing" width="550"/>
 
 <br>If you are still having issues, feel free to open a new Github issue [on the original menu](https://github.com/scp222thj/MalumMenu/issues/new), or you can ask for help in the MalumMenu Discord server: [discord.gg/YYcYf88jAb](https://discord.gg/YYcYf88jAb)
-
-</details>
-
-<details>
-
-<summary><h2>👾 I found a bug OR I would like to suggest a new feature</h2></summary>
-
-To report a bug or request a feature, you can open a new Github issue [on the original MalumMenu](https://github.com/scp222thj/MalumMenu/issues/new), or [on my fork](https://github.com/The-HyperMenu-Team/HyperMenu/issues/new) (I recommend the original since I'm unlikely to implement changes on my fork due to being busy high school student), or you can discuss it on the MalumMenu Discord server: [discord.gg/YYcYf88jAb](https://discord.gg/YYcYf88jAb)
 
 </details>
 
