@@ -309,6 +309,20 @@ public static class ErrorReporter
     }
 
     /// <summary>Snapshot of the DISTINCT retained errors, noisiest first.</summary>
+    /// <summary>
+    /// Returns the ErrorReports/HyperError_*.txt file written for this specific retained
+    /// error, or null when none was written (the report file could not be created, or this
+    /// error's signature is unknown).
+    /// </summary>
+    public static string ReportPathFor(RetainedError item)
+    {
+        if (item == null || string.IsNullOrEmpty(item.Signature)) return null;
+        lock (_lock)
+        {
+            return _fileBySignature.TryGetValue(item.Signature, out string path) ? path : null;
+        }
+    }
+
     public static RetainedError[] SnapshotRetainedErrors()
     {
         lock (_lock)

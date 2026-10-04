@@ -8,7 +8,8 @@ using BugSplatDotNetStandard;
 namespace MalumMenu;
 
 /// <summary>
-/// Uploads this session's retained errors to a BugSplat database so they can be reviewed
+/// Uploads this session's retained errors to a BugSplat database, one report per distinct
+/// error, so they can be reviewed
 /// together instead of one local .txt file at a time.
 /// </summary>
 public static class BugReporter
@@ -120,50 +121,63 @@ public static class BugReporter
                  + "dependency is missing from BepInEx/plugins.";
         }
 
-        string sessionLog = SessionLogPath();
+        // One report per distinct error. The retained list is already deduplicated by signature
+        // (with a repeat tally in the description), so these are genuinely separate faults rather
+        // than N copies of the same one.
+        int sent = 0;
+        string firstFailure = null;
 
-        // One report for the whole session rather than one per exception. The session log is
-        // attached and already holds one entry per distinct fault (with repeat tallies), so a
-        // single report is far easier to read than N near-identical ones.
-        System.Text.StringBuilder summary = new System.Text.StringBuilder();
         for (int i = 0; i < pending.Length; i++)
         {
             ErrorReporter.RetainedError item = pending[i];
             if (item == null) continue;
-            if (summary.Length > 0) summary.Append('\n');
-            summary.Append(Describe(item, i, pending.Length));
+
+            string detail = Describe(item, i, pending.Length);
+
+            ExceptionPostOptions options = new ExceptionPostOptions
+            {
+                Description = "HyperMenu error " + (i + 1) + " of " + pending.Length + ": " + detail,
+                Email = "<@" + Application + ">",
+                User = "<@" + Application + ">",
+                Notes = "HyperMenu " + MalumMenu.hyperVersion
+                      + " | " + DescribeEnvironment()
+            };
+
+            // Attach this error's own HyperError_*.txt rather than the whole session rollup, so
+            // each BugSplat report carries exactly the file for the fault it is about.
+            string reportFile = ErrorReporter.ReportPathFor(item);
+            if (!string.IsNullOrEmpty(reportFile) && File.Exists(reportFile))
+            {
+                try { options.Attachments.Add(new FileInfo(reportFile)); }
+                catch { /* attachment is optional */ }
+            }
+
+            // The real exception is posted, so BugSplat groups and de-duplicates by its own
+            // signature rather than everything landing as one synthetic blob.
+            string outcome = Post(bugSplat, item.Exception ?? new Exception(detail), options, timeoutSeconds);
+            if (outcome == null)
+            {
+                sent++;
+
+                // Marked one at a time so a mid-way failure does not record errors that were
+                // never actually sent.
+                ErrorReporter.MarkUploaded(new[] { item });
+            }
+            else if (firstFailure == null)
+            {
+                firstFailure = outcome;
+            }
         }
 
-        int distinct = pending.Length;
-        int total = ErrorReporter.RetainedOccurrenceCount;
-
-        ExceptionPostOptions options = new ExceptionPostOptions
+        if (sent > 0)
         {
-            Description = "HyperMenu session report: " + distinct + " distinct error"
-                        + (distinct == 1 ? "" : "s") + ", " + total + " occurrence"
-                        + (total == 1 ? "" : "s") + ".\n\n" + summary,
-            Email = "<@" + Application + ">",
-            User = "<@" + Application + ">",
-            Notes = "HyperMenu " + MalumMenu.hyperVersion
-                  + " | " + DescribeEnvironment()
-        };
-
-        if (sessionLog != null)
-        {
-            try { options.Attachments.Add(new FileInfo(sessionLog)); }
-            catch { /* attachment is optional */ }
+            return "Uploaded " + sent + " of " + pending.Length + " error report"
+                 + (pending.Length == 1 ? "" : "s") + " to BugSplat.";
         }
 
-        // Posted as a synthetic exception so the report keeps BugSplat's normal shape while
-        // carrying every distinct error in the description.
-        string outcome = Post(bugSplat, new Exception(summary.ToString()), options, timeoutSeconds);
-        if (outcome == null)
-        {
-            ErrorReporter.MarkUploaded(pending);
-            return "Uploaded 1 session report to BugSplat (" + distinct + " distinct error"
-                 + (distinct == 1 ? "" : "s") + ", " + total + " total).";
-        }
-        return "Upload failed: " + outcome;
+        if (firstFailure != null) return "Upload failed: " + firstFailure;
+
+        return "Nothing was uploaded.";
     }
 
     /// <summary>Returns null on success, or a failure reason.</summary>
@@ -257,16 +271,6 @@ public static class BugReporter
                  + " | " + UnityEngine.SystemInfo.processorType;
         }
         catch { return "environment unknown"; }
-    }
-
-    private static string SessionLogPath()
-    {
-        try
-        {
-            string path = ErrorReporter.SessionErrPath;
-            return !string.IsNullOrEmpty(path) && File.Exists(path) ? path : null;
-        }
-        catch { return null; }
     }
 
     private static string Flatten(AggregateException agg)
