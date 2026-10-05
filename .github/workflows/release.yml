@@ -70,10 +70,12 @@ jobs:
           copy_deps "build_epic/BepInEx/plugins"
           cd build_epic && zip -r ../HyperMenu-Epic-MSStore.zip . && cd ..
 
-          # Standalone plugin copy, plus any dependency DLLs left beside it for the
-          # Publish step below to attach as their own release assets.
-          cp "$BUILT_DLL_PATH" "$RELEASE_DLL_NAME"
-          copy_deps "."
+          # Process Quick Update
+          mkdir -p build_quick/BepInEx/plugins
+          cp "$BUILT_DLL_PATH" "build_quick/BepInEx/plugins/$RELEASE_DLL_NAME"
+          copy_deps "build_quick/BepInEx/plugins"
+          cd build_quick && zip -r ../HyperMenu-Quick-Update.zip . && cd ..
+
 
       - name: Publish Release to GitHub
         env:
@@ -95,7 +97,6 @@ jobs:
           gh release create "$TAG" \
             --title "Release $TAG" \
             --generate-notes \
-            "$RELEASE_DLL_NAME" \
             "HyperMenu-Steam-Itch.zip" \
             "HyperMenu-Epic-MSStore.zip" \
-            $EXTRA_ASSETS
+            "HyperMenu-Quick-Update.zip" \
