@@ -169,7 +169,7 @@ Click to expand each topic
 
 <summary><h2>❗ I'm having issues installing HyperMenu</h2></summary>
 
-First of all, make sure you are running the most recent version of Among Us (`18` / `2026.8.18`) with the most recent version of HyperMenu (`v4.4.0`).
+First of all, make sure you are running the most recent version of Among Us (`19` / `2026.9.29`) with the most recent version of HyperMenu (`v4.4.0`).
 
 Also, check if your platform is officially supported:
 

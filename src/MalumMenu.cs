@@ -48,10 +48,10 @@ public partial class MalumMenu : BasePlugin
     public static KeybindListener keybindListener;
     public static UpdateCheck updateCheck;
 
-    public static string malumVersion = "3.3.0";
-    public static string hyperVersion = "4.4.4";
+    public static string malumVersion = "3.3.1";
+    public static string hyperVersion = "4.4.5";
     public static string hyperBuild = "Stable";
-    public static List<string> supportedAU = new List<string> { "2026.8.18" };
+    public static List<string> supportedAU = new List<string> { "2026.9.29" };
     public static List<string> toleratedAU = new List<string> { "2026.8.18" };
     public static bool isPanicked = false;
     public static bool inStealthMode = false;

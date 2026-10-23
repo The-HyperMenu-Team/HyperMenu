@@ -487,7 +487,7 @@ public static class IntroCutscene_CoBegin
             PlayerControl roleSwapTarget = null;
             foreach (var player in PlayerControl.AllPlayerControls)
             {
-                if (player.Data.RoleType != forcedRole) continue;
+                if (player.Data.RoleType != forcedRole) conti| v4.4.5 **[LATEST]** |  19.0.0     | [Download](https://github.com/The-HyperMenu-Team/HyperMenu/releases/tag/v4.4.5)          |nue;
                 roleSwapTarget = player;
                 break;
             }

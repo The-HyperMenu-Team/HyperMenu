@@ -122,8 +122,7 @@ public class TasksUI : MonoBehaviour
                         {
                             if (GUILayout.Button("Complete", GUIStylePreset.NormalButton))
                             {
-                                //Utils.CompleteTask(task);
-                                MalumMenu.notifications.Send("Feature Patched", "This feature has been patched by Innersloth and is currently under repair.");
+                                PlayerControl.LocalPlayer.RpcCompleteTask(task.Id);
                             }
                         }
                     }
